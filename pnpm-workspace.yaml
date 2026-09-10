@@ -1,0 +1,18 @@
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@better-auth/core@1.7.4'
+  - '@better-auth/drizzle-adapter@1.7.4'
+  - '@better-auth/kysely-adapter@1.7.4'
+  - '@better-auth/memory-adapter@1.7.4'
+  - '@better-auth/mongo-adapter@1.7.4'
+  - '@better-auth/passkey@1.7.4'
+  - '@better-auth/prisma-adapter@1.7.4'
+  - '@better-auth/telemetry@1.7.4'
+  - '@types/node@22.20.2'
+  - '@types/react-dom@19.3.0'
+  - '@types/react@19.3.0'
+  - better-auth@1.7.4
+  - react-dom@19.3.0
+  - react@19.3.0
+  - scheduler@0.28.0

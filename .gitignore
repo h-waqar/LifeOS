@@ -1,0 +1,27 @@
+# Node dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js build output
+.next/
+out/
+
+# Environment files
+.env*.local
+.env
+!.env.example
+
+# Vitest / coverage
+coverage/
+
+# TypeScript cache
+*.tsbuildinfo
+next-env.d.ts
+
+# OS files
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
