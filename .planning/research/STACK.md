@@ -18,14 +18,15 @@
 - **Runtime:** Node.js 20+ LTS
 - **Routing & Endpoints:** Next.js Route Handlers & Server Actions
 - **Validation:** Zod (typed schema validation for all API inputs, forms, and AI tool calling contracts)
-- **Authentication & Sessions:** NextAuth / Better-Auth / Argon2 session cookies
-  - *Rationale:* Single-owner security model with secure HTTP-only cookies, CSRF protection, and forward compatibility with multi-user tables (PRD Section 45-46).
+- **Authentication & Sessions:** Better Auth
+  - *Rationale:* Standardized, type-safe authentication library natively integrating with PostgreSQL and Drizzle ORM. Uses secure HTTP-only cookies, session tokens, and CSRF protection. Replaces NextAuth and custom Argon2 alternatives. Authentication and authorization are strictly separated: Better Auth authenticates sessions, while application authorization enforces resource ownership using authenticated `user_id` (PRD Sections 45-46).
 
 ### Data Layer
 - **Database:** PostgreSQL 16+
   - *Rationale:* Mandated by PRD Section 43. Strict relational modeling, foreign keys, constraints, ACID transactions, and robust indexing.
-- **ORM & Migrations:** Drizzle ORM (or Prisma)
-  - *Rationale:* Type-safe SQL, explicit schema definitions, automated migration scripts, zero magic strings, fast execution without heavy runtime overhead.
+- **ORM & Migrations:** Drizzle ORM
+  - *Rationale:* Type-safe SQL, explicit TypeScript schema definitions, automated migration scripts via Drizzle Kit, zero magic strings, and fast execution without heavy runtime overhead. Prisma is rejected to eliminate unresolved choices.
+- **Database Boundary & Vertical-Slice Rule:** Database schemas are introduced incrementally with the phase implementing their corresponding functionality. Upfront monolithic schema generation is prohibited. Phase 1 database scope is strictly limited to foundational/auth infrastructure: `users`, `sessions` / Better Auth required tables, `preferences` (if required by Phase 1 design), and `audit_log`.
 - **Full-Text & Search:** PostgreSQL native `tsvector` + `pg_trgm` for Phase 1-3 full-text search; `pgvector` for semantic embeddings in Phase 9.
 
 ### AI & Agent Layer

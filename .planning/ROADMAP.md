@@ -2,7 +2,7 @@
 
 ## Overview
 
-LifeOS is an integrated personal operating system built from scratch to unify tasks, projects, goals, daily planning, calendar, habits, notes, finances, content creation, and AI assistance into a single source of truth. The roadmap progresses through 9 coherent capability phases: establishing a rock-solid TypeScript & PostgreSQL foundation (Phase 1), deploying the core productivity execution engine (Phase 2), connecting knowledge and learning (Phase 3), adding personal finance (Phase 4), managing content ideation and scheduling (Phase 5), integrating the AI layer with human-in-the-loop safety (Phase 6), powering system automations and events (Phase 7), connecting external integrations like Google Calendar and GitHub (Phase 8), and delivering predictive personal intelligence (Phase 9).
+LifeOS is an integrated personal operating system built from scratch to unify tasks, projects, goals, daily planning, calendar, habits, notes, relationships, finances, content creation, and AI assistance into a single source of truth. The roadmap progresses through 9 coherent capability phases: establishing a rock-solid TypeScript & PostgreSQL foundation with Drizzle ORM and Better Auth (Phase 1), deploying the core productivity execution engine (Phase 2), connecting knowledge, learning, and relationships (Phase 3), adding personal finance (Phase 4), managing content ideation and scheduling (Phase 5), integrating the AI layer with human-in-the-loop safety (Phase 6), powering system automations and events (Phase 7), connecting external integrations like Google Calendar and GitHub (Phase 8), and delivering predictive personal intelligence (Phase 9).
 
 ## Phases
 
@@ -10,9 +10,9 @@ LifeOS is an integrated personal operating system built from scratch to unify ta
 - Integer phases (1, 2, 3...): Planned milestone work
 - Decimal phases (2.1, 2.2...): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Foundation** - TypeScript architecture, Next.js shell, PostgreSQL database, authentication, design system, settings, and audit logging.
+- [ ] **Phase 1: Foundation** - TypeScript architecture, Next.js shell, PostgreSQL database with Drizzle ORM (foundational schema only: users, sessions / Better Auth tables, preferences, audit_log), Better Auth authentication, resource ownership authorization via user_id, design system, settings, and audit logging.
 - [ ] **Phase 2: Core Productivity** - Unified dashboard, tasks, projects, goals, calendar, time blocking, daily planning, and habits.
-- [ ] **Phase 3: Knowledge & Learning** - Rich Markdown notes, bidirectional linking, tags, global search, and learning tracker.
+- [ ] **Phase 3: Knowledge, Learning & Relationships** - Rich Markdown notes, bidirectional linking, tags, global search, learning tracker, and Relationships / People CRM (Person, Interaction).
 - [ ] **Phase 4: Personal Finance** - Accounts, transactions, categories, budgets, financial goals, and net worth reports.
 - [ ] **Phase 5: Content & Social Media** - Content ideas, multi-platform drafts, content calendar, and analytics data model.
 - [ ] **Phase 6: AI Layer & Assistant** - Multi-provider AI abstraction, personal graph RAG, structured tool calling with confirmation gates, and conversational assistant.
@@ -23,22 +23,22 @@ LifeOS is an integrated personal operating system built from scratch to unify ta
 ## Phase Details
 
 ### Phase 1: Foundation
-**Goal**: Establish the project architecture, PostgreSQL relational foundation, authentication, application navigation shell, design system, settings, and audit logging.
+**Goal**: Establish the project architecture, PostgreSQL relational foundation using Drizzle ORM (foundational/auth tables only: users, sessions / Better Auth tables, user preferences, audit_log), Better Auth authentication, server-side resource ownership authorization via authenticated user_id, application navigation shell, design system, settings, and audit logging.
 **Depends on**: Nothing (first phase)
 **Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, SHELL-01, SHELL-02, SHELL-03, SHELL-04, SEC-01, SEC-02, SEC-03, SEC-04
 **Success Criteria** (what must be TRUE):
-  1. User can register/log in securely, and session persists across page reloads.
-  2. All server actions and API endpoints enforce server-side resource ownership validation against the authenticated user.
+  1. User can register/log in securely via Better Auth, and session persists across page reloads.
+  2. All server actions and API endpoints enforce server-side resource ownership validation against the authenticated user's user_id, maintaining strict separation between authentication and authorization.
   3. Responsive application shell renders with sidebar navigation, theme switching, and global command palette shell.
   4. Sensitive mutations produce immutable audit log entries in PostgreSQL.
-  5. Database migrations run cleanly and automated test suite passes.
+  5. Database migrations run cleanly with Drizzle ORM (foundational tables only; domain tables deferred per vertical-slice rule) and automated test suite passes.
 **Plans**: TBD
 **UI hint**: yes
 
 Plans:
 - [ ] 01-01: Project setup (Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Vitest)
-- [ ] 01-02: PostgreSQL database schema, migrations, and Drizzle/Prisma setup
-- [ ] 01-03: Authentication, session management, and server authorization guards
+- [ ] 01-02: PostgreSQL database setup with Drizzle ORM (foundational schema only: users, sessions / Better Auth tables, preferences, audit_log)
+- [ ] 01-03: Better Auth authentication, session management, and server authorization ownership guards
 - [ ] 01-04: Application shell, navigation layout, theme settings, and audit logging
 
 ### Phase 2: Core Productivity
@@ -61,22 +61,24 @@ Plans:
 - [ ] 02-04: Daily planning morning routine and evening review with task carry-over
 - [ ] 02-05: Habit tracker with streak calculations and unified home dashboard
 
-### Phase 3: Knowledge & Learning
-**Goal**: Build a connected knowledge base with rich Markdown notes, bidirectional linking, tags, global search, and learning system.
+### Phase 3: Knowledge, Learning & Relationships
+**Goal**: Build a connected knowledge and relationship network with rich Markdown notes, bidirectional linking, tags, global search, learning system, and Relationships / People CRM (Person and Interaction entities).
 **Depends on**: Phase 2
-**Requirements**: NOTE-01, NOTE-02, NOTE-03, NOTE-04, NOTE-05, NOTE-06
+**Requirements**: NOTE-01, NOTE-02, NOTE-03, NOTE-04, NOTE-05, NOTE-06, CRM-01, CRM-02, CRM-03, CRM-04, CRM-05
 **Success Criteria** (what must be TRUE):
   1. User can author markdown notes with bidirectional wikilinks ([[Note Title]]) and view backlinks in note inspector.
-  2. User can link notes to tasks, projects, goals, and learning items.
-  3. User can execute full-text search across all notes, tasks, projects, and goals with instant results.
-  4. User can log and track learning items (books, courses) with status, ratings, and progress notes.
+  2. User can link notes to tasks, projects, goals, learning items, and people.
+  3. User can manage contacts (People) with relationship types, contact details, tags, and log interaction history with follow-up tracking.
+  4. User can execute full-text search across notes, tasks, projects, goals, and people with instant results.
+  5. User can log and track learning items (books, courses) with status, ratings, and progress notes.
 **Plans**: TBD
 **UI hint**: yes
 
 Plans:
 - [ ] 03-01: Markdown note editor with wikilinks, tags, and backlink graph inspection
-- [ ] 03-02: PostgreSQL full-text search across all entities and global command palette integration
-- [ ] 03-03: Learning system for tracking books, courses, articles, and skill notes
+- [ ] 03-02: Relationships / People CRM module (Person and Interaction schemas, contact management, follow-up tracking)
+- [ ] 03-03: PostgreSQL full-text search across all entities (notes, tasks, projects, goals, people) and global command palette integration
+- [ ] 03-04: Learning system for tracking books, courses, articles, and skill notes
 
 ### Phase 4: Personal Finance
 **Goal**: Provide a private financial ledger connecting accounts, transactions, category budgets, and financial goals.
@@ -172,6 +174,27 @@ Plans:
 - [ ] 09-01: Cross-domain personal analytics dashboard and trend calculation engine
 - [ ] 09-02: Goal risk forecasting and PostgreSQL pgvector semantic knowledge search
 
+## Database Architecture & Vertical-Slice Rule
+
+LifeOS strictly enforces a vertical-slice database evolution rule:
+1. **No Upfront Monolithic Schema**: Domain schemas MUST be introduced alongside the phase that implements their corresponding functionality. Creating database tables before their business logic exists is prohibited.
+2. **Phase 1 Database Scope**: Strictly limited to foundational/authentication tables:
+   - `users`
+   - `sessions` / Better Auth required tables (`accounts`, `verifications`, etc.)
+   - `preferences` (if required by Phase 1 design)
+   - `audit_log`
+   Do NOT create Task, Project, Goal, Habit, Calendar, Note, Person, Interaction, Finance, Content, AI, or other domain tables during Phase 1 unless strictly required by an explicitly approved Phase 1 vertical slice.
+3. **Domain Schema Introductions by Phase**:
+   - **Phase 1: Foundation**: Foundational & Auth (`users`, `sessions`, Better Auth tables, `user_preferences`, `audit_log`)
+   - **Phase 2: Core Productivity**: Tasks, Projects, Goals, Habits, Timeblocks (`tasks`, `subtasks`, `task_dependencies`, `projects`, `goals`, `goal_metrics`, `habits`, `habit_entries`, `time_blocks`, `daily_plans`, `evening_reviews`)
+   - **Phase 3: Knowledge, Learning & Relationships**: Notes, Tags, Learning, Contacts (`notes`, `tags`, `entity_tags`, `note_links`, `learning_items`, `people`, `interactions`)
+   - **Phase 4: Personal Finance**: Accounts, Transactions, Budgets (`accounts`, `transactions`, `categories`, `budgets`)
+   - **Phase 5: Content & Social Media**: Content items, drafts, editorial calendar (`content_items`, `content_platforms`, `content_publications`, `content_metrics`)
+   - **Phase 6: AI Layer & Assistant**: AI sessions and tool action logs (`ai_conversations`, `ai_messages`, `ai_actions`)
+   - **Phase 7: Automations & Event Engine**: Triggers, rules, and events (`automations`, `automation_runs`, `notifications`)
+   - **Phase 8: External Integrations**: Third-party connections and sync states (`integration_connections`, `sync_logs`)
+   - **Phase 9: Intelligence & Predictive Analytics**: Analytics aggregates and vector embeddings (`analytics_snapshots`, `pgvector` embeddings)
+
 ## Progress
 
 **Execution Order:**
@@ -181,7 +204,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 0/4 | Not started | - |
 | 2. Core Productivity | 0/5 | Not started | - |
-| 3. Knowledge & Learning | 0/3 | Not started | - |
+| 3. Knowledge, Learning & Relationships | 0/4 | Not started | - |
 | 4. Personal Finance | 0/2 | Not started | - |
 | 5. Content & Social Media | 0/2 | Not started | - |
 | 6. AI Layer & Assistant | 0/3 | Not started | - |

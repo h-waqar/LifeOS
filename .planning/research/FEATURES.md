@@ -14,10 +14,11 @@
 - **Daily Planning & Evening Review:** Morning 3-5 priority selection, time-block scheduling, evening completion tally, reflections, and rollover of uncompleted tasks.
 - **Habits & Streaks:** Habit definitions (daily, weekly, weekdays), check-in logs, streak calculations, and cue/goal associations.
 - **Markdown Notes & Knowledge Graph:** Markdown editing, bi-directional linking (`[[note]]`), tags, and entity relationships.
+- **Relationships / People CRM (Lightweight CRM):** Important people management (Person: name, relationship type, company, role, contact info, notes, tags), Interaction logging, `lastInteraction` tracking, `nextFollowUp` reminders, and links to tasks, projects, and notes (PRD Section 25).
 - **Personal Finance Basics:** Accounts, income/expense/transfer transactions, categories, budgets, and net worth overview.
 - **Content & Social Media Ideation:** Content ideas, multi-platform drafts, content calendar, and platform variants (Twitter, LinkedIn, Blog).
 - **Basic AI Assistant:** Chat interface, context-aware Q&A, natural language task parsing, and daily planning recommendations.
-- **Settings & Data Management:** Secure authentication, audit logging, JSON/Markdown data export, and backup/restore.
+- **Settings & Data Management:** Secure Better Auth authentication, server-side resource ownership authorization via authenticated `user_id`, audit logging, JSON/Markdown data export, and backup/restore.
 
 ### Differentiators (Competitive Advantage)
 - **Interconnected Personal Graph:** No duplicate entry; Goal → Project → Task → Calendar → Completion → Analytics flow.

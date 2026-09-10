@@ -23,9 +23,9 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 
 ### Active
 
-- [ ] **Phase 1 (Foundation)**: TypeScript project architecture, Next.js / modular structure, PostgreSQL schema & migrations, authentication & secure sessions, design system & navigation shell, audit logging, and user settings.
+- [ ] **Phase 1 (Foundation)**: TypeScript project architecture, Next.js / modular structure, PostgreSQL database with Drizzle ORM (foundational/auth tables only: users, sessions / Better Auth tables, preferences, audit_log), Better Auth authentication & secure sessions, server-side resource ownership authorization via authenticated user_id, design system & navigation shell, audit logging, and user settings.
 - [ ] **Phase 2 (Core Productivity)**: Tasks, Projects, Goals, Calendar & Time Blocking, Daily Planning & Evening Review, Habits & Streaks, and Unified Dashboard ("What matters right now?").
-- [ ] **Phase 3 (Knowledge & Learning)**: Markdown Notes with bi-directional linking ([[note]]), Tags, Knowledge Graph relations, Global Search, and Learning System (items, courses, progress).
+- [ ] **Phase 3 (Knowledge, Learning & Relationships)**: Markdown Notes with bi-directional linking ([[note]]), Tags, Knowledge Graph relations, Global Search, Learning System (items, courses, progress), and Relationships / People CRM (Person, Interaction entities, contact metadata, follow-ups, and relationship types).
 - [ ] **Phase 4 (Personal Finance)**: Accounts, Transactions (income/expense/transfers), Categories, Budgets, Financial Goals link, and Net Worth reports.
 - [ ] **Phase 5 (Content & Social Media)**: Content ideas, rich editor, platform-specific variations, Content Calendar, media attachments, and content analytics data models.
 - [ ] **Phase 6 (AI Layer & Assistant)**: Multi-provider abstraction (Gemini, Claude, OpenAI, Ollama), Context Retrieval (RAG over personal graph), Tool calling, Side-effect confirmation gates, and Chat / Command Palette universal capture.
@@ -40,6 +40,7 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 - **Distributed microservices**: No Kubernetes or multi-repo microservice architecture; a modular monolith running in Docker on a single VPS or locally minimizes operational overhead.
 - **Direct automated social publishing in MVP**: Publishing integrations are deferred to Phase 8; Phase 5 focuses on content ideation, drafting, and scheduling.
 - **Replacing relational modeling with unstructured JSON blobs**: Core business entities must be strictly normalized with foreign keys and migrations in PostgreSQL.
+- **Upfront monolithic database schema**: Building the complete domain database schema upfront violates the vertical-slice rule.
 
 ## Context
 
@@ -49,9 +50,10 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 
 ## Constraints
 
-- **Tech Stack**: TypeScript with strict mode (noImplicitAny), PostgreSQL for all relational data, modern web UI (React / Next.js with Tailwind CSS & shadcn/ui components).
-- **Security & Privacy**: Strict session verification; owner authorization check on all resource access; sensitive credentials (API keys, social tokens) encrypted at rest and never exposed to the client; comprehensive audit logging.
+- **Tech Stack**: TypeScript with strict mode (noImplicitAny), PostgreSQL for all relational data, Drizzle ORM for type-safe schema definitions and migrations, modern web UI (React / Next.js with Tailwind CSS & shadcn/ui components).
+- **Security & Privacy**: Strict session verification via Better Auth; authentication and authorization remain separate concerns; application authorization must enforce resource ownership using the authenticated user's user_id on all resource access; sensitive credentials (API keys, social tokens) encrypted at rest and never exposed to the client; comprehensive audit logging.
 - **Architecture**: Modular monolith with clear domain boundaries (src/features/*, src/lib/*, src/server/*), typed API contracts, server-side input validation (Zod), and database transactions for all multi-entity mutations.
+- **Database Scope & Vertical-Slice Rule**: Domain schemas must be introduced with the phase that implements their corresponding functionality. Do not build the entire database schema upfront. Phase 1 database work is strictly limited to foundational/authentication infrastructure required by the first vertical slice: users, sessions / Better Auth required tables, preferences (if required by Phase 1 design), and audit_log. Domain tables (Task, Project, Goal, Habit, Calendar, Note, Person, Interaction, Finance, Content, AI, etc.) are strictly prohibited during Phase 1 unless explicitly required by an approved Phase 1 vertical slice.
 - **Deployment**: Docker containerization with docker-compose for PostgreSQL, app server, and background workers.
 - **Testing**: Mandatory test coverage for business logic (goal progress, habit calculations, finance summaries, priority scoring) and integration tests for API contracts.
 
@@ -59,12 +61,16 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Next.js App Router + TypeScript Full-Stack | Unified TypeScript codebase, server actions / route handlers, React Server Components, and seamless SSR/client hydration | — Pending |
-| PostgreSQL with Drizzle / Prisma ORM | PRD mandates strict relational modeling, migrations, foreign keys, transaction safety, and indexing | — Pending |
-| Modular Monolith Architecture | Keeps local execution simple, eliminates distributed system failure modes, allows easy Docker VPS deployment | — Pending |
-| Multi-Provider AI Abstraction Layer | Enables switching between Gemini, Anthropic Claude, OpenAI, and local Ollama without rewriting business logic | — Pending |
-| Mandatory Human-in-the-Loop Confirmation Gate | Destructive mutations or external communications triggered by AI require explicit confirmation | — Pending |
-| Single-Owner User Model with Multi-User Schema Readiness | Ensures maximum privacy and speed for Hamza while tables retain user_id foreign keys for clean multi-user migration | — Pending |
+| Next.js App Router + TypeScript Full-Stack | Unified TypeScript codebase, server actions / route handlers, React Server Components, and seamless SSR/client hydration | Decided (Authoritative) |
+| Drizzle ORM with PostgreSQL | PRD mandates strict relational modeling, migrations, foreign keys, transaction safety, and indexing. Drizzle provides type-safe SQL, explicit schema definitions, automated migrations, and zero-runtime overhead. Prisma is rejected to eliminate unresolved ORM choices. | Decided (Authoritative) |
+| Better Auth for Authentication & Sessions | Better Auth provides secure session cookies, CSRF protection, and standard auth tables with clean TypeScript/Drizzle integration. Replaces NextAuth and custom Argon2 alternatives. | Decided (Authoritative) |
+| Strict Separation of Auth and Resource Ownership | Authentication and authorization remain separate concerns. Authentication verifies identity; application authorization enforces resource ownership using the authenticated user's user_id on all endpoints and server actions. Client-supplied user IDs are never trusted. | Decided (Authoritative) |
+| Relationships / People CRM in Phase 3 | Person and Interaction entities from PRD Section 25 are not deferred to v2. Add Relationships / People CRM to Phase 3 alongside Knowledge & Learning, enabling notes, tasks, and search to link to contacts. | Decided (Authoritative) |
+| Vertical-Slice Database Scope (Phase 1 Boundary) | Domain schemas must be introduced with the phase implementing their corresponding functionality. Do not build the entire database schema upfront. Phase 1 database scope is strictly limited to foundational/authentication infrastructure (users, sessions / Better Auth required tables, preferences if required by Phase 1 design, audit_log). Domain tables are prohibited in Phase 1. | Decided (Authoritative) |
+| Modular Monolith Architecture | Keeps local execution simple, eliminates distributed system failure modes, allows easy Docker VPS deployment | Decided (Authoritative) |
+| Multi-Provider AI Abstraction Layer | Enables switching between Gemini, Anthropic Claude, OpenAI, and local Ollama without rewriting business logic | Decided (Authoritative) |
+| Mandatory Human-in-the-Loop Confirmation Gate | Destructive mutations or external communications triggered by AI require explicit confirmation | Decided (Authoritative) |
+| Single-Owner User Model with Multi-User Schema Readiness | Ensures maximum privacy and speed for Hamza while tables retain user_id foreign keys for clean multi-user migration | Decided (Authoritative) |
 
 ## Evolution
 

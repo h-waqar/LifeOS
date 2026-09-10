@@ -18,42 +18,44 @@ The critical risks are specification drift, premature third-party API integratio
 ### Recommended Stack
 - **Full-Stack Framework:** Next.js 15 (App Router, TypeScript, React 19)
 - **UI Components:** Tailwind CSS, shadcn/ui (Radix primitives), Lucide React
-- **Database & Persistence:** PostgreSQL 16+ with Drizzle ORM, strict relational schema, migrations, and ACID transactions
+- **Database & Persistence:** PostgreSQL 16+ with Drizzle ORM, strict relational schema, migrations, and ACID transactions; strictly follows vertical-slice schema evolution
+- **Authentication & Sessions:** Better Auth with HTTP-only cookies and CSRF protection; strict separation between authentication and resource ownership authorization via authenticated `user_id`
 - **AI Integration:** Vercel AI SDK with multi-provider abstraction (Gemini, Claude, OpenAI, Ollama)
 - **Deployment:** Containerized Docker Compose setup with volume persistence and automated backup scripts
 
 ### Expected Features
-- **Table Stakes (MVP):** Authentication, Unified Dashboard ("What matters right now?"), Tasks, Projects, Goals, Calendar & Time Blocking, Daily Planning & Review, Habits, Notes with bi-directional links, Basic Personal Finance, Content drafting & calendar, Global Command Palette, and Contextual AI Assistant.
+- **Table Stakes (MVP):** Authentication, Unified Dashboard ("What matters right now?"), Tasks, Projects, Goals, Calendar & Time Blocking, Daily Planning & Review, Habits, Notes with bi-directional links, Relationships / People CRM (Person & Interaction tracking), Basic Personal Finance, Content drafting & calendar, Global Command Palette, and Contextual AI Assistant.
 - **Differentiators:** Interconnected personal information graph, human-in-the-loop AI safety gates, cross-domain analytics, and friction-free universal capture.
 - **Anti-Features:** Multi-tenant SaaS, team collaboration, autonomous unconfirmed mutations, and microservices.
 
 ### Architecture Approach
-A layered modular monolith structured into domain features (`src/features/*`), shared infrastructure (`src/lib/*`), and server contracts. Data flows cleanly from UI through validated server actions to relational PostgreSQL tables, with all significant actions logged to an audit trail.
+A layered modular monolith structured into domain features (`src/features/*`), shared infrastructure (`src/lib/*`), and server contracts. Data flows cleanly from UI through validated server actions to relational PostgreSQL tables, with all significant actions logged to an audit trail. Authentication (Better Auth) is strictly separated from authorization (resource ownership validation via `user_id`). The database adheres strictly to the vertical-slice rule: Phase 1 introduces only foundational/auth tables (`users`, `sessions`, `preferences`, `audit_log`), while domain schemas are deferred to their respective feature phases.
 
 ### Critical Pitfalls
 1. **Specification Drift:** Mitigated by treating `prd.md` as the product contract and using GSD traceability.
 2. **Uncontrolled AI Actions:** Mitigated by mandatory user confirmation gates for all side-effecting tools.
 3. **Schema De-normalization:** Mitigated by strict relational tables and rejecting raw JSON blob shortcuts.
 4. **Premature External Integrations:** Mitigated by completing internal domain models in Phases 1-5 before external adapters in Phase 8.
+5. **Upfront Monolithic Schema Creation:** Mitigated by enforcing the vertical-slice rule and restricting Phase 1 DB work to foundational/auth infrastructure.
 
 ## Implications for Roadmap
 
 Based on research and PRD Sections 71-80, the suggested 9-phase structure directly follows:
 
 ### Phase 1: Foundation
-**Rationale:** Establishes the core architecture, PostgreSQL database, authentication, design system, navigation, settings, and audit logging before any business logic is built.
-**Delivers:** Running Next.js application, DB migrations, secure auth, shell UI, settings, and automated testing baseline.
-**Avoids:** Tech stack confusion, schema instability, and missing audit logging.
+**Rationale:** Establishes the core architecture, PostgreSQL database with Drizzle ORM, Better Auth authentication, design system, navigation, settings, and audit logging before any business logic is built. Database scope is strictly restricted to foundational/auth tables.
+**Delivers:** Running Next.js application, foundational DB migrations, secure auth & resource ownership guards, shell UI, settings, and automated testing baseline.
+**Avoids:** Tech stack confusion, schema instability, upfront domain bloat, and missing audit logging.
 
 ### Phase 2: Core Productivity
 **Rationale:** Delivers the primary execution engine: Goals → Projects → Tasks → Calendar / Time Blocking → Habits → Dashboard.
 **Delivers:** Full productivity workflow allowing the user to set a goal, break it into projects/tasks, schedule them on the calendar, log habits, and view today's priorities.
 **Avoids:** Siloed productivity tools and duplicate data entry.
 
-### Phase 3: Knowledge & Learning
-**Rationale:** Connects notes and learning items to existing tasks, projects, and goals.
-**Delivers:** Markdown note editor, bi-directional linking (`[[note]]`), tags, global search, and learning system tracking.
-**Avoids:** Disconnected notes and forgotten reading lists.
+### Phase 3: Knowledge, Learning & Relationships
+**Rationale:** Connects notes, learning items, and important relationships (People CRM) to existing tasks, projects, and goals.
+**Delivers:** Markdown note editor, bi-directional linking (`[[note]]`), tags, global search, learning system tracking, and People CRM (Person & Interaction management with follow-ups).
+**Avoids:** Disconnected notes, forgotten reading lists, and siloed relationship context.
 
 ### Phase 4: Personal Finance
 **Rationale:** Self-contained financial ledger that connects financial activity to long-term goals.

@@ -8,9 +8,9 @@
 Requirements for initial release across the 9 planned phases. Each maps directly to roadmap phases.
 
 ### Authentication & Authorization
-- [ ] **AUTH-01**: User can authenticate securely via password/session cookies and maintain persistent session across page reloads.
-- [ ] **AUTH-02**: All server actions and API endpoints enforce server-side resource ownership validation against the authenticated user.
-- [ ] **AUTH-03**: User can log out from any page and invalidate active session tokens.
+- [ ] **AUTH-01**: User can authenticate securely via Better Auth (password/session cookies) and maintain persistent session across page reloads.
+- [ ] **AUTH-02**: All server actions and API endpoints enforce server-side resource ownership validation against the authenticated user's user_id, maintaining strict separation between authentication and authorization.
+- [ ] **AUTH-03**: User can log out from any page and invalidate active session tokens via Better Auth.
 - [ ] **AUTH-04**: User can manage account settings and update master credentials.
 
 ### Application Shell, Design System & Settings
@@ -69,9 +69,16 @@ Requirements for initial release across the 9 planned phases. Each maps directly
 - [ ] **NOTE-01**: User can create and edit rich Markdown notes with headings, checklists, code blocks, and math.
 - [ ] **NOTE-02**: User can link notes using bidirectional wikilinks ([[Note Title]]) and view backlinks in note inspector.
 - [ ] **NOTE-03**: User can tag notes and organize knowledge into hierarchical topics and life areas.
-- [ ] **NOTE-04**: User can link notes directly to Projects, Goals, Tasks, and Learning Items.
-- [ ] **NOTE-05**: User can perform instant full-text search across all notes, tasks, projects, and goals using PostgreSQL full-text indexing.
+- [ ] **NOTE-04**: User can link notes directly to Projects, Goals, Tasks, Learning Items, and People.
+- [ ] **NOTE-05**: User can perform instant full-text search across all notes, tasks, projects, goals, and people using PostgreSQL full-text indexing.
 - [ ] **NOTE-06**: User can track Learning Items (books, courses, articles) with status, ratings, key takeaways, and linked notes.
+
+### Relationships / People CRM
+- [ ] **CRM-01**: User can create, view, edit, and archive Person records with name, relationship type (Client, Friend, Family, Colleague, Prospect, Mentor, Professional), company, role, contact information, and tags.
+- [ ] **CRM-02**: User can log Interactions with a Person (date, channel/type, summary notes, next follow-up date).
+- [ ] **CRM-03**: System automatically tracks and displays `lastInteraction` date and surfaces upcoming or overdue `nextFollowUp` reminders.
+- [ ] **CRM-04**: User can link a Person to Tasks, Projects, and Notes without data duplication.
+- [ ] **CRM-05**: User can filter, search, and group people by relationship type, company, tags, and follow-up status.
 
 ### Personal Finance
 - [ ] **FIN-01**: User can manage financial accounts (Checking, Savings, Investments, Credit Cards) and balances.
@@ -136,6 +143,7 @@ Deferred to future releases after v1 roadmap execution:
 | Distributed microservices architecture | A modular monolith in Docker on a single VPS provides maximum reliability and lowest operational complexity |
 | Direct auto-publishing to social platforms in MVP | Content calendar and drafting are built in Phase 5; automated publishing requires external API approval and is deferred |
 | Generic unstructured JSON blob storage | PRD Section 43 mandates strict relational modeling with foreign keys, migrations, and ACID constraints |
+| Upfront monolithic database schema | Domain schemas must be introduced with the phase that implements their corresponding functionality (vertical-slice rule). Phase 1 is strictly restricted to foundational/auth infrastructure (users, sessions, preferences, audit_log). |
 
 ## Traceability
 
@@ -191,6 +199,11 @@ Deferred to future releases after v1 roadmap execution:
 | NOTE-04 | Phase 3 | Pending |
 | NOTE-05 | Phase 3 | Pending |
 | NOTE-06 | Phase 3 | Pending |
+| CRM-01 | Phase 3 | Pending |
+| CRM-02 | Phase 3 | Pending |
+| CRM-03 | Phase 3 | Pending |
+| CRM-04 | Phase 3 | Pending |
+| CRM-05 | Phase 3 | Pending |
 | FIN-01 | Phase 4 | Pending |
 | FIN-02 | Phase 4 | Pending |
 | FIN-03 | Phase 4 | Pending |
@@ -220,10 +233,10 @@ Deferred to future releases after v1 roadmap execution:
 | INTEL-04 | Phase 9 | Pending |
 
 **Coverage:**
-- v1 requirements: 70 total
-- Mapped to phases: 70
+- v1 requirements: 75 total
+- Mapped to phases: 75
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-10*
-*Last updated: 2026-09-10 after initial definition*
+*Last updated: 2026-09-10 after approving audit decisions*

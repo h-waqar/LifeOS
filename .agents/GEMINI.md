@@ -10,9 +10,10 @@ LifeOS is a greenfield personal operating system designed to help one person (Ha
 
 ### Constraints
 
-- **Tech Stack**: TypeScript with strict mode (noImplicitAny), PostgreSQL for all relational data, modern web UI (React / Next.js with Tailwind CSS & shadcn/ui components).
-- **Security & Privacy**: Strict session verification; owner authorization check on all resource access; sensitive credentials (API keys, social tokens) encrypted at rest and never exposed to the client; comprehensive audit logging.
+- **Tech Stack**: TypeScript with strict mode (noImplicitAny), PostgreSQL for all relational data, Drizzle ORM for type-safe schema definitions and migrations, modern web UI (React / Next.js with Tailwind CSS & shadcn/ui components).
+- **Security & Privacy**: Strict session verification via Better Auth; authentication and authorization remain separate concerns; application authorization must enforce resource ownership using the authenticated user's user_id on all resource access; sensitive credentials (API keys, social tokens) encrypted at rest and never exposed to the client; comprehensive audit logging.
 - **Architecture**: Modular monolith with clear domain boundaries (src/features/*, src/lib/*, src/server/*), typed API contracts, server-side input validation (Zod), and database transactions for all multi-entity mutations.
+- **Database Scope & Vertical-Slice Rule**: Domain schemas must be introduced with the phase that implements their corresponding functionality. Do not build the entire database schema upfront. Phase 1 database work is strictly limited to foundational/authentication infrastructure required by the first vertical slice: users, sessions / Better Auth required tables, preferences (if required by Phase 1 design), and audit_log. Domain tables (Task, Project, Goal, Habit, Calendar, Note, Person, Interaction, Finance, Content, AI, etc.) are strictly prohibited during Phase 1 unless explicitly required by an approved Phase 1 vertical slice.
 - **Deployment**: Docker containerization with docker-compose for PostgreSQL, app server, and background workers.
 - **Testing**: Mandatory test coverage for business logic (goal progress, habit calculations, finance summaries, priority scoring) and integration tests for API contracts.
 
@@ -36,12 +37,12 @@ LifeOS is a greenfield personal operating system designed to help one person (Ha
 - **Runtime:** Node.js 20+ LTS
 - **Routing & Endpoints:** Next.js Route Handlers & Server Actions
 - **Validation:** Zod (typed schema validation for all API inputs, forms, and AI tool calling contracts)
-- **Authentication & Sessions:** NextAuth / Better-Auth / Argon2 session cookies
+- **Authentication & Sessions:** Better Auth (session cookies, CSRF protection; strict separation between authentication and resource ownership authorization via user_id)
 
 ### Data Layer
 
 - **Database:** PostgreSQL 16+
-- **ORM & Migrations:** Drizzle ORM (or Prisma)
+- **ORM & Migrations:** Drizzle ORM (type-safe SQL, Drizzle Kit migrations; adheres strictly to vertical-slice schema evolution)
 - **Full-Text & Search:** PostgreSQL native `tsvector` + `pg_trgm` for Phase 1-3 full-text search; `pgvector` for semantic embeddings in Phase 9.
 
 ### AI & Agent Layer
