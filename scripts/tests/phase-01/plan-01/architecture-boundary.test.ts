@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 
 /**
  * ARCHITECTURE BOUNDARY SCANNER DESIGN & KNOWN LIMITATIONS:
@@ -102,6 +103,7 @@ export function checkFileBoundaries(
       relativeFile.includes(path.sep + "actions" + path.sep));
   const isFeatureComponent =
     relativeFile.startsWith("features" + path.sep) &&
+    !isFeatureAction &&
     (relativeFile.includes(path.sep + "components" + path.sep) ||
       relativeFile.endsWith(".tsx"));
 
@@ -230,11 +232,36 @@ function getSourceFilesRecursively(dir: string): string[] {
   return files;
 }
 
+export function findTestFilesInDir(dir: string, baseDir: string = dir): string[] {
+  if (!fs.existsSync(dir)) return [];
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const found: string[] = [];
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      found.push(...findTestFilesInDir(fullPath, baseDir));
+    } else if (
+      entry.name.endsWith(".test.ts") ||
+      entry.name.endsWith(".test.tsx") ||
+      entry.name.endsWith(".spec.ts") ||
+      entry.name.endsWith(".spec.tsx")
+    ) {
+      found.push(path.relative(baseDir, fullPath));
+    }
+  }
+  return found;
+}
+
 describe("Architecture Boundary Scanner", () => {
-  const srcDir = path.resolve(process.cwd(), "src");
+  const repoRoot = path.resolve(__dirname, "../../../../");
+  const srcDir = fs.existsSync(path.resolve(repoRoot, "src"))
+    ? path.resolve(repoRoot, "src")
+    : path.resolve(process.cwd(), "src");
 
   it("enforces strict architecture boundaries across all production source files in src/", () => {
+    expect(fs.existsSync(srcDir), `src directory not found at: ${srcDir}`).toBe(true);
     const sourceFiles = getSourceFilesRecursively(srcDir);
+    expect(sourceFiles.length, "src directory must contain production source files to scan").toBeGreaterThan(0);
     const allViolations: BoundaryViolation[] = [];
 
     for (const file of sourceFiles) {
@@ -254,26 +281,7 @@ describe("Architecture Boundary Scanner", () => {
   });
 
   it("enforces that no test files are co-located inside src/", () => {
-    function findTestFilesInDir(dir: string): string[] {
-      if (!fs.existsSync(dir)) return [];
-      const entries = fs.readdirSync(dir, { withFileTypes: true });
-      const found: string[] = [];
-      for (const entry of entries) {
-        const fullPath = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-          found.push(...findTestFilesInDir(fullPath));
-        } else if (
-          entry.name.endsWith(".test.ts") ||
-          entry.name.endsWith(".test.tsx") ||
-          entry.name.endsWith(".spec.ts") ||
-          entry.name.endsWith(".spec.tsx")
-        ) {
-          found.push(path.relative(srcDir, fullPath));
-        }
-      }
-      return found;
-    }
-
+    expect(fs.existsSync(srcDir), `src directory not found at: ${srcDir}`).toBe(true);
     const testFiles = findTestFilesInDir(srcDir);
     expect(
       testFiles,
@@ -426,6 +434,23 @@ describe("Architecture Boundary Scanner", () => {
         export default async function Page() { const t = await taskService.list(); return <div>{t.length}</div>; }
       `;
       expect(checkFileBoundaries(pageFile, pageContent, srcDir)).toHaveLength(0);
+    });
+
+    it("flags test files when present in a scanned directory (clean-src rule fixture validation)", () => {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "lifeos-test-clean-src-"));
+      try {
+        fs.mkdirSync(path.join(tempDir, "components"), { recursive: true });
+        fs.writeFileSync(path.join(tempDir, "components", "button.tsx"), "// component code");
+        fs.writeFileSync(path.join(tempDir, "components", "button.test.ts"), "// test code");
+        fs.writeFileSync(path.join(tempDir, "components", "card.spec.tsx"), "// spec code");
+
+        const detected = findTestFilesInDir(tempDir);
+        expect(detected).toHaveLength(2);
+        expect(detected).toContain(path.join("components", "button.test.ts"));
+        expect(detected).toContain(path.join("components", "card.spec.tsx"));
+      } finally {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
     });
   });
 });
