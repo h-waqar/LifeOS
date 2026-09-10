@@ -1,5 +1,12 @@
 import crypto from "node:crypto";
 
+// Server-only runtime protection: cryptographic keys and operations must never leak to browser clients
+if (typeof window !== "undefined" && !process.env.VITEST) {
+  throw new Error(
+    "Security violation: Cryptographic utility cannot be imported in the browser."
+  );
+}
+
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH_BYTES = 12; // 96-bit IV (NIST recommended for GCM)
 const AUTH_TAG_LENGTH_BYTES = 16; // 128-bit authentication tag
@@ -54,20 +61,27 @@ export function decryptSecret(payload: string, keyHex?: string): string {
 
   const [, ivHex, authTagHex, ciphertextHex] = parts;
 
+  // Explicitly validate hexadecimal format and lengths to prevent Buffer.from from silently truncating malformed hex
+  if (!/^[0-9a-fA-F]{24}$/.test(ivHex)) {
+    throw new Error(
+      `Invalid IV format: expected 24 hexadecimal characters (${IV_LENGTH_BYTES} bytes).`
+    );
+  }
+
+  if (!/^[0-9a-fA-F]{32}$/.test(authTagHex)) {
+    throw new Error(
+      `Invalid auth tag format: expected 32 hexadecimal characters (${AUTH_TAG_LENGTH_BYTES} bytes).`
+    );
+  }
+
+  if (ciphertextHex.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(ciphertextHex)) {
+    throw new Error(
+      "Invalid ciphertext format: expected an even-length hexadecimal string."
+    );
+  }
+
   const iv = Buffer.from(ivHex, "hex");
-  if (iv.length !== IV_LENGTH_BYTES) {
-    throw new Error(
-      `Invalid IV length: expected ${IV_LENGTH_BYTES} bytes, got ${iv.length}.`
-    );
-  }
-
   const authTag = Buffer.from(authTagHex, "hex");
-  if (authTag.length !== AUTH_TAG_LENGTH_BYTES) {
-    throw new Error(
-      `Invalid auth tag length: expected ${AUTH_TAG_LENGTH_BYTES} bytes, got ${authTag.length}.`
-    );
-  }
-
   const ciphertext = Buffer.from(ciphertextHex, "hex");
 
   const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);

@@ -9,12 +9,7 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
-    "env:generate": "tsx scripts/generate-env.ts",
-    "auth:reset": "tsx scripts/auth-reset.ts",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/server/db/migrate.ts",
-    "db:studio": "drizzle-kit studio"
+    "env:generate": "tsx scripts/generate-env.ts"
   },
   "dependencies": {
     "@better-auth/passkey": "1.7.4",

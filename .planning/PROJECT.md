@@ -55,7 +55,7 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 - **Architecture**: Modular monolith with clear domain boundaries (src/features/*, src/lib/*, src/server/*), typed API contracts, server-side input validation (Zod), and database transactions for all multi-entity mutations.
 - **Database Scope & Vertical-Slice Rule**: Domain schemas must be introduced with the phase that implements their corresponding functionality. Do not build the entire database schema upfront. Phase 1 database work is strictly limited to foundational/authentication infrastructure required by the first vertical slice: users, sessions / Better Auth required tables, preferences (if required by Phase 1 design), and audit_log. Domain tables (Task, Project, Goal, Habit, Calendar, Note, Person, Interaction, Finance, Content, AI, etc.) are strictly prohibited during Phase 1 unless explicitly required by an approved Phase 1 vertical slice.
 - **Deployment**: Docker containerization with docker-compose for PostgreSQL, app server, and background workers.
-- **Testing**: Mandatory test coverage for business logic (goal progress, habit calculations, finance summaries, priority scoring) and integration tests for API contracts.
+- **Testing & Test Organization**: Mandatory test coverage for business logic (goal progress, habit calculations, finance summaries, priority scoring) and integration tests for API contracts. All test files MUST reside in `scripts/tests/{phase}/{plan}/...` (e.g. `scripts/tests/phase-01/plan-01/...`). Test files MUST NOT be placed inside `src/`, keeping `src/` cleanly dedicated to production application code.
 
 ## Key Decisions
 
@@ -71,6 +71,7 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 | Multi-Provider AI Abstraction Layer | Enables switching between Gemini, Anthropic Claude, OpenAI, and local Ollama without rewriting business logic | Decided (Authoritative) |
 | Mandatory Human-in-the-Loop Confirmation Gate | Destructive mutations or external communications triggered by AI require explicit confirmation | Decided (Authoritative) |
 | Single-Owner User Model with Multi-User Schema Readiness | Ensures maximum privacy and speed for Hamza while tables retain user_id foreign keys for clean multi-user migration | Decided (Authoritative) |
+| Clean `src/` & Centralized Test Hierarchy | All test files are centralized in `scripts/tests/{phase}/{plan}/...` to guarantee a clean production codebase in `src/`. | Decided (Authoritative) |
 
 ## Evolution
 

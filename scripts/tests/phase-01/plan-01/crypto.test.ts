@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { encryptSecret, decryptSecret, encryptJSON, decryptJSON } from "./crypto";
+import { encryptSecret, decryptSecret, encryptJSON, decryptJSON } from "@/lib/crypto";
 
 describe("AES-256-GCM Crypto Utility", () => {
   const validKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
@@ -141,6 +141,60 @@ describe("AES-256-GCM Crypto Utility", () => {
       expect(() => decryptSecret("v2:12:34:56", validKey)).toThrow(
         /Invalid encrypted payload format/
       );
+    });
+
+    it("rejects payloads with malformed or non-hex IVs", () => {
+      // 23 hex chars (odd/short)
+      expect(() =>
+        decryptSecret("v1:0123456789abcdef0123456:0123456789abcdef0123456789abcdef:aabb", validKey)
+      ).toThrow(/Invalid IV format/);
+
+      // 24 chars containing non-hex 'g'
+      expect(() =>
+        decryptSecret("v1:0123456789abcdef0123456g:0123456789abcdef0123456789abcdef:aabb", validKey)
+      ).toThrow(/Invalid IV format/);
+
+      // 25 hex chars (too long)
+      expect(() =>
+        decryptSecret("v1:0123456789abcdef012345678:0123456789abcdef0123456789abcdef:aabb", validKey)
+      ).toThrow(/Invalid IV format/);
+    });
+
+    it("rejects payloads with malformed or non-hex authentication tags", () => {
+      // 31 hex chars (too short)
+      expect(() =>
+        decryptSecret("v1:0123456789abcdef01234567:0123456789abcdef0123456789abcde:aabb", validKey)
+      ).toThrow(/Invalid auth tag format/);
+
+      // 32 chars containing non-hex 'z'
+      expect(() =>
+        decryptSecret("v1:0123456789abcdef01234567:0123456789abcdef0123456789abcdz0:aabb", validKey)
+      ).toThrow(/Invalid auth tag format/);
+
+      // 33 hex chars (too long)
+      expect(() =>
+        decryptSecret("v1:0123456789abcdef01234567:0123456789abcdef0123456789abcdef0:aabb", validKey)
+      ).toThrow(/Invalid auth tag format/);
+    });
+
+    it("rejects payloads with malformed or non-hex ciphertext", () => {
+      // Odd-length ciphertext (3 hex digits)
+      expect(() =>
+        decryptSecret("v1:0123456789abcdef01234567:0123456789abcdef0123456789abcdef:abc", validKey)
+      ).toThrow(/Invalid ciphertext format/);
+
+      // Non-hex characters in ciphertext
+      expect(() =>
+        decryptSecret("v1:0123456789abcdef01234567:0123456789abcdef0123456789abcdef:12zz", validKey)
+      ).toThrow(/Invalid ciphertext format/);
+    });
+
+    it("encrypts and decrypts an empty string successfully", () => {
+      const emptySecret = "";
+      const encrypted = encryptSecret(emptySecret, validKey);
+      expect(encrypted).toMatch(/^v1:[0-9a-f]{24}:[0-9a-f]{32}:$/);
+      const decrypted = decryptSecret(encrypted, validKey);
+      expect(decrypted).toBe(emptySecret);
     });
   });
 });

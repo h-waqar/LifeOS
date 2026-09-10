@@ -15,7 +15,7 @@ LifeOS is a greenfield personal operating system designed to help one person (Ha
 - **Architecture**: Modular monolith with clear domain boundaries (src/features/*, src/lib/*, src/server/*), typed API contracts, server-side input validation (Zod), and database transactions for all multi-entity mutations.
 - **Database Scope & Vertical-Slice Rule**: Domain schemas must be introduced with the phase that implements their corresponding functionality. Do not build the entire database schema upfront. Phase 1 database work is strictly limited to foundational/authentication infrastructure required by the first vertical slice: users, sessions / Better Auth required tables, preferences (if required by Phase 1 design), and audit_log. Domain tables (Task, Project, Goal, Habit, Calendar, Note, Person, Interaction, Finance, Content, AI, etc.) are strictly prohibited during Phase 1 unless explicitly required by an approved Phase 1 vertical slice.
 - **Deployment**: Docker containerization with docker-compose for PostgreSQL, app server, and background workers.
-- **Testing**: Mandatory test coverage for business logic (goal progress, habit calculations, finance summaries, priority scoring) and integration tests for API contracts.
+- **Testing & Test Organization**: Mandatory test coverage for business logic (goal progress, habit calculations, finance summaries, priority scoring) and integration tests for API contracts. All test files MUST reside in `scripts/tests/{phase}/{plan}/...` (e.g. `scripts/tests/phase-01/plan-01/...`). Test files MUST NOT be placed inside `src/`, keeping `src/` cleanly dedicated to production application code.
 
 <!-- GSD:project-end -->
 
@@ -62,7 +62,7 @@ LifeOS is a greenfield personal operating system designed to help one person (Ha
 
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+- **Test File Organization & Clean Repository**: All test files MUST be placed in `scripts/tests/{phase}/{plan}/...` (e.g. `scripts/tests/phase-01/plan-01/`). Test files MUST NEVER be co-located inside `src/`.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
