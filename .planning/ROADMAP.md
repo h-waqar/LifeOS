@@ -36,8 +36,8 @@ LifeOS is an integrated personal operating system built from scratch to unify ta
 **UI hint**: yes
 
 Plans:
-- [ ] 01-01: Project setup (Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Vitest)
-- [ ] 01-02: PostgreSQL database setup with Drizzle ORM (foundational schema only: users, sessions / Better Auth tables, preferences, audit_log)
+- [x] 01-01: Project setup (Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Vitest)
+- [x] 01-02: PostgreSQL database setup with Drizzle ORM (foundational schema only: users, sessions / Better Auth tables, preferences, audit_log)
 - [ ] 01-03: Better Auth authentication, session management, and server authorization ownership guards
 - [ ] 01-04: Application shell, navigation layout, theme settings, and audit logging
 

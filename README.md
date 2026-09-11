@@ -1,0 +1,82 @@
+# LifeOS
+
+LifeOS is a personal operating system designed to manage, understand, and improve life from a single unified system.
+
+## Prerequisites
+
+- **Node.js**: 20+ LTS
+- **pnpm**: 9+
+- **Docker & Docker Compose**: (for local PostgreSQL service)
+
+## Quick Start
+
+### 1. Environment Configuration
+
+Generate secure local environment secrets:
+
+```bash
+pnpm env:generate
+```
+
+This creates `.env.local` with cryptographically secure values for `BETTER_AUTH_SECRET` and `LIFEOS_ENCRYPTION_KEY` with restricted `0600` permissions.
+
+### 2. Start PostgreSQL Container
+
+Start the local PostgreSQL container via Docker Compose:
+
+```bash
+docker compose up -d postgres
+```
+
+> **Note on Linux Permissions**: If your user is not in the `docker` group, run with `sudo docker compose up -d postgres` or add your user:
+> ```bash
+> sudo usermod -aG docker $USER && newgrp docker
+> ```
+
+### 3. Database Migrations
+
+Generate schema migrations (when schema definitions change):
+
+```bash
+pnpm db:generate
+```
+
+Apply pending migrations to PostgreSQL:
+
+```bash
+pnpm db:migrate
+```
+
+Launch Drizzle Studio for visual database inspection:
+
+```bash
+pnpm db:studio
+```
+
+### 4. Running Tests
+
+Run all unit, schema, configuration, and architecture boundary tests:
+
+```bash
+pnpm test
+```
+
+Run live integration tests (requires running PostgreSQL container):
+
+```bash
+pnpm test:integration
+```
+
+Run typecheck and production build verification:
+
+```bash
+npx tsc --noEmit
+pnpm build
+```
+
+## Architecture Boundaries & Conventions
+
+- **Modular Monolith**: Clean layer separation (`src/features/*`, `src/lib/*`, `src/server/*`).
+- **Clean `src/` Rule**: All tests must reside under `scripts/tests/{phase}/{plan}/...`. Zero test files are permitted in `src/`.
+- **Database Scope**: Phase 1 database tables are strictly limited to foundational infrastructure (`user`, `session`, `account`, `verification`, `passkey`, `user_preferences`, `audit_log`). Domain tables are added incrementally in later phases.
+- **Server-Only Protection**: Database pool and secrets cannot be imported into browser/client bundles.
