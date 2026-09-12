@@ -13,6 +13,8 @@ import {
 } from "./auth";
 import { userPreferences, preferences } from "./preferences";
 import { auditLog, auditLogs } from "./audit";
+import { projects, project } from "./projects";
+import { tasks, task } from "./tasks";
 
 // Table re-exports
 export {
@@ -30,6 +32,10 @@ export {
   preferences,
   auditLog,
   auditLogs,
+  projects,
+  project,
+  tasks,
+  task,
 };
 
 // Drizzle Relations
@@ -42,6 +48,8 @@ export const userRelations = relations(user, ({ one, many }) => ({
   accounts: many(account),
   passkeys: many(passkey),
   auditLogs: many(auditLog),
+  projects: many(projects),
+  tasks: many(tasks),
 }));
 
 export const userPreferencesRelations = relations(
@@ -82,6 +90,33 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
   }),
 }));
 
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  user: one(user, {
+    fields: [projects.userId],
+    references: [user.id],
+  }),
+  tasks: many(tasks),
+}));
+
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
+  user: one(user, {
+    fields: [tasks.userId],
+    references: [user.id],
+  }),
+  project: one(projects, {
+    fields: [tasks.projectId],
+    references: [projects.id],
+  }),
+  parentTask: one(tasks, {
+    fields: [tasks.parentTaskId],
+    references: [tasks.id],
+    relationName: "subtasks",
+  }),
+  subtasks: many(tasks, {
+    relationName: "subtasks",
+  }),
+}));
+
 // Inferred TypeScript Model Types
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
@@ -104,6 +139,12 @@ export type NewUserPreferences = typeof userPreferences.$inferInsert;
 export type AuditLog = typeof auditLog.$inferSelect;
 export type NewAuditLog = typeof auditLog.$inferInsert;
 
+export type Project = typeof projects.$inferSelect;
+export type NewProject = typeof projects.$inferInsert;
+
+export type Task = typeof tasks.$inferSelect;
+export type NewTask = typeof tasks.$inferInsert;
+
 /**
  * Explicit list of foundational table names.
  * Used by tests to assert vertical-slice schema boundaries.
@@ -116,4 +157,12 @@ export const FOUNDATIONAL_TABLE_NAMES = [
   "passkey",
   "user_preferences",
   "audit_log",
+] as const;
+
+/**
+ * Explicit list of approved Phase 1 Core Domain table names (Plan 01-07).
+ */
+export const CORE_DOMAIN_TABLE_NAMES = [
+  "projects",
+  "tasks",
 ] as const;

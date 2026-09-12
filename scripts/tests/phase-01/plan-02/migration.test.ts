@@ -97,14 +97,11 @@ describe("Database Migration Generation & Runner", () => {
     expect(combinedSql).toContain("CREATE ROLE lifeos_app NOLOGIN");
   });
 
-  it("verifies generated SQL DDL does not contain any domain tables (vertical-slice integrity)", () => {
-    const sqlFiles = fs
-      .readdirSync(migrationsDir)
-      .filter((f) => f.endsWith(".sql"));
-
-    const combinedSql = sqlFiles
-      .map((f) => fs.readFileSync(path.join(migrationsDir, f), "utf-8"))
-      .join("\n");
+  it("verifies generated SQL DDL does not contain any domain tables in initial foundation migration (vertical-slice integrity)", () => {
+    const initialMigrationSql = fs.readFileSync(
+      path.join(migrationsDir, "0000_productive_lord_hawal.sql"),
+      "utf-8"
+    );
 
     const forbiddenTables = [
       'CREATE TABLE "task"',
@@ -126,7 +123,7 @@ describe("Database Migration Generation & Runner", () => {
 
     for (const tableDdl of forbiddenTables) {
       expect(
-        combinedSql.includes(tableDdl),
+        initialMigrationSql.includes(tableDdl),
         `Found forbidden domain DDL '${tableDdl}' in initial foundation migration`
       ).toBe(false);
     }

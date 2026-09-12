@@ -36,6 +36,13 @@
       "when": 1789204030000,
       "tag": "0004_single_user_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789217337445,
+      "tag": "0005_elite_rhino",
+      "breakpoints": true
     }
   ]
 }

@@ -175,12 +175,8 @@ describe("Foundational Database Schema (Drizzle ORM)", () => {
       ]);
     });
 
-    it("ensures zero domain tables exist in the schema (anti-regression for vertical-slice rule)", () => {
-      const forbiddenDomainEntities = [
-        "task",
-        "tasks",
-        "project",
-        "projects",
+    it("ensures deferred domain tables do not exist in the schema (anti-regression for vertical-slice rule)", () => {
+      const deferredDomainEntities = [
         "goal",
         "goals",
         "habit",
@@ -207,12 +203,17 @@ describe("Foundational Database Schema (Drizzle ORM)", () => {
         "aiConversation",
       ];
 
-      for (const entity of forbiddenDomainEntities) {
+      for (const entity of deferredDomainEntities) {
         expect(
           (schema as Record<string, unknown>)[entity],
-          `Domain entity '${entity}' must NOT be defined in Phase 1 database schema (violates vertical-slice rule).`
+          `Deferred domain entity '${entity}' must NOT be defined in database schema yet (violates vertical-slice rule).`
         ).toBeUndefined();
       }
+    });
+
+    it("ensures approved Plan 01-07 core domain tables exist in the schema", () => {
+      expect((schema as Record<string, unknown>).projects).toBeDefined();
+      expect((schema as Record<string, unknown>).tasks).toBeDefined();
     });
   });
 });
