@@ -1,5 +1,11 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { createPgPool, closeDatabase, getPool } from "@/server/db";
+import {
+  createPgPool,
+  closeDatabase,
+  getPool,
+  getDb,
+  getLifecycleState,
+} from "@/server/db";
 import { Pool } from "pg";
 
 describe("Database Configuration & Pool Lifecycle", () => {
@@ -76,5 +82,56 @@ describe("Database Configuration & Pool Lifecycle", () => {
 
     // Calling closeDatabase again is idempotent and does not throw
     await expect(closeDatabase()).resolves.toBeUndefined();
+  });
+
+  it("provides getDb() returning a Drizzle client instance backed by getPool()", async () => {
+    const database = getDb();
+    expect(database).toBeDefined();
+    expect(database.query).toBeDefined();
+    expect(database.select).toBeDefined();
+    expect(getLifecycleState()).toBe("READY");
+  });
+
+  it("tracks connection lifecycle state transitions across init and close", async () => {
+    await closeDatabase();
+    expect(getLifecycleState()).toBe("IDLE");
+
+    const activePool = getPool();
+    expect(activePool).toBeDefined();
+    expect(getLifecycleState()).toBe("READY");
+
+    const closePromise = closeDatabase();
+    expect(["CLOSING", "CLOSED", "IDLE"]).toContain(getLifecycleState());
+    await closePromise;
+    expect(getLifecycleState()).toBe("IDLE");
+  });
+
+  it("handles concurrent closeDatabase() invocations sharing the same promise", async () => {
+    getPool();
+    expect(getLifecycleState()).toBe("READY");
+
+    const [res1, res2, res3] = await Promise.all([
+      closeDatabase(),
+      closeDatabase(),
+      closeDatabase(),
+    ]);
+
+    expect(res1).toBeUndefined();
+    expect(res2).toBeUndefined();
+    expect(res3).toBeUndefined();
+    expect(getLifecycleState()).toBe("IDLE");
+  });
+
+  it("re-initializes pool and client cleanly after closeDatabase()", async () => {
+    const pool1 = getPool();
+    await closeDatabase();
+
+    const pool2 = getPool();
+    expect(pool2).toBeDefined();
+    expect(pool2).not.toBe(pool1);
+    expect(getLifecycleState()).toBe("READY");
+
+    const db2 = getDb();
+    expect(db2).toBeDefined();
   });
 });

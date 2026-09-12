@@ -97,7 +97,8 @@ describe("Foundational Database Schema (Drizzle ORM)", () => {
       expect(cols).toHaveProperty("backedUp");
       expect(cols).toHaveProperty("transports");
       expect(cols).toHaveProperty("createdAt");
-      expect(cols).toHaveProperty("updatedAt");
+      expect(cols).toHaveProperty("aaguid");
+      expect((cols as Record<string, unknown>).updatedAt).toBeUndefined();
 
       expect(cols.id.primary).toBe(true);
       expect(cols.publicKey.notNull).toBe(true);
@@ -109,6 +110,8 @@ describe("Foundational Database Schema (Drizzle ORM)", () => {
       expect(cols.deviceType.notNull).toBe(true);
       expect(cols.backedUp.notNull).toBe(true);
       expect(cols.backedUp.default).toBe(false);
+      expect(cols.createdAt.notNull).toBe(false);
+      expect(cols.aaguid.notNull).toBe(false);
     });
   });
 

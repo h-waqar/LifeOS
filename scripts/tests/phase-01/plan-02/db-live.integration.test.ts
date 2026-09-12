@@ -1,29 +1,17 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
 import { db, checkDatabaseHealth, closeDatabase } from "@/server/db";
-import { user, session, userPreferences, auditLog } from "@/server/db/schema";
+import { user, session, auditLog } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
+import { probeDatabase } from "./db-probe";
 
-describe("Live PostgreSQL Integration Tests", () => {
-  let isDbAvailable = false;
+const probe = await probeDatabase();
 
-  beforeAll(async () => {
-    const health = await checkDatabaseHealth();
-    isDbAvailable = health.ok;
-    if (!isDbAvailable) {
-      console.warn(
-        "\n[integration] Skipping live database tests: PostgreSQL container is offline.\n" +
-          "To enable live integration tests, run: docker compose up -d postgres\n"
-      );
-    }
-  });
-
+describe.skipIf(!probe.isAvailable)("Live PostgreSQL Integration Tests", () => {
   afterAll(async () => {
     await closeDatabase();
   });
 
   it("verifies live PostgreSQL connectivity and latency", async () => {
-    if (!isDbAvailable) return;
-
     const health = await checkDatabaseHealth();
     expect(health.ok).toBe(true);
     expect(health.latencyMs).toBeDefined();
@@ -31,8 +19,6 @@ describe("Live PostgreSQL Integration Tests", () => {
   });
 
   it("verifies ACID transaction rollback behavior", async () => {
-    if (!isDbAvailable) return;
-
     const testUserId = `test-user-tx-${Date.now()}`;
 
     try {
@@ -57,8 +43,6 @@ describe("Live PostgreSQL Integration Tests", () => {
   });
 
   it("verifies foreign key cascade deletion and audit log set null behavior", async () => {
-    if (!isDbAvailable) return;
-
     const testUserId = `test-cascade-${Date.now()}`;
     const testSessionId = `test-session-${Date.now()}`;
     const testAuditId = `test-audit-${Date.now()}`;
@@ -97,15 +81,13 @@ describe("Live PostgreSQL Integration Tests", () => {
       .where(eq(session.id, testSessionId));
     expect(sessionRows).toHaveLength(0);
 
-    // 5. Audit log should remain with userId set to null
+    // 5. Audit log should remain with userId set to null (immutable audit trail preserved)
     const auditRows = await db
       .select()
       .from(auditLog)
       .where(eq(auditLog.id, testAuditId));
     expect(auditRows).toHaveLength(1);
     expect(auditRows[0].userId).toBeNull();
-
-    // Clean up audit entry
-    await db.delete(auditLog).where(eq(auditLog.id, testAuditId));
   });
 });
+

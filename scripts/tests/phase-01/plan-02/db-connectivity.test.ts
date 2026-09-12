@@ -53,4 +53,58 @@ describe("Database Connectivity & Health Check", () => {
     expect(result.error).toContain("Query failed");
     expect(mockRelease).toHaveBeenCalled();
   });
+
+  describe("probeDatabase three-state authenticity contract", () => {
+    it("returns isAvailable=false when DB offline and REQUIRE_DB unset", async () => {
+      const { probeDatabase } = await import("./db-probe");
+      vi.spyOn(Pool.prototype, "connect").mockRejectedValueOnce(
+        new Error("connect ECONNREFUSED")
+      );
+      const original = process.env.REQUIRE_DB;
+      delete process.env.REQUIRE_DB;
+      try {
+        const probe = await probeDatabase();
+        expect(probe.isAvailable).toBe(false);
+        expect(probe.error).toContain("ECONNREFUSED");
+      } finally {
+        if (original) process.env.REQUIRE_DB = original;
+      }
+    });
+
+    it("throws critical error when DB offline and REQUIRE_DB=true", async () => {
+      const { probeDatabase } = await import("./db-probe");
+      vi.spyOn(Pool.prototype, "connect").mockRejectedValueOnce(
+        new Error("connect ECONNREFUSED")
+      );
+      const original = process.env.REQUIRE_DB;
+      process.env.REQUIRE_DB = "true";
+      try {
+        await expect(probeDatabase()).rejects.toThrow(
+          /CRITICAL REQUIRE_DB FAILURE/
+        );
+      } finally {
+        if (original) {
+          process.env.REQUIRE_DB = original;
+        } else {
+          delete process.env.REQUIRE_DB;
+        }
+      }
+    });
+
+    it("returns isAvailable=true when DB is online", async () => {
+      const { probeDatabase } = await import("./db-probe");
+      const mockRelease = vi.fn();
+      const mockClient = {
+        query: vi.fn().mockResolvedValue({ rows: [{ "?column?": 1 }] }),
+        release: mockRelease,
+      };
+      vi.spyOn(Pool.prototype, "connect").mockResolvedValueOnce(
+        mockClient as any
+      );
+
+      const probe = await probeDatabase();
+      expect(probe.isAvailable).toBe(true);
+      expect(probe.error).toBeUndefined();
+    });
+  });
 });

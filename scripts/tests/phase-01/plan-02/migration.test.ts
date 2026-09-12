@@ -48,6 +48,13 @@ describe("Database Migration Generation & Runner", () => {
     expect(combinedSql).toContain('CREATE INDEX "audit_log_action_idx"');
     expect(combinedSql).toContain('CREATE INDEX "audit_log_created_at_idx"');
     expect(combinedSql).toContain('CREATE INDEX "audit_log_user_id_idx"');
+
+    // Audit log security boundary and purge function
+    expect(combinedSql).toContain("purge_expired_audit_logs");
+    expect(combinedSql).toContain("SECURITY DEFINER");
+    expect(combinedSql).toContain("lifeos_app");
+    expect(combinedSql).toContain("trg_audit_log_prevent_update");
+    expect(combinedSql).toContain("trg_audit_log_prevent_direct_delete");
   });
 
   it("verifies generated SQL DDL does not contain any domain tables (vertical-slice integrity)", () => {
