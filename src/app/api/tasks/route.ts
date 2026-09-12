@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import {
   requireAuthenticatedUser,
   AuthenticationError,
@@ -28,6 +28,23 @@ const SECURITY_CACHE_HEADERS = {
 
 const MAX_TASKS_BODY_SIZE = 32 * 1024;
 
+const tasksQuerySchema = z
+  .object({
+    status: z
+      .enum([
+        "inbox",
+        "todo",
+        "in_progress",
+        "blocked",
+        "completed",
+        "cancelled",
+      ])
+      .optional(),
+    projectId: z.string().trim().min(1).optional(),
+    priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+  })
+  .strict();
+
 /**
  * GET /api/tasks
  * Lists tasks owned by the authenticated user with optional filtering.
@@ -37,9 +54,17 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const { user } = await requireAuthenticatedUser(req);
     const { searchParams } = new URL(req.url);
 
-    const status = searchParams.get("status") ?? undefined;
-    const projectId = searchParams.get("projectId") ?? undefined;
-    const priority = searchParams.get("priority") ?? undefined;
+    const queryObject = Object.fromEntries(searchParams.entries());
+    const queryParse = tasksQuerySchema.safeParse(queryObject);
+
+    if (!queryParse.success) {
+      return NextResponse.json(
+        { error: "Validation error", issues: queryParse.error.flatten() },
+        { status: 400, headers: SECURITY_CACHE_HEADERS }
+      );
+    }
+
+    const { status, projectId, priority } = queryParse.data;
 
     const tasksList = await listTasks(user.id, {
       status,

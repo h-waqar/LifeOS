@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import {
   requireAuthenticatedUser,
   AuthenticationError,
@@ -27,6 +27,14 @@ const SECURITY_CACHE_HEADERS = {
 
 const MAX_PROJECTS_BODY_SIZE = 32 * 1024;
 
+const projectsQuerySchema = z
+  .object({
+    status: z
+      .enum(["planning", "active", "paused", "completed", "archived"])
+      .optional(),
+  })
+  .strict();
+
 /**
  * GET /api/projects
  * Lists all projects owned by the authenticated user.
@@ -35,7 +43,17 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     const { user } = await requireAuthenticatedUser(req);
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status") ?? undefined;
+    const queryObject = Object.fromEntries(searchParams.entries());
+    const queryParse = projectsQuerySchema.safeParse(queryObject);
+
+    if (!queryParse.success) {
+      return NextResponse.json(
+        { error: "Validation error", issues: queryParse.error.flatten() },
+        { status: 400, headers: SECURITY_CACHE_HEADERS }
+      );
+    }
+
+    const { status } = queryParse.data;
 
     const projectsList = await listProjects(user.id, { status });
 

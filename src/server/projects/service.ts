@@ -114,7 +114,7 @@ function validateEntityId(id: unknown, entityName = "Entity"): string {
 }
 
 /**
- * Creates a project strictly scoped to the authenticated user.
+ * Creates a project strictly scoped to the authenticated user within an atomic transaction.
  */
 export async function createProject(
   authenticatedUserId: string,
@@ -124,32 +124,37 @@ export async function createProject(
   const safeUserId = validateUserId(authenticatedUserId);
   const validated = createProjectSchema.parse(input);
 
-  const [inserted] = await db
-    .insert(projects)
-    .values({
-      userId: safeUserId,
-      name: validated.name,
-      description: validated.description ?? null,
-      status: validated.status ?? "planning",
-      priority: validated.priority ?? "medium",
-    })
-    .returning();
+  return await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(projects)
+      .values({
+        userId: safeUserId,
+        name: validated.name,
+        description: validated.description ?? null,
+        status: validated.status ?? "planning",
+        priority: validated.priority ?? "medium",
+      })
+      .returning();
 
-  await createAuditLog({
-    userId: safeUserId,
-    category: "mutation",
-    action: "project.create",
-    status: "success",
-    details: {
-      projectId: inserted.id,
-      name: inserted.name,
-      status: inserted.status,
-    },
-    ipAddress: actorInfo?.ipAddress,
-    userAgent: actorInfo?.userAgent,
+    await createAuditLog(
+      {
+        userId: safeUserId,
+        category: "mutation",
+        action: "project.create",
+        status: "success",
+        details: {
+          projectId: inserted.id,
+          name: inserted.name,
+          status: inserted.status,
+        },
+        ipAddress: actorInfo?.ipAddress,
+        userAgent: actorInfo?.userAgent,
+      },
+      tx
+    );
+
+    return toProjectDTO(inserted);
   });
-
-  return toProjectDTO(inserted);
 }
 
 /**
@@ -203,7 +208,8 @@ export async function listProjects(
 }
 
 /**
- * Updates a project strictly scoped to the authenticated user.
+ * Updates a project strictly scoped to the authenticated user within an atomic transaction.
+ * Acquires a row-level lock (FOR UPDATE) to guarantee serializability against concurrent mutations.
  * Throws NotFoundError if project does not exist or belongs to another user.
  */
 export async function updateProject(
@@ -216,51 +222,64 @@ export async function updateProject(
   const safeProjectId = validateEntityId(projectId, "Project");
   const validated = updateProjectSchema.parse(input);
 
-  const existing = await getProject(safeUserId, safeProjectId);
-  if (!existing) {
-    throw new NotFoundError("Project not found.");
-  }
+  return await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(projects)
+      .where(
+        and(eq(projects.userId, safeUserId), eq(projects.id, safeProjectId))
+      )
+      .for("update")
+      .limit(1);
 
-  const updates: Partial<Omit<Project, "id" | "userId" | "createdAt">> = {
-    updatedAt: new Date(),
-  };
+    if (!existing) {
+      throw new NotFoundError("Project not found.");
+    }
 
-  if (validated.name !== undefined) updates.name = validated.name;
-  if (validated.description !== undefined)
-    updates.description = validated.description;
-  if (validated.status !== undefined) updates.status = validated.status;
-  if (validated.priority !== undefined) updates.priority = validated.priority;
+    const updates: Partial<Omit<Project, "id" | "userId" | "createdAt">> = {
+      updatedAt: new Date(),
+    };
 
-  const [updated] = await db
-    .update(projects)
-    .set(updates)
-    .where(
-      and(eq(projects.userId, safeUserId), eq(projects.id, safeProjectId))
-    )
-    .returning();
+    if (validated.name !== undefined) updates.name = validated.name;
+    if (validated.description !== undefined)
+      updates.description = validated.description;
+    if (validated.status !== undefined) updates.status = validated.status;
+    if (validated.priority !== undefined) updates.priority = validated.priority;
 
-  if (!updated) {
-    throw new NotFoundError("Project not found.");
-  }
+    const [updated] = await tx
+      .update(projects)
+      .set(updates)
+      .where(
+        and(eq(projects.userId, safeUserId), eq(projects.id, safeProjectId))
+      )
+      .returning();
 
-  await createAuditLog({
-    userId: safeUserId,
-    category: "mutation",
-    action: "project.update",
-    status: "success",
-    details: {
-      projectId: safeProjectId,
-      updatedFields: Object.keys(validated),
-    },
-    ipAddress: actorInfo?.ipAddress,
-    userAgent: actorInfo?.userAgent,
+    if (!updated) {
+      throw new NotFoundError("Project not found.");
+    }
+
+    await createAuditLog(
+      {
+        userId: safeUserId,
+        category: "mutation",
+        action: "project.update",
+        status: "success",
+        details: {
+          projectId: safeProjectId,
+          updatedFields: Object.keys(validated),
+        },
+        ipAddress: actorInfo?.ipAddress,
+        userAgent: actorInfo?.userAgent,
+      },
+      tx
+    );
+
+    return toProjectDTO(updated);
   });
-
-  return toProjectDTO(updated);
 }
 
 /**
- * Deletes a project strictly scoped to the authenticated user.
+ * Deletes a project strictly scoped to the authenticated user within an atomic transaction.
  * Associated tasks have their project_id set to null via foreign key ON DELETE SET NULL.
  * Throws NotFoundError if project does not exist or belongs to another user.
  */
@@ -272,26 +291,45 @@ export async function deleteProject(
   const safeUserId = validateUserId(authenticatedUserId);
   const safeProjectId = validateEntityId(projectId, "Project");
 
-  const [deleted] = await db
-    .delete(projects)
-    .where(
-      and(eq(projects.userId, safeUserId), eq(projects.id, safeProjectId))
-    )
-    .returning({ id: projects.id });
+  return await db.transaction(async (tx) => {
+    // Acquire row-level lock before deletion
+    const [existing] = await tx
+      .select({ id: projects.id })
+      .from(projects)
+      .where(
+        and(eq(projects.userId, safeUserId), eq(projects.id, safeProjectId))
+      )
+      .for("update")
+      .limit(1);
 
-  if (!deleted) {
-    throw new NotFoundError("Project not found.");
-  }
+    if (!existing) {
+      throw new NotFoundError("Project not found.");
+    }
 
-  await createAuditLog({
-    userId: safeUserId,
-    category: "mutation",
-    action: "project.delete",
-    status: "success",
-    details: { projectId: safeProjectId },
-    ipAddress: actorInfo?.ipAddress,
-    userAgent: actorInfo?.userAgent,
+    const [deleted] = await tx
+      .delete(projects)
+      .where(
+        and(eq(projects.userId, safeUserId), eq(projects.id, safeProjectId))
+      )
+      .returning({ id: projects.id });
+
+    if (!deleted) {
+      throw new NotFoundError("Project not found.");
+    }
+
+    await createAuditLog(
+      {
+        userId: safeUserId,
+        category: "mutation",
+        action: "project.delete",
+        status: "success",
+        details: { projectId: safeProjectId },
+        ipAddress: actorInfo?.ipAddress,
+        userAgent: actorInfo?.userAgent,
+      },
+      tx
+    );
+
+    return { success: true };
   });
-
-  return { success: true };
 }

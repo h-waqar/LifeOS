@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { db } from "@/server/db";
 import { tasks, projects, type Task } from "@/server/db/schema";
 import { AuthorizationError } from "@/server/auth/guard";
@@ -200,8 +200,45 @@ function validateEntityId(id: unknown, entityName = "Entity"): string {
 }
 
 /**
- * Creates a task strictly scoped to the authenticated user.
- * Validates cross-entity ownership for projectId and parentTaskId before insertion.
+ * Recursively asserts that proposedParentId does not create a hierarchy cycle with taskId.
+ * Detects A -> A, A -> B -> A, A -> B -> C -> A, and reparenting to any descendant.
+ */
+async function assertNoHierarchyCycle(
+  tx: any,
+  userId: string,
+  taskId: string,
+  proposedParentId: string
+): Promise<void> {
+  // 1. Direct self-cycle
+  if (proposedParentId === taskId) {
+    throw new InvariantViolationError("A task cannot be its own parent.");
+  }
+
+  // 2. Recursive ancestor search: checks if taskId exists in the ancestor chain of proposedParentId
+  const result = await tx.execute(sql`
+    WITH RECURSIVE ancestors AS (
+      SELECT id, parent_task_id, 1 as depth
+      FROM tasks
+      WHERE id = ${proposedParentId} AND user_id = ${userId}
+      UNION ALL
+      SELECT t.id, t.parent_task_id, a.depth + 1
+      FROM tasks t
+      JOIN ancestors a ON t.id = a.parent_task_id
+      WHERE t.user_id = ${userId} AND a.depth < 100
+    )
+    SELECT id FROM ancestors WHERE id = ${taskId} LIMIT 1;
+  `);
+
+  if (result.rows && result.rows.length > 0) {
+    throw new InvariantViolationError(
+      "Task hierarchy cycle detected: cannot set parent to a descendant or circular ancestor."
+    );
+  }
+}
+
+/**
+ * Creates a task strictly scoped to the authenticated user within an atomic transaction.
+ * Validates cross-entity ownership, project consistency, and records audit log atomically.
  */
 export async function createTask(
   authenticatedUserId: string,
@@ -212,15 +249,17 @@ export async function createTask(
   const validated = createTaskSchema.parse(input);
 
   return await db.transaction(async (tx) => {
-    // 1. Verify project ownership if projectId is provided
-    if (validated.projectId) {
+    let finalProjectId = validated.projectId ?? null;
+
+    // 1. Verify project ownership if explicit projectId is provided
+    if (finalProjectId) {
       const projectRows = await tx
         .select({ id: projects.id })
         .from(projects)
         .where(
           and(
             eq(projects.userId, safeUserId),
-            eq(projects.id, validated.projectId)
+            eq(projects.id, finalProjectId)
           )
         )
         .limit(1);
@@ -230,10 +269,10 @@ export async function createTask(
       }
     }
 
-    // 2. Verify parent task ownership if parentTaskId is provided
+    // 2. Verify parent task ownership and project alignment if parentTaskId is provided
     if (validated.parentTaskId) {
-      const parentRows = await tx
-        .select({ id: tasks.id })
+      const [parentRow] = await tx
+        .select({ id: tasks.id, projectId: tasks.projectId })
         .from(tasks)
         .where(
           and(
@@ -243,8 +282,24 @@ export async function createTask(
         )
         .limit(1);
 
-      if (parentRows.length === 0) {
+      if (!parentRow) {
         throw new NotFoundError("Parent task not found.");
+      }
+
+      // Project alignment rules
+      if (finalProjectId && parentRow.projectId && finalProjectId !== parentRow.projectId) {
+        throw new InvariantViolationError(
+          "Subtask cannot belong to a different project than its parent task."
+        );
+      }
+      if (finalProjectId && !parentRow.projectId) {
+        throw new InvariantViolationError(
+          "Subtask cannot belong to a project when parent task has no project."
+        );
+      }
+      // Inherit parent project if not explicitly set
+      if (!finalProjectId && parentRow.projectId) {
+        finalProjectId = parentRow.projectId;
       }
     }
 
@@ -261,7 +316,7 @@ export async function createTask(
       .insert(tasks)
       .values({
         userId: safeUserId,
-        projectId: validated.projectId ?? null,
+        projectId: finalProjectId,
         parentTaskId: validated.parentTaskId ?? null,
         title: validated.title,
         description: validated.description ?? null,
@@ -274,20 +329,23 @@ export async function createTask(
       })
       .returning();
 
-    await createAuditLog({
-      userId: safeUserId,
-      category: "mutation",
-      action: "task.create",
-      status: "success",
-      details: {
-        taskId: inserted.id,
-        title: inserted.title,
-        projectId: inserted.projectId,
-        status: inserted.status,
+    await createAuditLog(
+      {
+        userId: safeUserId,
+        category: "mutation",
+        action: "task.create",
+        status: "success",
+        details: {
+          taskId: inserted.id,
+          title: inserted.title,
+          projectId: inserted.projectId,
+          status: inserted.status,
+        },
+        ipAddress: actorInfo?.ipAddress,
+        userAgent: actorInfo?.userAgent,
       },
-      ipAddress: actorInfo?.ipAddress,
-      userAgent: actorInfo?.userAgent,
-    });
+      tx
+    );
 
     return toTaskDTO(inserted);
   });
@@ -350,8 +408,9 @@ export async function listTasks(
 }
 
 /**
- * Updates a task strictly scoped to the authenticated user.
- * Prevents self-referential subtasks and validates relational ownership.
+ * Updates a task strictly scoped to the authenticated user within an atomic transaction.
+ * Prevents multi-level hierarchy cycles, enforces row-level locks (FOR UPDATE),
+ * guarantees project consistency across parent/child tasks, and records audit log atomically.
  */
 export async function updateTask(
   authenticatedUserId: string,
@@ -364,26 +423,29 @@ export async function updateTask(
   const validated = updateTaskSchema.parse(input);
 
   return await db.transaction(async (tx) => {
-    // 1. Fetch existing task scoped to user
+    // 1. Fetch and lock existing task scoped to user (FOR UPDATE)
     const [existing] = await tx
       .select()
       .from(tasks)
       .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
+      .for("update")
       .limit(1);
 
     if (!existing) {
       throw new NotFoundError("Task not found.");
     }
 
-    // 2. Prevent self-referencing parent task
+    // 2. Validate parentTaskId and hierarchy cycle prevention
+    let targetParentProjectId: string | null | undefined = undefined;
     if (validated.parentTaskId !== undefined) {
       if (validated.parentTaskId === safeTaskId) {
         throw new InvariantViolationError("A task cannot be its own parent.");
       }
 
       if (validated.parentTaskId !== null) {
-        const parentRows = await tx
-          .select({ id: tasks.id })
+        // Lock proposed parent task row (FOR UPDATE)
+        const [parentRow] = await tx
+          .select({ id: tasks.id, projectId: tasks.projectId })
           .from(tasks)
           .where(
             and(
@@ -391,15 +453,29 @@ export async function updateTask(
               eq(tasks.id, validated.parentTaskId)
             )
           )
+          .for("update")
           .limit(1);
 
-        if (parentRows.length === 0) {
+        if (!parentRow) {
           throw new NotFoundError("Parent task not found.");
         }
+
+        targetParentProjectId = parentRow.projectId;
+
+        // Recursive hierarchy cycle detection
+        await assertNoHierarchyCycle(
+          tx,
+          safeUserId,
+          safeTaskId,
+          validated.parentTaskId
+        );
       }
     }
 
-    // 3. Verify project ownership if projectId is changed to non-null
+    // 3. Project alignment validation
+    let nextProjectId =
+      validated.projectId !== undefined ? validated.projectId : existing.projectId;
+
     if (validated.projectId !== undefined && validated.projectId !== null) {
       const projectRows = await tx
         .select({ id: projects.id })
@@ -414,6 +490,42 @@ export async function updateTask(
 
       if (projectRows.length === 0) {
         throw new NotFoundError("Project not found.");
+      }
+    }
+
+    const activeParentId =
+      validated.parentTaskId !== undefined
+        ? validated.parentTaskId
+        : existing.parentTaskId;
+
+    if (activeParentId) {
+      let effectiveParentProjectId = targetParentProjectId;
+      if (effectiveParentProjectId === undefined) {
+        const [pRow] = await tx
+          .select({ projectId: tasks.projectId })
+          .from(tasks)
+          .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, activeParentId)))
+          .limit(1);
+        effectiveParentProjectId = pRow?.projectId ?? null;
+      }
+
+      if (
+        nextProjectId &&
+        effectiveParentProjectId &&
+        nextProjectId !== effectiveParentProjectId
+      ) {
+        throw new InvariantViolationError(
+          "Subtask cannot belong to a different project than its parent task."
+        );
+      }
+      if (nextProjectId && !effectiveParentProjectId) {
+        throw new InvariantViolationError(
+          "Subtask cannot belong to a project when parent task has no project."
+        );
+      }
+      // If parent has project and child project was not explicitly provided or was null, inherit parent's project
+      if (!nextProjectId && effectiveParentProjectId && validated.projectId === undefined) {
+        nextProjectId = effectiveParentProjectId;
       }
     }
 
@@ -443,8 +555,7 @@ export async function updateTask(
       updates.description = validated.description;
     if (validated.status !== undefined) updates.status = validated.status;
     if (validated.priority !== undefined) updates.priority = validated.priority;
-    if (validated.projectId !== undefined)
-      updates.projectId = validated.projectId;
+    updates.projectId = nextProjectId;
     if (validated.parentTaskId !== undefined)
       updates.parentTaskId = validated.parentTaskId;
     if (validated.dueDate !== undefined)
@@ -462,26 +573,43 @@ export async function updateTask(
       .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
       .returning();
 
-    await createAuditLog({
-      userId: safeUserId,
-      category: "mutation",
-      action: "task.update",
-      status: "success",
-      details: {
-        taskId: safeTaskId,
-        updatedFields: Object.keys(validated),
-        status: updated.status,
+    // If projectId changed on a parent task, propagate to all descendants in the hierarchy
+    if (nextProjectId !== existing.projectId) {
+      await tx.execute(sql`
+        WITH RECURSIVE subtask_tree AS (
+          SELECT id FROM tasks WHERE parent_task_id = ${safeTaskId} AND user_id = ${safeUserId}
+          UNION ALL
+          SELECT t.id FROM tasks t JOIN subtask_tree st ON t.parent_task_id = st.id WHERE t.user_id = ${safeUserId}
+        )
+        UPDATE tasks
+        SET project_id = ${nextProjectId}, updated_at = NOW()
+        WHERE id IN (SELECT id FROM subtask_tree) AND user_id = ${safeUserId};
+      `);
+    }
+
+    await createAuditLog(
+      {
+        userId: safeUserId,
+        category: "mutation",
+        action: "task.update",
+        status: "success",
+        details: {
+          taskId: safeTaskId,
+          updatedFields: Object.keys(validated),
+          status: updated.status,
+        },
+        ipAddress: actorInfo?.ipAddress,
+        userAgent: actorInfo?.userAgent,
       },
-      ipAddress: actorInfo?.ipAddress,
-      userAgent: actorInfo?.userAgent,
-    });
+      tx
+    );
 
     return toTaskDTO(updated);
   });
 }
 
 /**
- * Deletes a task strictly scoped to the authenticated user.
+ * Deletes a task strictly scoped to the authenticated user within an atomic transaction.
  * Associated subtasks are deleted via foreign key ON DELETE CASCADE.
  * Throws NotFoundError if task does not exist or belongs to another user.
  */
@@ -493,24 +621,41 @@ export async function deleteTask(
   const safeUserId = validateUserId(authenticatedUserId);
   const safeTaskId = validateEntityId(taskId, "Task");
 
-  const [deleted] = await db
-    .delete(tasks)
-    .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
-    .returning({ id: tasks.id });
+  return await db.transaction(async (tx) => {
+    // Acquire row-level lock before deletion
+    const [existing] = await tx
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
+      .for("update")
+      .limit(1);
 
-  if (!deleted) {
-    throw new NotFoundError("Task not found.");
-  }
+    if (!existing) {
+      throw new NotFoundError("Task not found.");
+    }
 
-  await createAuditLog({
-    userId: safeUserId,
-    category: "mutation",
-    action: "task.delete",
-    status: "success",
-    details: { taskId: safeTaskId },
-    ipAddress: actorInfo?.ipAddress,
-    userAgent: actorInfo?.userAgent,
+    const [deleted] = await tx
+      .delete(tasks)
+      .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
+      .returning({ id: tasks.id });
+
+    if (!deleted) {
+      throw new NotFoundError("Task not found.");
+    }
+
+    await createAuditLog(
+      {
+        userId: safeUserId,
+        category: "mutation",
+        action: "task.delete",
+        status: "success",
+        details: { taskId: safeTaskId },
+        ipAddress: actorInfo?.ipAddress,
+        userAgent: actorInfo?.userAgent,
+      },
+      tx
+    );
+
+    return { success: true };
   });
-
-  return { success: true };
 }

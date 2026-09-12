@@ -23,38 +23,48 @@ export interface CreateAuditLogParams {
  * Creates an immutable audit log record in PostgreSQL.
  * Captures security events, authentication lifecycle changes, and sensitive mutations.
  */
-export async function createAuditLog(params: CreateAuditLogParams): Promise<void> {
-  try {
-    const sanitizedAction =
-      typeof params.action === "string" ? params.action.trim() : "";
-    if (!sanitizedAction) {
-      console.warn("⚠️ Invalid audit log action: must be a non-empty string.");
-      return;
+export async function createAuditLog(
+  params: CreateAuditLogParams,
+  tx?: any
+): Promise<void> {
+  const sanitizedAction =
+    typeof params.action === "string" ? params.action.trim() : "";
+  if (!sanitizedAction) {
+    const errorMsg = "⚠️ Invalid audit log action: must be a non-empty string.";
+    if (tx) {
+      throw new Error(errorMsg);
     }
+    console.warn(errorMsg);
+    return;
+  }
 
-    const sanitizedUserId =
-      typeof params.userId === "string" && params.userId.trim().length > 0
-        ? params.userId.trim()
-        : null;
+  const sanitizedUserId =
+    typeof params.userId === "string" && params.userId.trim().length > 0
+      ? params.userId.trim()
+      : null;
 
-    const sanitizedIp =
-      typeof params.ipAddress === "string" && params.ipAddress.trim().length > 0
-        ? params.ipAddress.trim().replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 128)
-        : null;
+  const sanitizedIp =
+    typeof params.ipAddress === "string" && params.ipAddress.trim().length > 0
+      ? params.ipAddress.trim().replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 128)
+      : null;
 
-    const sanitizedUserAgent =
-      typeof params.userAgent === "string" && params.userAgent.trim().length > 0
-        ? params.userAgent.trim().replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 512)
-        : null;
+  const sanitizedUserAgent =
+    typeof params.userAgent === "string" && params.userAgent.trim().length > 0
+      ? params.userAgent.trim().replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 512)
+      : null;
 
-    const sanitizedActor =
-      typeof params.actor === "string" && params.actor.trim().length > 0
-        ? params.actor.trim().replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 128)
-        : sanitizedUserId
-        ? `user:${sanitizedUserId}`
-        : "system";
+  // Strict actor attribution: when user is authenticated, actor is canonically bound to user:${sanitizedUserId}
+  const sanitizedActor = sanitizedUserId
+    ? `user:${sanitizedUserId}`
+    : typeof params.actor === "string" && params.actor.trim().length > 0
+    ? params.actor.trim().replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 128)
+    : "system";
 
-    await db.insert(auditLog).values({
+  const client = tx ?? db;
+
+  if (tx) {
+    // Within a transaction boundary: must throw on error to trigger transaction rollback
+    await client.insert(auditLog).values({
       userId: sanitizedUserId,
       category: params.category,
       action: sanitizedAction.slice(0, 128),
@@ -64,8 +74,21 @@ export async function createAuditLog(params: CreateAuditLogParams): Promise<void
       ipAddress: sanitizedIp,
       userAgent: sanitizedUserAgent,
     });
-  } catch (error) {
-    // Log error to server console without breaking caller flow
-    console.error("❌ Failed to write audit log entry:", error);
+  } else {
+    // Standalone / non-transactional logging (e.g. background audit or auth event)
+    try {
+      await client.insert(auditLog).values({
+        userId: sanitizedUserId,
+        category: params.category,
+        action: sanitizedAction.slice(0, 128),
+        status: params.status,
+        actor: sanitizedActor,
+        details: params.details ?? null,
+        ipAddress: sanitizedIp,
+        userAgent: sanitizedUserAgent,
+      });
+    } catch (error) {
+      console.error("❌ Failed to write audit log entry:", error);
+    }
   }
 }
