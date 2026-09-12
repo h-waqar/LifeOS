@@ -80,3 +80,8 @@ pnpm build
 - **Clean `src/` Rule**: All tests must reside under `scripts/tests/{phase}/{plan}/...`. Zero test files are permitted in `src/`.
 - **Database Scope**: Phase 1 database tables are strictly limited to foundational infrastructure (`user`, `session`, `account`, `verification`, `passkey`, `user_preferences`, `audit_log`). Domain tables are added incrementally in later phases.
 - **Server-Only Protection**: Database pool and secrets cannot be imported into browser/client bundles.
+- **Audit-Log Security & Privilege Separation**: The `audit_log` table is append-only and immutable. Role `lifeos_app` possesses `SELECT` and `INSERT` privileges only (zero `UPDATE`, `DELETE`, or `TRUNCATE` access). Pruning is strictly mediated by the `SECURITY DEFINER` procedure `purge_expired_audit_logs(retention_days)` with a fixed `search_path = pg_catalog, public` and a non-bypassable 90-day minimum retention wall.
+- **Integration Test Authenticity Contract**: Integration tests (`pnpm test:integration`) adhere to a verified three-state contract:
+  - PostgreSQL offline + `REQUIRE_DB` unset → tests genuinely SKIPPED (never reported as passed).
+  - PostgreSQL offline + `REQUIRE_DB=true` → suite FAILS with non-zero exit code.
+  - PostgreSQL online → live integration tests execute and pass.
