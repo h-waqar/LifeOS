@@ -15,7 +15,20 @@ if (typeof window !== "undefined" && !process.env.VITEST) {
 export const updatePreferencesSchema = z
   .object({
     theme: z.enum(["dark", "light", "system"]).optional(),
-    dateFormat: z.string().trim().min(1, "Date format cannot be empty or whitespace").max(32).optional(),
+    dateFormat: z
+      .string()
+      .trim()
+      .min(1, "Date format cannot be empty or whitespace")
+      .max(32, "Date format cannot exceed 32 characters")
+      .regex(
+        /^[a-zA-Z0-9\s/._\-:,]+$/,
+        "Date format may only contain alphanumeric characters, spaces, and standard punctuation ([-_/. ,:])"
+      )
+      .refine(
+        (val) => !/[\u0000-\u001F\u007F]/.test(val),
+        "Date format cannot contain control characters or null bytes"
+      )
+      .optional(),
     timeFormat: z.enum(["12h", "24h"]).optional(),
     workingHoursStart: z
       .string()
