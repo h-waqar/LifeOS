@@ -39,12 +39,18 @@ export const envSchema = z.object({
     ),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 }).superRefine((data, ctx) => {
-  if (data.NODE_ENV === "production" && !data.BETTER_AUTH_URL.startsWith("https://")) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["BETTER_AUTH_URL"],
-      message: "BETTER_AUTH_URL must use https in production",
-    });
+  try {
+    const url = new URL(data.BETTER_AUTH_URL);
+    const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (data.NODE_ENV === "production" && !isLocalhost && !data.BETTER_AUTH_URL.startsWith("https://")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["BETTER_AUTH_URL"],
+        message: "BETTER_AUTH_URL must use https in production",
+      });
+    }
+  } catch {
+    // URL parsing errors handled by .url() validator
   }
 });
 
