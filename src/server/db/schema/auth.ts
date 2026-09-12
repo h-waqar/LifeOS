@@ -95,6 +95,7 @@ export const verification = pgTable("verification", {
 /**
  * Better Auth Passkey Plugin: Passkey Table
  * Stores WebAuthn biometric and security key credentials (FIDO2).
+ * Strictly aligned with Better Auth 1.7.4 @better-auth/passkey schema.
  */
 export const passkey = pgTable("passkey", {
   id: text("id").primaryKey(),
@@ -108,12 +109,8 @@ export const passkey = pgTable("passkey", {
   deviceType: text("device_type").notNull(),
   backedUp: boolean("backed_up").notNull().default(false),
   transports: text("transports"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  aaguid: text("aaguid"),
 });
 
 // Plural aliases for convenience and query flexibility
@@ -122,3 +119,4 @@ export const sessions = session;
 export const accounts = account;
 export const verifications = verification;
 export const passkeys = passkey;
+

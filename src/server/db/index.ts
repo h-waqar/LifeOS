@@ -10,9 +10,42 @@ if (typeof window !== "undefined" && !process.env.VITEST) {
   );
 }
 
+export type LifecycleState =
+  | "IDLE"
+  | "CONNECTING"
+  | "READY"
+  | "CLOSING"
+  | "CLOSED";
+
 declare global {
   // eslint-disable-next-line no-var
   var __lifeos_pg_pool__: Pool | undefined;
+  // eslint-disable-next-line no-var
+  var __lifeos_drizzle_db__: NodePgDatabase<typeof schema> | undefined;
+  // eslint-disable-next-line no-var
+  var __lifeos_db_state__: LifecycleState | undefined;
+}
+
+let localPool: Pool | undefined;
+let localDb: NodePgDatabase<typeof schema> | undefined;
+let currentState: LifecycleState = "IDLE";
+let closingPromise: Promise<void> | null = null;
+
+function setState(state: LifecycleState): void {
+  currentState = state;
+  if (process.env.NODE_ENV !== "production") {
+    globalThis.__lifeos_db_state__ = state;
+  }
+}
+
+/**
+ * Returns current connection pool lifecycle state.
+ */
+export function getLifecycleState(): LifecycleState {
+  if (process.env.NODE_ENV !== "production" && globalThis.__lifeos_db_state__) {
+    return globalThis.__lifeos_db_state__;
+  }
+  return currentState;
 }
 
 /**
@@ -29,25 +62,82 @@ export function createPgPool(config?: PoolConfig): Pool {
 }
 
 /**
- * Returns or initializes the global pool instance with Next.js HMR development caching.
+ * Returns or initializes the global pool instance with Next.js HMR development caching
+ * and concurrency lifecycle state management.
  */
-export function getPool(): Pool {
-  if (!globalThis.__lifeos_pg_pool__ || (globalThis.__lifeos_pg_pool__ as any).ended) {
-    const newPool = createPgPool();
-    if (process.env.NODE_ENV !== "production") {
-      globalThis.__lifeos_pg_pool__ = newPool;
-    }
-    return newPool;
+export function getPool(config?: PoolConfig): Pool {
+  const cachedPool =
+    process.env.NODE_ENV !== "production"
+      ? globalThis.__lifeos_pg_pool__
+      : localPool;
+
+  if (cachedPool && !(cachedPool as any).ended) {
+    setState("READY");
+    return cachedPool;
   }
-  return globalThis.__lifeos_pg_pool__;
+
+  setState("CONNECTING");
+  const newPool = createPgPool(config);
+
+  if (process.env.NODE_ENV !== "production") {
+    globalThis.__lifeos_pg_pool__ = newPool;
+  } else {
+    localPool = newPool;
+  }
+
+  setState("READY");
+  return newPool;
 }
 
-export const pool = getPool();
+/**
+ * Returns or initializes the Drizzle ORM client instance backed by getPool().
+ */
+export function getDb(config?: PoolConfig): NodePgDatabase<typeof schema> {
+  const currentPool = getPool(config);
+
+  const cachedDb =
+    process.env.NODE_ENV !== "production"
+      ? globalThis.__lifeos_drizzle_db__
+      : localDb;
+
+  if (cachedDb && (cachedDb as any).$client === currentPool) {
+    return cachedDb;
+  }
+
+  const newDb = drizzle(currentPool, { schema });
+  if (process.env.NODE_ENV !== "production") {
+    globalThis.__lifeos_drizzle_db__ = newDb;
+  } else {
+    localDb = newDb;
+  }
+
+  return newDb;
+}
 
 /**
- * Drizzle ORM client instance with foundational schema.
+ * Proxy export for pool: delegates dynamically to getPool()
  */
-export const db: NodePgDatabase<typeof schema> = drizzle(pool, { schema });
+export const pool: Pool = new Proxy({} as Pool, {
+  get(_target, prop, receiver) {
+    const instance = getPool();
+    const value = Reflect.get(instance, prop, receiver);
+    return typeof value === "function" ? value.bind(instance) : value;
+  },
+});
+
+/**
+ * Proxy export for db: delegates dynamically to getDb()
+ */
+export const db: NodePgDatabase<typeof schema> = new Proxy(
+  {} as NodePgDatabase<typeof schema>,
+  {
+    get(_target, prop, receiver) {
+      const instance = getDb();
+      const value = Reflect.get(instance, prop, receiver);
+      return typeof value === "function" ? value.bind(instance) : value;
+    },
+  }
+);
 
 /**
  * Verifies database connectivity by executing a lightweight ping query.
@@ -78,19 +168,45 @@ export async function checkDatabaseHealth(customPool?: Pool): Promise<{
 }
 
 /**
- * Gracefully terminates pool connections and resets the global cache.
- * Idempotent: safe to call multiple times without throwing.
+ * Gracefully terminates pool connections and resets the state machine and caches.
+ * Concurrency-safe: multiple concurrent calls share the same close promise.
  */
 export async function closeDatabase(): Promise<void> {
-  const target = globalThis.__lifeos_pg_pool__;
-  if (target && !(target as any).ended) {
-    await target.end();
+  if (closingPromise) {
+    return closingPromise;
   }
-  globalThis.__lifeos_pg_pool__ = undefined;
 
-  if (pool && pool !== target && !(pool as any).ended) {
-    await pool.end();
+  const activePool =
+    process.env.NODE_ENV !== "production"
+      ? globalThis.__lifeos_pg_pool__
+      : localPool;
+
+  if (!activePool || (activePool as any).ended) {
+    setState("IDLE");
+    return;
   }
+
+  setState("CLOSING");
+
+  closingPromise = (async () => {
+    try {
+      if (!(activePool as any).ended) {
+        await activePool.end();
+      }
+    } finally {
+      if (process.env.NODE_ENV !== "production") {
+        globalThis.__lifeos_pg_pool__ = undefined;
+        globalThis.__lifeos_drizzle_db__ = undefined;
+      }
+      localPool = undefined;
+      localDb = undefined;
+      setState("CLOSED");
+      setState("IDLE");
+      closingPromise = null;
+    }
+  })();
+
+  return closingPromise;
 }
 
 // Re-export schema symbols for convenience
