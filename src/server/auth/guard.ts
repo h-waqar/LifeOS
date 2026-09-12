@@ -42,7 +42,7 @@ export interface AuthenticatedContext {
 export type HeaderSource =
   | Request
   | Headers
-  | { headers: Headers }
+  | { headers: Headers | HeadersInit }
   | HeadersInit
   | undefined;
 
@@ -57,10 +57,16 @@ async function resolveHeaders(source?: HeaderSource): Promise<Headers> {
   if (source instanceof Headers) {
     return source;
   }
-  if (source && typeof source === "object" && "headers" in source && source.headers instanceof Headers) {
-    return source.headers;
+  if (source && typeof source === "object" && "headers" in source) {
+    const rawHeaders = (source as { headers: unknown }).headers;
+    if (rawHeaders instanceof Headers) {
+      return rawHeaders;
+    }
+    if (rawHeaders && typeof rawHeaders === "object") {
+      return new Headers(rawHeaders as HeadersInit);
+    }
   }
-  if (source && typeof source === "object" && !(source instanceof Headers)) {
+  if (source && typeof source === "object") {
     return new Headers(source as HeadersInit);
   }
 
@@ -127,13 +133,24 @@ export async function requireAuthenticatedUser(
  * Mandatory Resource Ownership Boundary.
  *
  * Enforces that the requested resource belongs to the authenticated user.
- * FAILS CLOSED: Throws an `AuthorizationError` (403) if `resourceUserId !== authenticatedUserId`.
+ * FAILS CLOSED: Throws an `AuthorizationError` (403) if:
+ * - resourceUserId or authenticatedUserId is null, undefined, empty, or whitespace-only
+ * - types are invalid (non-string)
+ * - resourceUserId !== authenticatedUserId
  */
 export function requireResourceOwnership(
   resourceUserId: string | null | undefined,
-  authenticatedUserId: string
+  authenticatedUserId: string | null | undefined
 ): void {
-  if (!resourceUserId || !authenticatedUserId || resourceUserId !== authenticatedUserId) {
+  if (
+    !resourceUserId ||
+    !authenticatedUserId ||
+    typeof resourceUserId !== "string" ||
+    typeof authenticatedUserId !== "string" ||
+    !resourceUserId.trim() ||
+    !authenticatedUserId.trim() ||
+    resourceUserId !== authenticatedUserId
+  ) {
     throw new AuthorizationError();
   }
 }
@@ -150,11 +167,15 @@ export function withUserScope(
   authenticatedUserId: string,
   extraCondition?: SQL
 ): SQL {
-  if (!authenticatedUserId) {
+  if (
+    !authenticatedUserId ||
+    typeof authenticatedUserId !== "string" ||
+    !authenticatedUserId.trim()
+  ) {
     throw new AuthorizationError("Cannot construct query scope: authenticated user ID is required.");
   }
 
-  const ownershipCondition = eq(userColumn, authenticatedUserId);
+  const ownershipCondition = eq(userColumn, authenticatedUserId.trim());
 
   if (extraCondition) {
     return and(ownershipCondition, extraCondition)!;
