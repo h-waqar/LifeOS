@@ -38,8 +38,9 @@ LifeOS is an integrated personal operating system built from scratch to unify ta
 Plans:
 - [x] 01-01: Project setup (Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Vitest)
 - [x] 01-02: PostgreSQL database setup with Drizzle ORM (foundational schema only: users, sessions / Better Auth tables, preferences, audit_log)
-- [ ] 01-03: Better Auth authentication, session management, and server authorization ownership guards
-- [ ] 01-04: Application shell, navigation layout, theme settings, and audit logging
+- [x] 01-03: Database Hardening, Concurrency Lifecycle & Audit Log Security Boundary
+- [x] 01-04: Better Auth authentication, session security, and server authorization ownership guards
+- [ ] 01-05: Application shell, navigation layout, theme settings, and audit logging
 
 ### Phase 2: Core Productivity
 **Goal**: Deliver the primary execution engine: Goals → Projects → Tasks → Calendar / Time Blocking → Habits → Dashboard.
