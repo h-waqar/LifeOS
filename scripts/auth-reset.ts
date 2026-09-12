@@ -97,39 +97,46 @@ export async function runAuthReset(options?: {
     // Hash password with Better Auth's standard hasher
     const hashedPassword = await hashPassword(targetPassword);
 
-    // Update or insert credential account
-    const existingAccount = await db
-      .select()
-      .from(account)
-      .where(eq(account.userId, targetUser.id));
+    let revokedCount = 0;
 
-    const credentialAccount = existingAccount.find(
-      (a) => a.providerId === "credential"
-    );
+    // Execute credential update and session revocation atomically
+    await db.transaction(async (tx) => {
+      // Update or insert credential account
+      const existingAccount = await tx
+        .select()
+        .from(account)
+        .where(eq(account.userId, targetUser.id));
 
-    if (credentialAccount) {
-      await db
-        .update(account)
-        .set({
+      const credentialAccount = existingAccount.find(
+        (a) => a.providerId === "credential"
+      );
+
+      if (credentialAccount) {
+        await tx
+          .update(account)
+          .set({
+            password: hashedPassword,
+            updatedAt: new Date(),
+          })
+          .where(eq(account.id, credentialAccount.id));
+      } else {
+        await tx.insert(account).values({
+          id: crypto.randomUUID(),
+          userId: targetUser.id,
+          accountId: targetUser.id,
+          providerId: "credential",
           password: hashedPassword,
-          updatedAt: new Date(),
-        })
-        .where(eq(account.id, credentialAccount.id));
-    } else {
-      await db.insert(account).values({
-        id: crypto.randomUUID(),
-        userId: targetUser.id,
-        accountId: targetUser.id,
-        providerId: "credential",
-        password: hashedPassword,
-      });
-    }
+        });
+      }
 
-    // Revoke all active sessions
-    const deletedSessions = await db
-      .delete(session)
-      .where(eq(session.userId, targetUser.id))
-      .returning({ id: session.id });
+      // Revoke all active sessions
+      const deletedSessions = await tx
+        .delete(session)
+        .where(eq(session.userId, targetUser.id))
+        .returning({ id: session.id });
+
+      revokedCount = deletedSessions.length;
+    });
 
     // Write security audit log
     await createAuditLog({
@@ -139,17 +146,17 @@ export async function runAuthReset(options?: {
       status: "success",
       actor: "cli:auth-reset",
       details: {
-        revokedSessionCount: deletedSessions.length,
+        revokedSessionCount: revokedCount,
       },
     });
 
     console.log(
-      `✅ Password successfully reset. ${deletedSessions.length} active sessions revoked.`
+      `✅ Password successfully reset. ${revokedCount} active sessions revoked.`
     );
 
     return {
       success: true,
-      message: `Password reset successfully. ${deletedSessions.length} sessions revoked.`,
+      message: `Password reset successfully. ${revokedCount} sessions revoked.`,
       userId: targetUser.id,
     };
   } finally {
