@@ -185,10 +185,16 @@ export async function checkDatabaseHealth(customPool?: Pool): Promise<{
       client.release();
     }
   } catch (error) {
+    const errorMessage =
+      error instanceof Error && error.message && error.message.trim().length > 0
+        ? error.message
+        : (error as any)?.code ||
+          (error as any)?.errors?.[0]?.message ||
+          "Database connection failed";
+
     return {
       ok: false,
-      error:
-        error instanceof Error ? error.message : "Database connection failed",
+      error: errorMessage,
     };
   }
 }

@@ -200,6 +200,34 @@ function validateEntityId(id: unknown, entityName = "Entity"): string {
 }
 
 /**
+ * Executes an async operation with automatic retry on PostgreSQL transaction deadlocks (40P01)
+ * and serialization failures (40001) under intense concurrent contention.
+ */
+async function withDeadlockRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries = 2
+): Promise<T> {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      if (
+        (err?.code === "40P01" || err?.code === "40001") &&
+        attempt < maxRetries
+      ) {
+        attempt++;
+        await new Promise((resolve) =>
+          setTimeout(resolve, attempt * 30 + Math.floor(Math.random() * 30))
+        );
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+/**
  * Recursively asserts that proposedParentId does not create a hierarchy cycle with taskId.
  * Detects A -> A, A -> B -> A, A -> B -> C -> A, and reparenting to any descendant.
  */
@@ -248,106 +276,122 @@ export async function createTask(
   const safeUserId = validateUserId(authenticatedUserId);
   const validated = createTaskSchema.parse(input);
 
-  return await db.transaction(async (tx) => {
-    let finalProjectId = validated.projectId ?? null;
+  return await withDeadlockRetry(async () => {
+    try {
+      return await db.transaction(async (tx) => {
+        let finalProjectId = validated.projectId ?? null;
 
-    // 1. Verify project ownership if explicit projectId is provided
-    if (finalProjectId) {
-      const projectRows = await tx
-        .select({ id: projects.id })
-        .from(projects)
-        .where(
-          and(
-            eq(projects.userId, safeUserId),
-            eq(projects.id, finalProjectId)
-          )
-        )
-        .limit(1);
+        // 1. Verify project ownership if explicit projectId is provided (with row-level share lock)
+        if (finalProjectId) {
+          const projectRows = await tx
+            .select({ id: projects.id })
+            .from(projects)
+            .where(
+              and(
+                eq(projects.userId, safeUserId),
+                eq(projects.id, finalProjectId)
+              )
+            )
+            .for("share")
+            .limit(1);
 
-      if (projectRows.length === 0) {
-        throw new NotFoundError("Project not found.");
-      }
-    }
+          if (projectRows.length === 0) {
+            throw new NotFoundError("Project not found.");
+          }
+        }
 
-    // 2. Verify parent task ownership and project alignment if parentTaskId is provided
-    if (validated.parentTaskId) {
-      const [parentRow] = await tx
-        .select({ id: tasks.id, projectId: tasks.projectId })
-        .from(tasks)
-        .where(
-          and(
-            eq(tasks.userId, safeUserId),
-            eq(tasks.id, validated.parentTaskId)
-          )
-        )
-        .limit(1);
+        // 2. Verify parent task ownership and project alignment if parentTaskId is provided (with row-level share lock)
+        if (validated.parentTaskId) {
+          const [parentRow] = await tx
+            .select({ id: tasks.id, projectId: tasks.projectId })
+            .from(tasks)
+            .where(
+              and(
+                eq(tasks.userId, safeUserId),
+                eq(tasks.id, validated.parentTaskId)
+              )
+            )
+            .for("share")
+            .limit(1);
 
-      if (!parentRow) {
-        throw new NotFoundError("Parent task not found.");
-      }
+          if (!parentRow) {
+            throw new NotFoundError("Parent task not found.");
+          }
 
-      // Project alignment rules
-      if (finalProjectId && parentRow.projectId && finalProjectId !== parentRow.projectId) {
-        throw new InvariantViolationError(
-          "Subtask cannot belong to a different project than its parent task."
+          // Project alignment rules
+          if (finalProjectId && parentRow.projectId && finalProjectId !== parentRow.projectId) {
+            throw new InvariantViolationError(
+              "Subtask cannot belong to a different project than its parent task."
+            );
+          }
+          if (finalProjectId && !parentRow.projectId) {
+            throw new InvariantViolationError(
+              "Subtask cannot belong to a project when parent task has no project."
+            );
+          }
+          // Inherit parent project if not explicitly set
+          if (!finalProjectId && parentRow.projectId) {
+            finalProjectId = parentRow.projectId;
+          }
+        }
+
+        // 3. Determine completedAt invariant
+        const finalStatus = validated.status ?? "inbox";
+        let finalCompletedAt: Date | null = null;
+        if (finalStatus === "completed") {
+          finalCompletedAt = validated.completedAt
+            ? new Date(validated.completedAt)
+            : new Date();
+        }
+
+        const [inserted] = await tx
+          .insert(tasks)
+          .values({
+            userId: safeUserId,
+            projectId: finalProjectId,
+            parentTaskId: validated.parentTaskId ?? null,
+            title: validated.title,
+            description: validated.description ?? null,
+            status: finalStatus,
+            priority: validated.priority ?? "medium",
+            dueDate: validated.dueDate ? new Date(validated.dueDate) : null,
+            estimatedDuration: validated.estimatedDuration ?? null,
+            actualDuration: validated.actualDuration ?? null,
+            completedAt: finalCompletedAt,
+          })
+          .returning();
+
+        await createAuditLog(
+          {
+            userId: safeUserId,
+            category: "mutation",
+            action: "task.create",
+            status: "success",
+            details: {
+              taskId: inserted.id,
+              title: inserted.title,
+              projectId: inserted.projectId,
+              status: inserted.status,
+            },
+            ipAddress: actorInfo?.ipAddress,
+            userAgent: actorInfo?.userAgent,
+          },
+          tx
         );
+
+        return toTaskDTO(inserted);
+      });
+    } catch (err: any) {
+      if (err?.code === "23503") {
+        if (err.constraint?.includes("project") || err.detail?.includes("projects")) {
+          throw new NotFoundError("Project not found.");
+        }
+        if (err.constraint?.includes("parent") || err.detail?.includes("tasks")) {
+          throw new NotFoundError("Parent task not found.");
+        }
       }
-      if (finalProjectId && !parentRow.projectId) {
-        throw new InvariantViolationError(
-          "Subtask cannot belong to a project when parent task has no project."
-        );
-      }
-      // Inherit parent project if not explicitly set
-      if (!finalProjectId && parentRow.projectId) {
-        finalProjectId = parentRow.projectId;
-      }
+      throw err;
     }
-
-    // 3. Determine completedAt invariant
-    const finalStatus = validated.status ?? "inbox";
-    let finalCompletedAt: Date | null = null;
-    if (finalStatus === "completed") {
-      finalCompletedAt = validated.completedAt
-        ? new Date(validated.completedAt)
-        : new Date();
-    }
-
-    const [inserted] = await tx
-      .insert(tasks)
-      .values({
-        userId: safeUserId,
-        projectId: finalProjectId,
-        parentTaskId: validated.parentTaskId ?? null,
-        title: validated.title,
-        description: validated.description ?? null,
-        status: finalStatus,
-        priority: validated.priority ?? "medium",
-        dueDate: validated.dueDate ? new Date(validated.dueDate) : null,
-        estimatedDuration: validated.estimatedDuration ?? null,
-        actualDuration: validated.actualDuration ?? null,
-        completedAt: finalCompletedAt,
-      })
-      .returning();
-
-    await createAuditLog(
-      {
-        userId: safeUserId,
-        category: "mutation",
-        action: "task.create",
-        status: "success",
-        details: {
-          taskId: inserted.id,
-          title: inserted.title,
-          projectId: inserted.projectId,
-          status: inserted.status,
-        },
-        ipAddress: actorInfo?.ipAddress,
-        userAgent: actorInfo?.userAgent,
-      },
-      tx
-    );
-
-    return toTaskDTO(inserted);
   });
 }
 
@@ -422,190 +466,212 @@ export async function updateTask(
   const safeTaskId = validateEntityId(taskId, "Task");
   const validated = updateTaskSchema.parse(input);
 
-  return await db.transaction(async (tx) => {
-    // 1. Fetch and lock existing task scoped to user (FOR UPDATE)
-    const [existing] = await tx
-      .select()
-      .from(tasks)
-      .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
-      .for("update")
-      .limit(1);
-
-    if (!existing) {
-      throw new NotFoundError("Task not found.");
-    }
-
-    // 2. Validate parentTaskId and hierarchy cycle prevention
-    let targetParentProjectId: string | null | undefined = undefined;
-    if (validated.parentTaskId !== undefined) {
-      if (validated.parentTaskId === safeTaskId) {
-        throw new InvariantViolationError("A task cannot be its own parent.");
-      }
-
-      if (validated.parentTaskId !== null) {
-        // Lock proposed parent task row (FOR UPDATE)
-        const [parentRow] = await tx
-          .select({ id: tasks.id, projectId: tasks.projectId })
-          .from(tasks)
-          .where(
-            and(
-              eq(tasks.userId, safeUserId),
-              eq(tasks.id, validated.parentTaskId)
-            )
-          )
-          .for("update")
-          .limit(1);
-
-        if (!parentRow) {
-          throw new NotFoundError("Parent task not found.");
-        }
-
-        targetParentProjectId = parentRow.projectId;
-
-        // Recursive hierarchy cycle detection
-        await assertNoHierarchyCycle(
-          tx,
-          safeUserId,
-          safeTaskId,
-          validated.parentTaskId
-        );
-      }
-    }
-
-    // 3. Project alignment validation
-    let nextProjectId =
-      validated.projectId !== undefined ? validated.projectId : existing.projectId;
-
-    if (validated.projectId !== undefined && validated.projectId !== null) {
-      const projectRows = await tx
-        .select({ id: projects.id })
-        .from(projects)
-        .where(
-          and(
-            eq(projects.userId, safeUserId),
-            eq(projects.id, validated.projectId)
-          )
-        )
+  try {
+    return await db.transaction(async (tx) => {
+      // 1. Fetch and lock existing task scoped to user (FOR UPDATE)
+      const [existing] = await tx
+        .select()
+        .from(tasks)
+        .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
+        .for("update")
         .limit(1);
 
-      if (projectRows.length === 0) {
+      if (!existing) {
+        throw new NotFoundError("Task not found.");
+      }
+
+      // 2. Validate parentTaskId and hierarchy cycle prevention
+      let targetParentProjectId: string | null | undefined = undefined;
+      if (validated.parentTaskId !== undefined) {
+        if (validated.parentTaskId === safeTaskId) {
+          throw new InvariantViolationError("A task cannot be its own parent.");
+        }
+
+        if (validated.parentTaskId !== null) {
+          // Lock proposed parent task row (FOR UPDATE)
+          const [parentRow] = await tx
+            .select({ id: tasks.id, projectId: tasks.projectId })
+            .from(tasks)
+            .where(
+              and(
+                eq(tasks.userId, safeUserId),
+                eq(tasks.id, validated.parentTaskId)
+              )
+            )
+            .for("update")
+            .limit(1);
+
+          if (!parentRow) {
+            throw new NotFoundError("Parent task not found.");
+          }
+
+          targetParentProjectId = parentRow.projectId;
+
+          // Recursive hierarchy cycle detection
+          await assertNoHierarchyCycle(
+            tx,
+            safeUserId,
+            safeTaskId,
+            validated.parentTaskId
+          );
+        }
+      }
+
+      // 3. Project alignment validation (only required if projectId or parentTaskId is modified)
+      let nextProjectId =
+        validated.projectId !== undefined ? validated.projectId : existing.projectId;
+
+      if (validated.projectId !== undefined || validated.parentTaskId !== undefined) {
+        if (validated.projectId !== undefined && validated.projectId !== null) {
+          const projectRows = await tx
+            .select({ id: projects.id })
+            .from(projects)
+            .where(
+              and(
+                eq(projects.userId, safeUserId),
+                eq(projects.id, validated.projectId)
+              )
+            )
+            .for("share")
+            .limit(1);
+
+          if (projectRows.length === 0) {
+            throw new NotFoundError("Project not found.");
+          }
+        }
+
+        const activeParentId =
+          validated.parentTaskId !== undefined
+            ? validated.parentTaskId
+            : existing.parentTaskId;
+
+        if (activeParentId) {
+          let effectiveParentProjectId = targetParentProjectId;
+          if (effectiveParentProjectId === undefined) {
+            const [pRow] = await tx
+              .select({ projectId: tasks.projectId })
+              .from(tasks)
+              .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, activeParentId)))
+              .for("share")
+              .limit(1);
+            effectiveParentProjectId = pRow?.projectId ?? null;
+          }
+
+          if (
+            nextProjectId &&
+            effectiveParentProjectId &&
+            nextProjectId !== effectiveParentProjectId
+          ) {
+            throw new InvariantViolationError(
+              "Subtask cannot belong to a different project than its parent task."
+            );
+          }
+          if (nextProjectId && !effectiveParentProjectId) {
+            throw new InvariantViolationError(
+              "Subtask cannot belong to a project when parent task has no project."
+            );
+          }
+          // If parent has project and child project was not explicitly provided or was null, inherit parent's project
+          if (!nextProjectId && effectiveParentProjectId && validated.projectId === undefined) {
+            nextProjectId = effectiveParentProjectId;
+          }
+        }
+      }
+
+      // 4. Determine status and completedAt invariants
+      const nextStatus = validated.status ?? existing.status;
+      let nextCompletedAt = existing.completedAt;
+
+      if (nextStatus === "completed") {
+        if (validated.completedAt !== undefined) {
+          nextCompletedAt = validated.completedAt
+            ? new Date(validated.completedAt)
+            : new Date();
+        } else if (!existing.completedAt) {
+          nextCompletedAt = new Date();
+        }
+      } else {
+        // If moved out of completed status, clear completedAt
+        nextCompletedAt = null;
+      }
+
+      const updates: Partial<Omit<Task, "id" | "userId" | "createdAt">> = {
+        updatedAt: new Date(),
+      };
+
+      if (validated.title !== undefined) updates.title = validated.title;
+      if (validated.description !== undefined)
+        updates.description = validated.description;
+      if (validated.status !== undefined) updates.status = nextStatus;
+      if (validated.priority !== undefined) updates.priority = validated.priority;
+      if (validated.projectId !== undefined) updates.projectId = nextProjectId;
+      if (validated.parentTaskId !== undefined)
+        updates.parentTaskId = validated.parentTaskId;
+      if (validated.dueDate !== undefined)
+        updates.dueDate = validated.dueDate ? new Date(validated.dueDate) : null;
+      if (validated.estimatedDuration !== undefined)
+        updates.estimatedDuration = validated.estimatedDuration;
+      if (validated.actualDuration !== undefined)
+        updates.actualDuration = validated.actualDuration;
+
+      updates.completedAt = nextCompletedAt;
+
+      // 5. Execute task update
+      const [updated] = await tx
+        .update(tasks)
+        .set(updates)
+        .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
+        .returning();
+
+      // 6. Propagate project change to descendant subtasks if project changed
+      if (
+        validated.projectId !== undefined &&
+        validated.projectId !== existing.projectId
+      ) {
+        await tx.execute(sql`
+          WITH RECURSIVE subtask_tree AS (
+            SELECT id FROM tasks WHERE parent_task_id = ${safeTaskId} AND user_id = ${safeUserId}
+            UNION ALL
+            SELECT t.id FROM tasks t
+            JOIN subtask_tree st ON t.parent_task_id = st.id
+            WHERE t.user_id = ${safeUserId}
+          )
+          UPDATE tasks
+          SET project_id = ${nextProjectId}, updated_at = NOW()
+          WHERE id IN (SELECT id FROM subtask_tree) AND user_id = ${safeUserId};
+        `);
+      }
+
+      await createAuditLog(
+        {
+          userId: safeUserId,
+          category: "mutation",
+          action: "task.update",
+          status: "success",
+          details: {
+            taskId: safeTaskId,
+            updatedFields: Object.keys(validated),
+            status: updated.status,
+          },
+          ipAddress: actorInfo?.ipAddress,
+          userAgent: actorInfo?.userAgent,
+        },
+        tx
+      );
+
+      return toTaskDTO(updated);
+    });
+  } catch (err: any) {
+    if (err?.code === "23503") {
+      if (err.constraint?.includes("project") || err.detail?.includes("projects")) {
         throw new NotFoundError("Project not found.");
       }
-    }
-
-    const activeParentId =
-      validated.parentTaskId !== undefined
-        ? validated.parentTaskId
-        : existing.parentTaskId;
-
-    if (activeParentId) {
-      let effectiveParentProjectId = targetParentProjectId;
-      if (effectiveParentProjectId === undefined) {
-        const [pRow] = await tx
-          .select({ projectId: tasks.projectId })
-          .from(tasks)
-          .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, activeParentId)))
-          .limit(1);
-        effectiveParentProjectId = pRow?.projectId ?? null;
-      }
-
-      if (
-        nextProjectId &&
-        effectiveParentProjectId &&
-        nextProjectId !== effectiveParentProjectId
-      ) {
-        throw new InvariantViolationError(
-          "Subtask cannot belong to a different project than its parent task."
-        );
-      }
-      if (nextProjectId && !effectiveParentProjectId) {
-        throw new InvariantViolationError(
-          "Subtask cannot belong to a project when parent task has no project."
-        );
-      }
-      // If parent has project and child project was not explicitly provided or was null, inherit parent's project
-      if (!nextProjectId && effectiveParentProjectId && validated.projectId === undefined) {
-        nextProjectId = effectiveParentProjectId;
+      if (err.constraint?.includes("parent") || err.detail?.includes("tasks")) {
+        throw new NotFoundError("Parent task not found.");
       }
     }
-
-    // 4. Determine status and completedAt invariants
-    const nextStatus = validated.status ?? existing.status;
-    let nextCompletedAt = existing.completedAt;
-
-    if (nextStatus === "completed") {
-      if (validated.completedAt !== undefined) {
-        nextCompletedAt = validated.completedAt
-          ? new Date(validated.completedAt)
-          : new Date();
-      } else if (!existing.completedAt) {
-        nextCompletedAt = new Date();
-      }
-    } else {
-      // If moved out of completed status, clear completedAt
-      nextCompletedAt = null;
-    }
-
-    const updates: Partial<Omit<Task, "id" | "userId" | "createdAt">> = {
-      updatedAt: new Date(),
-    };
-
-    if (validated.title !== undefined) updates.title = validated.title;
-    if (validated.description !== undefined)
-      updates.description = validated.description;
-    if (validated.status !== undefined) updates.status = validated.status;
-    if (validated.priority !== undefined) updates.priority = validated.priority;
-    updates.projectId = nextProjectId;
-    if (validated.parentTaskId !== undefined)
-      updates.parentTaskId = validated.parentTaskId;
-    if (validated.dueDate !== undefined)
-      updates.dueDate = validated.dueDate ? new Date(validated.dueDate) : null;
-    if (validated.estimatedDuration !== undefined)
-      updates.estimatedDuration = validated.estimatedDuration;
-    if (validated.actualDuration !== undefined)
-      updates.actualDuration = validated.actualDuration;
-
-    updates.completedAt = nextCompletedAt;
-
-    const [updated] = await tx
-      .update(tasks)
-      .set(updates)
-      .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
-      .returning();
-
-    // If projectId changed on a parent task, propagate to all descendants in the hierarchy
-    if (nextProjectId !== existing.projectId) {
-      await tx.execute(sql`
-        WITH RECURSIVE subtask_tree AS (
-          SELECT id FROM tasks WHERE parent_task_id = ${safeTaskId} AND user_id = ${safeUserId}
-          UNION ALL
-          SELECT t.id FROM tasks t JOIN subtask_tree st ON t.parent_task_id = st.id WHERE t.user_id = ${safeUserId}
-        )
-        UPDATE tasks
-        SET project_id = ${nextProjectId}, updated_at = NOW()
-        WHERE id IN (SELECT id FROM subtask_tree) AND user_id = ${safeUserId};
-      `);
-    }
-
-    await createAuditLog(
-      {
-        userId: safeUserId,
-        category: "mutation",
-        action: "task.update",
-        status: "success",
-        details: {
-          taskId: safeTaskId,
-          updatedFields: Object.keys(validated),
-          status: updated.status,
-        },
-        ipAddress: actorInfo?.ipAddress,
-        userAgent: actorInfo?.userAgent,
-      },
-      tx
-    );
-
-    return toTaskDTO(updated);
-  });
+    throw err;
+  }
 }
 
 /**
@@ -621,41 +687,43 @@ export async function deleteTask(
   const safeUserId = validateUserId(authenticatedUserId);
   const safeTaskId = validateEntityId(taskId, "Task");
 
-  return await db.transaction(async (tx) => {
-    // Acquire row-level lock before deletion
-    const [existing] = await tx
-      .select({ id: tasks.id })
-      .from(tasks)
-      .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
-      .for("update")
-      .limit(1);
+  return await withDeadlockRetry(async () =>
+    db.transaction(async (tx) => {
+      // Acquire row-level lock before deletion
+      const [existing] = await tx
+        .select({ id: tasks.id })
+        .from(tasks)
+        .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
+        .for("update")
+        .limit(1);
 
-    if (!existing) {
-      throw new NotFoundError("Task not found.");
-    }
+      if (!existing) {
+        throw new NotFoundError("Task not found.");
+      }
 
-    const [deleted] = await tx
-      .delete(tasks)
-      .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
-      .returning({ id: tasks.id });
+      const [deleted] = await tx
+        .delete(tasks)
+        .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
+        .returning({ id: tasks.id });
 
-    if (!deleted) {
-      throw new NotFoundError("Task not found.");
-    }
+      if (!deleted) {
+        throw new NotFoundError("Task not found.");
+      }
 
-    await createAuditLog(
-      {
-        userId: safeUserId,
-        category: "mutation",
-        action: "task.delete",
-        status: "success",
-        details: { taskId: safeTaskId },
-        ipAddress: actorInfo?.ipAddress,
-        userAgent: actorInfo?.userAgent,
-      },
-      tx
-    );
+      await createAuditLog(
+        {
+          userId: safeUserId,
+          category: "mutation",
+          action: "task.delete",
+          status: "success",
+          details: { taskId: safeTaskId },
+          ipAddress: actorInfo?.ipAddress,
+          userAgent: actorInfo?.userAgent,
+        },
+        tx
+      );
 
-    return { success: true };
-  });
+      return { success: true };
+    })
+  );
 }
