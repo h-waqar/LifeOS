@@ -1,21 +1,3 @@
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'lifeos_app') THEN
-    CREATE ROLE lifeos_app NOLOGIN;
-  END IF;
-END
-$$;
---> statement-breakpoint
-GRANT USAGE ON SCHEMA public TO lifeos_app;
---> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "user", "session", "account", "verification", "passkey", "user_preferences" TO lifeos_app;
---> statement-breakpoint
-REVOKE ALL ON TABLE "audit_log" FROM PUBLIC;
---> statement-breakpoint
-REVOKE ALL ON TABLE "audit_log" FROM lifeos_app;
---> statement-breakpoint
-GRANT SELECT, INSERT ON TABLE "audit_log" TO lifeos_app;
---> statement-breakpoint
 CREATE OR REPLACE FUNCTION purge_expired_audit_logs(retention_days integer)
 RETURNS integer
 LANGUAGE plpgsql

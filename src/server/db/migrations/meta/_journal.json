@@ -22,6 +22,13 @@
       "when": 1789204010000,
       "tag": "0002_audit_security_boundary",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789204020000,
+      "tag": "0003_harden_audit_security",
+      "breakpoints": true
     }
   ]
 }

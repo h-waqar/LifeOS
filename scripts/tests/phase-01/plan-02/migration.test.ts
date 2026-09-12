@@ -57,6 +57,46 @@ describe("Database Migration Generation & Runner", () => {
     expect(combinedSql).toContain("trg_audit_log_prevent_direct_delete");
   });
 
+  it("enforces that no migration SQL file contains hardcoded passwords or static credentials", () => {
+    const sqlFiles = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith(".sql"));
+
+    for (const file of sqlFiles) {
+      const content = fs.readFileSync(path.join(migrationsDir, file), "utf-8");
+      // Migration SQL must not contain PASSWORD keywords or credentials
+      expect(content).not.toMatch(/PASSWORD\s+['"][^'"]+['"]/i);
+      expect(content).not.toContain("lifeos_app_password");
+    }
+  });
+
+  it("verifies that audit log delete protection does NOT rely on current_query()", () => {
+    const sqlFiles = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith(".sql"));
+
+    const combinedSql = sqlFiles
+      .map((f) => fs.readFileSync(path.join(migrationsDir, f), "utf-8"))
+      .join("\n");
+
+    // current_query() is prohibited due to comment bypass vulnerability
+    expect(combinedSql).not.toContain("current_query()");
+    // Instead, must use transaction-local session setting
+    expect(combinedSql).toContain("current_setting('lifeos.in_purge_procedure', true)");
+  });
+
+  it("verifies that role creation is provisioned as NOLOGIN without credentials in migrations", () => {
+    const sqlFiles = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith(".sql"));
+
+    const combinedSql = sqlFiles
+      .map((f) => fs.readFileSync(path.join(migrationsDir, f), "utf-8"))
+      .join("\n");
+
+    expect(combinedSql).toContain("CREATE ROLE lifeos_app NOLOGIN");
+  });
+
   it("verifies generated SQL DDL does not contain any domain tables (vertical-slice integrity)", () => {
     const sqlFiles = fs
       .readdirSync(migrationsDir)
