@@ -40,6 +40,7 @@ Plans:
 - [x] 01-02: PostgreSQL database setup with Drizzle ORM (foundational schema only: users, sessions / Better Auth tables, preferences, audit_log)
 - [x] 01-03: Database Hardening, Concurrency Lifecycle & Audit Log Security Boundary
 - [x] 01-04: Better Auth authentication, session security, and server authorization ownership guards
+- [x] 01-04.1: (INSERTED) Close Authentication Boundary Race Conditions & Production Hardening
 - [ ] 01-05: Application shell, navigation layout, theme settings, and audit logging
 
 ### Phase 2: Core Productivity

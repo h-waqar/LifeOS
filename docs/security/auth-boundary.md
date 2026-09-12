@@ -38,10 +38,18 @@ Query-Level Ownership Scoping (WHERE user_id = user.id)
 PostgreSQL Database Operation
 ```
 
-### Single-User Registration Lock (Decision D-01)
-LifeOS is dedicated to a single owner. When the first user registers, that user claims ownership of the system:
-- **HTTP Hook (`hooks.before`)**: Intercepts `/sign-up` requests. If `SELECT id FROM user LIMIT 1` returns any record, immediately throws `APIError("FORBIDDEN", 403)`.
-- **Database Hook (`databaseHooks.user.create.before`)**: Defense-in-depth trigger at the adapter level preventing user row insertion if a user already exists.
+### Single-User Registration Lock (Decision D-01, Plan 01-04.1)
+LifeOS is strictly dedicated to a single owner. The system guarantees single-user cardinality at both the application boundary and the PostgreSQL storage engine layer:
+- **Storage Engine Constraint (`single_user_lock`)**:
+  The `user` table enforces cardinality via:
+  ```sql
+  single_user_lock boolean DEFAULT true NOT NULL,
+  CONSTRAINT user_single_user_lock_unique UNIQUE (single_user_lock),
+  CONSTRAINT user_single_user_lock_check CHECK (single_user_lock = true)
+  ```
+  PostgreSQL's B-tree unique index locks the tuple key `true`. Under concurrent registration races, exactly one transaction can insert; concurrent or subsequent transactions fail with `23505 unique_violation`. Direct SQL inserts and Better Auth bypass attempts are strictly rejected at the database level.
+- **HTTP Hook (`hooks.before`)**: Fast fail-closed pre-check intercepting `/sign-up` requests. If `SELECT id FROM user LIMIT 1` returns any record, immediately throws `APIError("FORBIDDEN", 403)`.
+- **Database Hook (`databaseHooks.user.create.before`)**: Fast fail-closed check at the adapter level before statement execution.
 - Subsequent registration attempts are rejected with `403 Forbidden`.
 
 ---
