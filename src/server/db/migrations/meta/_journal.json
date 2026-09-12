@@ -29,6 +29,13 @@
       "when": 1789204020000,
       "tag": "0003_harden_audit_security",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789204030000,
+      "tag": "0004_single_user_lock",
+      "breakpoints": true
     }
   ]
 }

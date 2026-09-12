@@ -100,22 +100,17 @@ export const auth = betterAuth({
         after: async (createdUser) => {
           // Automatically initialize default preferences for the new owner
           try {
-            const existingPref = await db
-              .select({ id: userPreferences.id })
-              .from(userPreferences)
-              .where(eq(userPreferences.userId, createdUser.id))
-              .limit(1);
-
-            if (existingPref.length === 0) {
-              await db.insert(userPreferences).values({
+            await db
+              .insert(userPreferences)
+              .values({
                 userId: createdUser.id,
                 theme: "dark",
                 dateFormat: "YYYY-MM-DD",
                 timeFormat: "24h",
                 workingHoursStart: "09:00",
                 workingHoursEnd: "18:00",
-              });
-            }
+              })
+              .onConflictDoNothing();
           } catch (err) {
             console.error("Failed to initialize user preferences upon registration:", err);
           }

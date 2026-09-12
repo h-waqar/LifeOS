@@ -4,25 +4,37 @@ import {
   timestamp,
   boolean,
   integer,
+  unique,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /**
  * Better Auth Core: User Table
  * Stores identity anchor and primary user profile.
+ * Enforces single-user cardinality at the storage layer via single_user_lock.
  */
-export const user = pgTable("user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").notNull().default(false),
-  image: text("image"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const user = pgTable(
+  "user",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    emailVerified: boolean("email_verified").notNull().default(false),
+    image: text("image"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    singleUserLock: boolean("single_user_lock").notNull().default(true),
+  },
+  (table) => [
+    unique("user_single_user_lock_unique").on(table.singleUserLock),
+    check("user_single_user_lock_check", sql`${table.singleUserLock} = true`),
+  ]
+);
 
 /**
  * Better Auth Core: Session Table
