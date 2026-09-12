@@ -7,11 +7,13 @@ import { projects } from "@/server/db/schema/projects";
 import { tasks } from "@/server/db/schema/tasks";
 import { createAuditLog } from "@/server/audit";
 import { eq, sql } from "drizzle-orm";
+import { spawn, type ChildProcess } from "node:child_process";
 
 const BASE_URL = process.env.LIVE_HTTP_URL || "http://localhost:3000";
 
 describe("Plan 01-09: Concurrency, Contention & Race-Condition Verification Suite", () => {
   let probe: ProbeResult;
+  let serverProcess: ChildProcess | null = null;
 
   const testUser = {
     email: "plan09_concurrency@example.com",
@@ -25,6 +27,36 @@ describe("Plan 01-09: Concurrency, Contention & Race-Condition Verification Suit
   beforeAll(async () => {
     probe = await probeDatabase();
     if (!probe.isAvailable) return;
+
+    let serverRunning = false;
+    try {
+      const res = await fetch(`${BASE_URL}/api/preferences`, { signal: AbortSignal.timeout(1500) });
+      if (res.status === 401 || res.status === 200) {
+        serverRunning = true;
+      }
+    } catch {
+      serverRunning = false;
+    }
+
+    if (!serverRunning) {
+      serverProcess = spawn("npx", ["next", "start", "-p", "3000"], {
+        stdio: "ignore",
+        detached: true,
+      });
+
+      const startTime = Date.now();
+      while (Date.now() - startTime < 15000) {
+        try {
+          const res = await fetch(`${BASE_URL}/api/preferences`, { signal: AbortSignal.timeout(1000) });
+          if (res.status === 401 || res.status === 200) {
+            serverRunning = true;
+            break;
+          }
+        } catch {
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
+    }
 
     await db.delete(user);
 
@@ -50,6 +82,11 @@ describe("Plan 01-09: Concurrency, Contention & Race-Condition Verification Suit
   });
 
   afterAll(async () => {
+    if (serverProcess && serverProcess.pid) {
+      try {
+        process.kill(-serverProcess.pid);
+      } catch {}
+    }
     if (probe?.isAvailable) {
       await db.delete(user);
       await closeDatabase();
