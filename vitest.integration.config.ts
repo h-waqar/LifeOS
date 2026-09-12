@@ -9,6 +9,7 @@ export default defineConfig({
     globals: true,
     include: ["scripts/tests/**/*.integration.test.ts"],
     testTimeout: 30000,
+    fileParallelism: false,
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
