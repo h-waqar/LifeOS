@@ -9,23 +9,36 @@ describe.skipIf(!probe.isAvailable)(
   () => {
     let adminPool: Pool;
     let appPool: Pool;
+    const testAppPassword = `test_lifeos_app_${Date.now()}`;
 
-    beforeAll(() => {
+    beforeAll(async () => {
       adminPool = new Pool({
         connectionString:
           process.env.DATABASE_URL ||
           "postgresql://lifeos:lifeos_password@localhost:5432/lifeos",
       });
 
+      // Role provisioning: dynamically assign a unique ephemeral password for the test suite run
+      await adminPool.query(
+        `ALTER ROLE lifeos_app WITH LOGIN PASSWORD '${testAppPassword}';`
+      );
+
       appPool = new Pool({
         connectionString:
-          "postgresql://lifeos_app:lifeos_app_password@localhost:5432/lifeos",
+          process.env.APP_DATABASE_URL ||
+          `postgresql://lifeos_app:${testAppPassword}@localhost:5432/lifeos`,
       });
     });
 
     afterAll(async () => {
       await appPool?.end();
-      await adminPool?.end();
+      // Credential cleanup: reset lifeos_app to NOLOGIN and remove credentials
+      if (adminPool) {
+        await adminPool
+          .query("ALTER ROLE lifeos_app WITH NOLOGIN PASSWORD NULL;")
+          .catch(() => {});
+        await adminPool.end();
+      }
     });
 
     it("PostgreSQL catalog inspection confirms final lifeos_app privileges and SECURITY DEFINER configuration", async () => {
@@ -51,7 +64,7 @@ describe.skipIf(!probe.isAvailable)(
       `);
       expect(funcPriv.rows[0].can_execute).toBe(true);
 
-      // 3. Verify function is SECURITY DEFINER with fixed search_path
+      // 3. Verify function is SECURITY DEFINER with fixed search_path = pg_catalog
       const funcDef = await adminPool.query(`
         SELECT proname, prosecdef, proconfig
         FROM pg_proc
@@ -59,7 +72,7 @@ describe.skipIf(!probe.isAvailable)(
       `);
       expect(funcDef.rows.length).toBe(1);
       expect(funcDef.rows[0].prosecdef).toBe(true); // SECURITY DEFINER
-      expect(funcDef.rows[0].proconfig).toEqual(["search_path=pg_catalog, public"]); // Fixed search_path
+      expect(funcDef.rows[0].proconfig).toEqual(["search_path=pg_catalog"]); // Fixed secure search_path
     });
 
     it("lifeos_app cannot UPDATE audit_log", async () => {
@@ -251,6 +264,103 @@ describe.skipIf(!probe.isAvailable)(
 
       // Clean up spoofed function
       await adminPool.query("DROP FUNCTION IF EXISTS spoofed_delete_attempt(text);");
+    });
+
+    it("direct DELETE with SQL comments (/* purge_expired_audit_logs */) is REJECTED by hardened trigger", async () => {
+      const testId = `adv-comment-${Date.now()}`;
+      await adminPool.query(
+        `INSERT INTO audit_log (id, category, action, status, created_at)
+         VALUES ($1, 'security', 'adv.comment.bypass', 'success', NOW() - INTERVAL '150 days');`,
+        [testId]
+      );
+
+      // Attempting comment bypass that worked in vulnerable trigger
+      await expect(
+        adminPool.query(`DELETE FROM audit_log WHERE id = $1 /* purge_expired_audit_logs */;`, [testId])
+      ).rejects.toThrow(/Direct DELETE on audit_log is prohibited/i);
+
+      // Clean up
+      await adminPool.query("SELECT purge_expired_audit_logs(90);");
+    });
+
+    it("direct DELETE with string literals or subqueries containing function name is REJECTED", async () => {
+      const testId = `adv-str-${Date.now()}`;
+      await adminPool.query(
+        `INSERT INTO audit_log (id, category, action, status, created_at)
+         VALUES ($1, 'security', 'adv.str.bypass', 'success', NOW() - INTERVAL '150 days');`,
+        [testId]
+      );
+
+      await expect(
+        adminPool.query(
+          `DELETE FROM audit_log WHERE id = $1 AND 'purge_expired_audit_logs' = 'purge_expired_audit_logs';`,
+          [testId]
+        )
+      ).rejects.toThrow(/Direct DELETE on audit_log is prohibited/i);
+
+      await adminPool.query("SELECT purge_expired_audit_logs(90);");
+    });
+
+    it("retention_days > 36500 (100 years) is rejected to prevent numeric overflow", async () => {
+      // 36501 days rejected
+      await expect(
+        appPool.query("SELECT purge_expired_audit_logs(36501);")
+      ).rejects.toThrow(/Retention period exceeds maximum threshold/i);
+
+      // Integer max rejected
+      await expect(
+        appPool.query("SELECT purge_expired_audit_logs(2147483647);")
+      ).rejects.toThrow(/Retention period exceeds maximum threshold/i);
+    });
+
+    it("PUBLIC does not have execute privileges on internal trigger functions", async () => {
+      const triggerFuncs = [
+        "audit_log_prevent_direct_delete()",
+        "audit_log_prevent_update()",
+      ];
+
+      for (const fn of triggerFuncs) {
+        const res = await adminPool.query(
+          `SELECT has_function_privilege('public', $1, 'execute') AS public_can_exec;`,
+          [fn]
+        );
+        expect(res.rows[0].public_can_exec).toBe(false);
+      }
+    });
+
+    it("lifeos_app cannot ALTER table, DROP table, or disable triggers due to ownership boundary", async () => {
+      // lifeos_app is NOT table owner
+      await expect(
+        appPool.query("ALTER TABLE audit_log DISABLE TRIGGER ALL;")
+      ).rejects.toThrow(/must be owner of table audit_log/i);
+
+      await expect(
+        appPool.query("DROP TABLE audit_log;")
+      ).rejects.toThrow(/must be owner of table audit_log/i);
+
+      await expect(
+        appPool.query("ALTER TABLE audit_log DROP COLUMN category;")
+      ).rejects.toThrow(/must be owner of table audit_log/i);
+    });
+
+    it("documents security reality: lifeos_app can insert arbitrary past timestamps and fake actor IDs", async () => {
+      // An application role with INSERT privilege can supply arbitrary created_at and actor
+      const fakeId = `fake-audit-${Date.now()}`;
+      await appPool.query(
+        `INSERT INTO audit_log (id, user_id, category, action, status, actor, details, created_at)
+         VALUES ($1, NULL, 'security', 'fake.event', 'success', 'impersonated_admin', '{"forged": true}', NOW() - INTERVAL '500 days');`,
+        [fakeId]
+      );
+
+      const res = await adminPool.query(
+        `SELECT actor, details FROM audit_log WHERE id = $1;`,
+        [fakeId]
+      );
+      expect(res.rows[0].actor).toBe("impersonated_admin");
+      expect(res.rows[0].details).toEqual({ forged: true });
+
+      // Clean up via legitimate purge procedure
+      await adminPool.query("SELECT purge_expired_audit_logs(90);");
     });
   }
 );
