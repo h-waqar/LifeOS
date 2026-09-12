@@ -10,6 +10,16 @@ if (typeof window !== "undefined" && !process.env.VITEST) {
   );
 }
 
+/**
+ * Formal PostgreSQL Connection Lifecycle States:
+ * - IDLE: Initial state or reset state. No pool instance exists.
+ * - CONNECTING: Transient state while creating a new Pool instance.
+ * - READY: Pool resource is allocated and ready to manage lazy connections. Queries are permitted.
+ *   (Note: node-postgres pools connect lazily. "READY" means the pool resource is constructed.
+ *   Active connectivity over the wire is verified via checkDatabaseHealth()).
+ * - CLOSING: Graceful shutdown in progress. Calls to getPool() / getDb() throw to prevent races.
+ * - CLOSED: Shutdown completed. Sockets drained and caches cleared. Queries not permitted until re-initialized.
+ */
 export type LifecycleState =
   | "IDLE"
   | "CONNECTING"
@@ -63,9 +73,20 @@ export function createPgPool(config?: PoolConfig): Pool {
 
 /**
  * Returns or initializes the global pool instance with Next.js HMR development caching
- * and concurrency lifecycle state management.
+ * and concurrency-safe lifecycle state management.
+ * 
+ * Semantics:
+ * - In IDLE or CLOSED: Transitions CONNECTING -> READY and instantiates the pool.
+ * - In READY: Reuses the active cached pool.
+ * - In CLOSING: Throws an explicit Error to prevent returning a dying pool or orphaning a new pool.
  */
 export function getPool(config?: PoolConfig): Pool {
+  if (currentState === "CLOSING" || closingPromise !== null) {
+    throw new Error(
+      "Cannot acquire database pool while database connection is CLOSING. Await closeDatabase() completion before re-initializing."
+    );
+  }
+
   const cachedPool =
     process.env.NODE_ENV !== "production"
       ? globalThis.__lifeos_pg_pool__
@@ -77,16 +98,21 @@ export function getPool(config?: PoolConfig): Pool {
   }
 
   setState("CONNECTING");
-  const newPool = createPgPool(config);
+  try {
+    const newPool = createPgPool(config);
 
-  if (process.env.NODE_ENV !== "production") {
-    globalThis.__lifeos_pg_pool__ = newPool;
-  } else {
-    localPool = newPool;
+    if (process.env.NODE_ENV !== "production") {
+      globalThis.__lifeos_pg_pool__ = newPool;
+    } else {
+      localPool = newPool;
+    }
+
+    setState("READY");
+    return newPool;
+  } catch (error) {
+    setState("IDLE");
+    throw error;
   }
-
-  setState("READY");
-  return newPool;
 }
 
 /**
@@ -170,6 +196,7 @@ export async function checkDatabaseHealth(customPool?: Pool): Promise<{
 /**
  * Gracefully terminates pool connections and resets the state machine and caches.
  * Concurrency-safe: multiple concurrent calls share the same close promise.
+ * Guaranteed cleanup: references are cleared in finally even if pool.end() fails.
  */
 export async function closeDatabase(): Promise<void> {
   if (closingPromise) {
@@ -182,7 +209,9 @@ export async function closeDatabase(): Promise<void> {
       : localPool;
 
   if (!activePool || (activePool as any).ended) {
-    setState("IDLE");
+    if (currentState !== "CLOSED") {
+      setState("IDLE");
+    }
     return;
   }
 
@@ -201,7 +230,6 @@ export async function closeDatabase(): Promise<void> {
       localPool = undefined;
       localDb = undefined;
       setState("CLOSED");
-      setState("IDLE");
       closingPromise = null;
     }
   })();

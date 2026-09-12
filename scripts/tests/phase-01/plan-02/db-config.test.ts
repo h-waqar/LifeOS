@@ -93,17 +93,14 @@ describe("Database Configuration & Pool Lifecycle", () => {
   });
 
   it("tracks connection lifecycle state transitions across init and close", async () => {
-    await closeDatabase();
-    expect(getLifecycleState()).toBe("IDLE");
-
     const activePool = getPool();
     expect(activePool).toBeDefined();
     expect(getLifecycleState()).toBe("READY");
 
     const closePromise = closeDatabase();
-    expect(["CLOSING", "CLOSED", "IDLE"]).toContain(getLifecycleState());
+    expect(["CLOSING", "CLOSED"]).toContain(getLifecycleState());
     await closePromise;
-    expect(getLifecycleState()).toBe("IDLE");
+    expect(getLifecycleState()).toBe("CLOSED");
   });
 
   it("handles concurrent closeDatabase() invocations sharing the same promise", async () => {
@@ -119,12 +116,49 @@ describe("Database Configuration & Pool Lifecycle", () => {
     expect(res1).toBeUndefined();
     expect(res2).toBeUndefined();
     expect(res3).toBeUndefined();
-    expect(getLifecycleState()).toBe("IDLE");
+    expect(getLifecycleState()).toBe("CLOSED");
+  });
+
+  it("prohibits getPool() and getDb() while database is CLOSING to prevent concurrency races", async () => {
+    const activePool = getPool();
+    expect(activePool).toBeDefined();
+
+    // Start graceful shutdown
+    const closePromise = closeDatabase();
+    expect(getLifecycleState()).toBe("CLOSING");
+
+    // Attempting getPool() during CLOSING must throw and not expose dying pool or overwrite state
+    expect(() => getPool()).toThrow(
+      /Cannot acquire database pool while database connection is CLOSING/
+    );
+
+    // Attempting getDb() during CLOSING must also throw
+    expect(() => getDb()).toThrow(
+      /Cannot acquire database pool while database connection is CLOSING/
+    );
+
+    await closePromise;
+    expect(getLifecycleState()).toBe("CLOSED");
+  });
+
+  it("concurrent getPool() calls return the identical pool instance", () => {
+    const [p1, p2, p3] = [getPool(), getPool(), getPool()];
+    expect(p1).toBe(p2);
+    expect(p2).toBe(p3);
+    expect(getLifecycleState()).toBe("READY");
+  });
+
+  it("concurrent getDb() calls return the identical client instance", () => {
+    const [d1, d2, d3] = [getDb(), getDb(), getDb()];
+    expect(d1).toBe(d2);
+    expect(d2).toBe(d3);
+    expect(getLifecycleState()).toBe("READY");
   });
 
   it("re-initializes pool and client cleanly after closeDatabase()", async () => {
     const pool1 = getPool();
     await closeDatabase();
+    expect(getLifecycleState()).toBe("CLOSED");
 
     const pool2 = getPool();
     expect(pool2).toBeDefined();
