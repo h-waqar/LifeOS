@@ -41,7 +41,8 @@ Plans:
 - [x] 01-03: Database Hardening, Concurrency Lifecycle & Audit Log Security Boundary
 - [x] 01-04: Better Auth authentication, session security, and server authorization ownership guards
 - [x] 01-04.1: (INSERTED) Close Authentication Boundary Race Conditions & Production Hardening
-- [ ] 01-05: Application shell, navigation layout, theme settings, and audit logging
+- [x] 01-05: Adversarial API & Authorization Boundary Integration Suite
+- [x] 01-06: (INSERTED) Adversarial Application/API Security Boundary & Data-Access Audit
 
 ### Phase 2: Core Productivity
 **Goal**: Deliver the primary execution engine: Goals → Projects → Tasks → Calendar / Time Blocking → Habits → Dashboard.

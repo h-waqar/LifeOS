@@ -113,7 +113,23 @@ An adversarial security audit of all API boundaries, authentication hooks, and s
 
 ---
 
-## 7. Verification Commands
+## 7. Plan 01-06 Adversarial Application & API Boundary Hardening
+
+An adversarial security audit of application endpoints, browser security headers, payload boundaries, and data-access flows established:
+
+1. **Cache-Control & User Data Isolation**: Authenticated API routes (`/api/preferences`) enforce dynamic execution (`export const dynamic = "force-dynamic"`) and set `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate` and `Pragma: no-cache` on all responses, preventing proxy or CDN response caching across users.
+2. **Payload Size Guard (DoS Defense)**: Mutation routes enforce dual-layer byte length limits: checking `Content-Length` and verifying raw body byte size `<= 32KB` before JSON parsing, preventing memory exhaustion (OOM) denial-of-service attacks.
+3. **MIME / Content-Type Enforcement**: Mutation endpoints verify `Content-Type: application/json` and reject non-JSON payloads with `415 Unsupported Media Type`.
+4. **Stored XSS Prevention**: Preference formatting schemas (`dateFormat`) strictly forbid HTML tags (`<script>`, `<img>`), JavaScript pseudoprotocols, ASCII control characters, and null bytes via character allowlist regex (`/^[a-zA-Z0-9\s/._\-:,]+$/`).
+5. **Audit Log Ingress Sanitization**: `createAuditLog` bounds and sanitizes incoming IP addresses (max 128 chars) and User-Agent headers (max 512 chars) and validates non-empty action strings, preventing table bloat and log poisoning.
+6. **Browser Security Headers**: Global Next.js configuration enforces `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, `X-XSS-Protection: 0`, and `Cross-Origin-Opener-Policy: same-origin`.
+7. **CLI Password Length Boundary**: The emergency recovery script (`scripts/auth-reset.ts`) enforces password length between 8 and 128 characters, matching Better Auth's password hashing policy.
+
+For complete audit documentation and mutation testing evidence, see `docs/security/api-security-audit.md`.
+
+---
+
+## 8. Verification Commands
 
 ```bash
 # Run all unit, adversarial guard, and boundary tests
