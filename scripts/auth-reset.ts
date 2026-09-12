@@ -74,10 +74,10 @@ export async function runAuthReset(options?: {
       }
     }
 
-    if (!targetPassword || targetPassword.length < 8) {
+    if (!targetPassword || targetPassword.length < 8 || targetPassword.length > 128) {
       return {
         success: false,
-        message: "Password must be at least 8 characters long.",
+        message: "Password must be at least 8 characters and at most 128 characters long.",
       };
     }
 
