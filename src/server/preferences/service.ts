@@ -12,15 +12,23 @@ if (typeof window !== "undefined" && !process.env.VITEST) {
   );
 }
 
-export const updatePreferencesSchema = z.object({
-  theme: z.enum(["dark", "light", "system"]).optional(),
-  dateFormat: z.string().min(1).max(32).optional(),
-  timeFormat: z.enum(["12h", "24h"]).optional(),
-  workingHoursStart: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format must be HH:mm").optional(),
-  workingHoursEnd: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format must be HH:mm").optional(),
-  // Explicitly disallow or strip client-controlled userId to prevent spoofing
-  userId: z.never({ message: "Client cannot specify userId in payload" }).optional(),
-});
+export const updatePreferencesSchema = z
+  .object({
+    theme: z.enum(["dark", "light", "system"]).optional(),
+    dateFormat: z.string().trim().min(1, "Date format cannot be empty or whitespace").max(32).optional(),
+    timeFormat: z.enum(["12h", "24h"]).optional(),
+    workingHoursStart: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format must be HH:mm")
+      .optional(),
+    workingHoursEnd: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format must be HH:mm")
+      .optional(),
+    // Explicitly disallow client-controlled userId to prevent spoofing
+    userId: z.never({ message: "Client cannot specify userId in payload" }).optional(),
+  })
+  .strict();
 
 export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
 
@@ -32,14 +40,18 @@ export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
 export async function getUserPreferences(
   authenticatedUserId: string
 ): Promise<UserPreferences | null> {
-  if (!authenticatedUserId) {
+  if (
+    !authenticatedUserId ||
+    typeof authenticatedUserId !== "string" ||
+    !authenticatedUserId.trim()
+  ) {
     throw new AuthorizationError("Authenticated user ID is required to read preferences.");
   }
 
   const results = await db
     .select()
     .from(userPreferences)
-    .where(eq(userPreferences.userId, authenticatedUserId))
+    .where(eq(userPreferences.userId, authenticatedUserId.trim()))
     .limit(1);
 
   return results[0] ?? null;
@@ -48,20 +60,26 @@ export async function getUserPreferences(
 /**
  * Updates preferences for the authenticated user.
  * Strictly uses query-level condition: `WHERE user_id = authenticatedUserId`.
- * Client payload is validated via Zod, discarding any client-injected userId.
+ * Client payload is validated via Zod (.strict()), discarding any client-injected userId.
+ * Employs an atomic single-statement upsert to prevent concurrent creation/update races.
  */
 export async function updateUserPreferences(
   authenticatedUserId: string,
   input: UpdatePreferencesInput,
   actorInfo?: { ipAddress?: string | null; userAgent?: string | null }
 ): Promise<UserPreferences> {
-  if (!authenticatedUserId) {
+  if (
+    !authenticatedUserId ||
+    typeof authenticatedUserId !== "string" ||
+    !authenticatedUserId.trim()
+  ) {
     throw new AuthorizationError("Authenticated user ID is required to update preferences.");
   }
 
+  const safeUserId = authenticatedUserId.trim();
   const validated = updatePreferencesSchema.parse(input);
 
-  // Strip any unexpected keys and enforce server-controlled fields
+  // Enforce server-controlled fields
   const safeUpdates: Partial<Omit<UserPreferences, "id" | "userId" | "createdAt">> = {};
   if (validated.theme !== undefined) safeUpdates.theme = validated.theme;
   if (validated.dateFormat !== undefined) safeUpdates.dateFormat = validated.dateFormat;
@@ -71,45 +89,34 @@ export async function updateUserPreferences(
 
   const now = new Date();
 
-  // Atomically update only if the record belongs to authenticatedUserId
-  const updated = await db
-    .update(userPreferences)
-    .set({
-      ...safeUpdates,
+  // Atomically upsert preferences strictly anchored to safeUserId
+  const [finalRecord] = await db
+    .insert(userPreferences)
+    .values({
+      userId: safeUserId,
+      theme: safeUpdates.theme ?? "dark",
+      dateFormat: safeUpdates.dateFormat ?? "YYYY-MM-DD",
+      timeFormat: safeUpdates.timeFormat ?? "24h",
+      workingHoursStart: safeUpdates.workingHoursStart ?? "09:00",
+      workingHoursEnd: safeUpdates.workingHoursEnd ?? "18:00",
       updatedAt: now,
     })
-    .where(eq(userPreferences.userId, authenticatedUserId))
-    .returning();
-
-  let finalRecord: UserPreferences;
-
-  if (updated.length > 0) {
-    finalRecord = updated[0];
-  } else {
-    // If not found, insert fresh preferences strictly anchored to authenticatedUserId
-    const inserted = await db
-      .insert(userPreferences)
-      .values({
-        userId: authenticatedUserId,
-        theme: safeUpdates.theme ?? "dark",
-        dateFormat: safeUpdates.dateFormat ?? "YYYY-MM-DD",
-        timeFormat: safeUpdates.timeFormat ?? "24h",
-        workingHoursStart: safeUpdates.workingHoursStart ?? "09:00",
-        workingHoursEnd: safeUpdates.workingHoursEnd ?? "18:00",
+    .onConflictDoUpdate({
+      target: userPreferences.userId,
+      set: {
+        ...safeUpdates,
         updatedAt: now,
-      })
-      .returning();
-
-    finalRecord = inserted[0];
-  }
+      },
+    })
+    .returning();
 
   // Record mutation in audit log
   await createAuditLog({
-    userId: authenticatedUserId,
+    userId: safeUserId,
     category: "mutation",
     action: "preferences.updated",
     status: "success",
-    actor: `user:${authenticatedUserId}`,
+    actor: `user:${safeUserId}`,
     details: safeUpdates as Record<string, unknown>,
     ipAddress: actorInfo?.ipAddress,
     userAgent: actorInfo?.userAgent,
