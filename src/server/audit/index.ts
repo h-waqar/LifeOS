@@ -25,12 +25,19 @@ export interface CreateAuditLogParams {
  */
 export async function createAuditLog(params: CreateAuditLogParams): Promise<void> {
   try {
+    const sanitizedUserId =
+      typeof params.userId === "string" && params.userId.trim().length > 0
+        ? params.userId.trim()
+        : null;
+
     await db.insert(auditLog).values({
-      userId: params.userId ?? null,
+      userId: sanitizedUserId,
       category: params.category,
       action: params.action,
       status: params.status,
-      actor: params.actor ?? (params.userId ? `user:${params.userId}` : "system"),
+      actor:
+        params.actor ??
+        (sanitizedUserId ? `user:${sanitizedUserId}` : "system"),
       details: params.details ?? null,
       ipAddress: params.ipAddress ?? null,
       userAgent: params.userAgent ?? null,
