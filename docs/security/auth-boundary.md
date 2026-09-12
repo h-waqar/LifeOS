@@ -72,19 +72,20 @@ LifeOS is strictly dedicated to a single owner. The system guarantees single-use
 Located in `src/server/auth/guard.ts`:
 
 ### `requireAuthenticatedUser(source?)`
-Resolves incoming headers (from explicit request arguments or Next.js `headers()`), validates the session via Better Auth, and returns `{ user, session }`.
+Resolves incoming headers (from explicit request arguments, `{ headers: ... }` dictionaries, or Next.js `headers()`), validates the session via Better Auth, and returns `{ user, session }`.
 - **Fails Closed**: Throws `AuthenticationError` (`status: 401`, `code: "UNAUTHORIZED"`).
 - Never trusts client-supplied user IDs.
 
 ### `requireResourceOwnership(resourceUserId, authenticatedUserId)`
 Validates that a targeted resource owner ID matches the authenticated user ID.
-- **Fails Closed**: Throws `AuthorizationError` (`status: 403`, `code: "FORBIDDEN"`).
+- **Fails Closed**: Throws `AuthorizationError` (`status: 403`, `code: "FORBIDDEN"`) if either ID is empty, whitespace-only, non-string, null, undefined, or mismatched (preventing IDOR / BOLA).
 
 ### `withUserScope(column, authenticatedUserId, extraCondition?)`
 Helper that constructs a Drizzle SQL condition enforcing query-level ownership filtering:
 ```ts
-eq(column, authenticatedUserId)
+eq(column, authenticatedUserId.trim())
 ```
+Guarantees non-empty trimmed string identity before database query generation.
 
 ---
 
@@ -95,16 +96,27 @@ In the event of lost credentials, the CLI recovery script `pnpm auth:reset` (`sc
 pnpm auth:reset --email <email> --password <new_password>
 ```
 1. Computes high-entropy password hash using `better-auth/crypto`.
-2. Updates credentials in the `account` table.
-3. Immediately revokes all active sessions from the `session` table.
-4. Writes an immutable audit record to `audit_log` with `action: "auth.cli_reset"`, `category: "security"`.
+2. Updates credentials in the `account` table and revokes all active sessions in the `session` table inside an **atomic PostgreSQL database transaction** (`db.transaction`).
+3. Writes an immutable audit record to `audit_log` with `action: "auth.cli_reset"`, `category: "security"`.
 
 ---
 
-## 6. Verification Commands
+## 6. Plan 01-05 Adversarial Hardening & Boundary Defense
+
+An adversarial security audit of all API boundaries, authentication hooks, and storage-engine constraints established:
+
+1. **Audit Log FK Sanitization**: `createAuditLog` sanitizes `userId` (`params.userId?.trim() || null`). Empty strings or whitespace do not violate PostgreSQL foreign key constraints (`audit_log_user_id_user_id_fk`), ensuring security event logs are never dropped.
+2. **Atomic Upsert Concurrency**: `updateUserPreferences` uses a single atomic `INSERT INTO ... ON CONFLICT (user_id) DO UPDATE` query rather than check-then-act. Concurrent mutations cannot fail with unique constraint violations or 500 errors.
+3. **Strict Payload Boundaries**: `updatePreferencesSchema` is strictly closed (`.strict()`). Unrecognized properties (`ownerId`, `user_id`, `id`, `singleUserLock`, `admin`) are rejected immediately with `400 Bad Request`.
+4. **Whitespace & Type Confusion Defense**: All authorization guards and services validate that user identifiers and formatting parameters are non-empty trimmed strings.
+5. **Fail-Closed API Surface**: Unauthenticated requests to `/api/preferences` (GET, PATCH, PUT) and Better Auth internal endpoints (`list-sessions`, `revoke-session`, `update-user`, `delete-user`, passkeys) fail closed with `401 Unauthorized` without leaking stack traces or internal SQL.
+
+---
+
+## 7. Verification Commands
 
 ```bash
-# Run all unit and boundary tests
+# Run all unit, adversarial guard, and boundary tests
 pnpm test
 
 # Run live PostgreSQL integration tests with authenticity enforcement
