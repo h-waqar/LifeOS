@@ -53,6 +53,10 @@ function ProjectsContent() {
   const [deletingProject, setDeletingProject] = React.useState<ProjectDTO | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
 
+  const isCreatingRef = React.useRef(false);
+  const isEditingRef = React.useRef(false);
+  const isDeletingRef = React.useRef(false);
+
   const fetchProjects = React.useCallback(async () => {
     try {
       setLoading(true);
@@ -99,8 +103,9 @@ function ProjectsContent() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (isCreatingRef.current || !name.trim()) return;
 
+    isCreatingRef.current = true;
     setCreateLoading(true);
     try {
       const payload: Record<string, unknown> = {
@@ -134,6 +139,7 @@ function ProjectsContent() {
     } catch (err: any) {
       toast.error(err.message || "Failed to create project");
     } finally {
+      isCreatingRef.current = false;
       setCreateLoading(false);
     }
   };
@@ -149,8 +155,9 @@ function ProjectsContent() {
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingProject || !editName.trim()) return;
+    if (isEditingRef.current || !editingProject || !editName.trim()) return;
 
+    isEditingRef.current = true;
     setEditLoading(true);
     try {
       const payload: Record<string, unknown> = {
@@ -181,6 +188,7 @@ function ProjectsContent() {
     } catch (err: any) {
       toast.error(err.message || "Failed to update project");
     } finally {
+      isEditingRef.current = false;
       setEditLoading(false);
     }
   };
@@ -191,8 +199,9 @@ function ProjectsContent() {
   };
 
   const handleDelete = async () => {
-    if (!deletingProject) return;
+    if (isDeletingRef.current || !deletingProject) return;
 
+    isDeletingRef.current = true;
     setDeleteLoading(true);
     try {
       const res = await fetch(`/api/projects/${deletingProject.id}`, {
@@ -211,6 +220,7 @@ function ProjectsContent() {
     } catch (err: any) {
       toast.error(err.message || "Failed to delete project");
     } finally {
+      isDeletingRef.current = false;
       setDeleteLoading(false);
     }
   };
@@ -354,10 +364,15 @@ function ProjectsContent() {
         >
           <form onSubmit={handleCreate} className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="create-project-name"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Project Name *
               </label>
               <Input
+                id="create-project-name"
+                name="name"
                 placeholder="e.g. Q3 Health & Fitness"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -369,10 +384,15 @@ function ProjectsContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="create-project-desc"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Description
               </label>
               <Textarea
+                id="create-project-desc"
+                name="description"
                 placeholder="Project scope and goals..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -383,10 +403,15 @@ function ProjectsContent() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="create-project-status"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Status
                 </label>
                 <Select
+                  id="create-project-status"
+                  name="status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value as ProjectStatus)}
                   disabled={createLoading}
@@ -401,10 +426,15 @@ function ProjectsContent() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="create-project-priority"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Priority
                 </label>
                 <Select
+                  id="create-project-priority"
+                  name="priority"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as Priority)}
                   disabled={createLoading}
@@ -447,10 +477,15 @@ function ProjectsContent() {
         >
           <form onSubmit={handleEdit} className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="edit-project-name"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Project Name *
               </label>
               <Input
+                id="edit-project-name"
+                name="name"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 required
@@ -460,10 +495,15 @@ function ProjectsContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="edit-project-desc"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Description
               </label>
               <Textarea
+                id="edit-project-desc"
+                name="description"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 disabled={editLoading}
@@ -473,10 +513,15 @@ function ProjectsContent() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="edit-project-status"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Status
                 </label>
                 <Select
+                  id="edit-project-status"
+                  name="status"
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value as ProjectStatus)}
                   disabled={editLoading}
@@ -491,10 +536,15 @@ function ProjectsContent() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="edit-project-priority"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Priority
                 </label>
                 <Select
+                  id="edit-project-priority"
+                  name="priority"
                   value={editPriority}
                   onChange={(e) => setEditPriority(e.target.value as Priority)}
                   disabled={editLoading}

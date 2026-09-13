@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const isSubmittingRef = React.useRef(false);
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -30,11 +31,13 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorMsg(null);
 
+    if (isSubmittingRef.current) return;
     if (!email.trim() || !password) {
       setErrorMsg("Please enter both email and password.");
       return;
     }
 
+    isSubmittingRef.current = true;
     setLoading(true);
     try {
       const res = await signIn.email({
@@ -56,6 +59,7 @@ export default function LoginPage() {
       setErrorMsg(message);
       toast.error(message);
     } finally {
+      isSubmittingRef.current = false;
       setLoading(false);
     }
   };

@@ -44,6 +44,9 @@ Plans:
 - [x] 01-05: Adversarial API & Authorization Boundary Integration Suite
 - [x] 01-06: (INSERTED) Adversarial Application/API Security Boundary & Data-Access Audit
 - [x] 01-07: Core Domain Model & Data Integrity (Projects, Tasks, PostgreSQL Composite Isolation & Invariants)
+- [x] 01-08: Task Hierarchy Hardening, Transactional Audit Logging & Concurrency Defense
+- [x] 01-09: Application Shell, Core Productivity Views & Browser E2E Verification
+- [x] 01-10: Repository-Native Human Verification Loop Framework (.human-loop/)
 
 ### Phase 2: Core Productivity
 **Goal**: Deliver the primary execution engine: Goals → Projects → Tasks → Calendar / Time Blocking → Habits → Dashboard.

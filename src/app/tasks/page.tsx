@@ -71,6 +71,11 @@ function TasksContent() {
   const [deletingTask, setDeletingTask] = React.useState<TaskDTO | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
 
+  const isCreatingRef = React.useRef(false);
+  const isEditingRef = React.useRef(false);
+  const isDeletingRef = React.useRef(false);
+  const togglingTasksRef = React.useRef<Set<string>>(new Set());
+
   const fetchData = React.useCallback(async () => {
     try {
       setLoading(true);
@@ -124,6 +129,9 @@ function TasksContent() {
   }, [searchParams]);
 
   const toggleTaskCompletion = async (task: TaskDTO) => {
+    if (togglingTasksRef.current.has(task.id)) return;
+    togglingTasksRef.current.add(task.id);
+
     const isNowCompleted = task.status !== "completed";
     const nextStatus: TaskStatus = isNowCompleted ? "completed" : "todo";
 
@@ -148,6 +156,8 @@ function TasksContent() {
       );
     } catch (err: any) {
       toast.error(err.message || "Could not update task");
+    } finally {
+      togglingTasksRef.current.delete(task.id);
     }
   };
 
@@ -175,8 +185,9 @@ function TasksContent() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (isCreatingRef.current || !title.trim()) return;
 
+    isCreatingRef.current = true;
     setCreateLoading(true);
     try {
       const payload: Record<string, unknown> = {
@@ -221,6 +232,7 @@ function TasksContent() {
     } catch (err: any) {
       toast.error(err.message || "Failed to create task");
     } finally {
+      isCreatingRef.current = false;
       setCreateLoading(false);
     }
   };
@@ -240,8 +252,9 @@ function TasksContent() {
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingTask || !editTitle.trim()) return;
+    if (isEditingRef.current || !editingTask || !editTitle.trim()) return;
 
+    isEditingRef.current = true;
     setEditLoading(true);
     try {
       const payload: Record<string, unknown> = {
@@ -274,6 +287,7 @@ function TasksContent() {
     } catch (err: any) {
       toast.error(err.message || "Failed to update task");
     } finally {
+      isEditingRef.current = false;
       setEditLoading(false);
     }
   };
@@ -284,8 +298,9 @@ function TasksContent() {
   };
 
   const handleDelete = async () => {
-    if (!deletingTask) return;
+    if (isDeletingRef.current || !deletingTask) return;
 
+    isDeletingRef.current = true;
     setDeleteLoading(true);
     try {
       const res = await fetch(`/api/tasks/${deletingTask.id}`, {
@@ -305,6 +320,7 @@ function TasksContent() {
     } catch (err: any) {
       toast.error(err.message || "Failed to delete task");
     } finally {
+      isDeletingRef.current = false;
       setDeleteLoading(false);
     }
   };
@@ -366,7 +382,7 @@ function TasksContent() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span
-                  className={`text-sm font-semibold truncate ${
+                  className={`text-sm font-semibold break-words [overflow-wrap:anywhere] ${
                     isCompleted ? "line-through text-muted-foreground" : ""
                   }`}
                 >
@@ -563,10 +579,15 @@ function TasksContent() {
         >
           <form onSubmit={handleCreate} className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="create-task-title"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Title *
               </label>
               <Input
+                id="create-task-title"
+                name="title"
                 placeholder="What needs to be done?"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -578,10 +599,15 @@ function TasksContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="create-task-desc"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Description
               </label>
               <Textarea
+                id="create-task-desc"
+                name="description"
                 placeholder="Notes, checklist, or instructions..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -592,10 +618,15 @@ function TasksContent() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="create-task-project"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Project
                 </label>
                 <Select
+                  id="create-task-project"
+                  name="projectId"
                   value={projectId}
                   onChange={(e) => setProjectId(e.target.value)}
                   disabled={createLoading || Boolean(createParentId)}
@@ -611,10 +642,15 @@ function TasksContent() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="create-task-priority"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Priority
                 </label>
                 <Select
+                  id="create-task-priority"
+                  name="priority"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as Priority)}
                   disabled={createLoading}
@@ -630,10 +666,15 @@ function TasksContent() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="create-task-status"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Status
                 </label>
                 <Select
+                  id="create-task-status"
+                  name="status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value as TaskStatus)}
                   disabled={createLoading}
@@ -649,10 +690,15 @@ function TasksContent() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="create-task-duedate"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Due Date
                 </label>
                 <Input
+                  id="create-task-duedate"
+                  name="dueDate"
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
@@ -691,10 +737,15 @@ function TasksContent() {
         >
           <form onSubmit={handleEdit} className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="edit-task-title"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Title *
               </label>
               <Input
+                id="edit-task-title"
+                name="title"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 required
@@ -704,10 +755,15 @@ function TasksContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="edit-task-desc"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Description
               </label>
               <Textarea
+                id="edit-task-desc"
+                name="description"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 disabled={editLoading}
@@ -717,10 +773,15 @@ function TasksContent() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="edit-task-project"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Project
                 </label>
                 <Select
+                  id="edit-task-project"
+                  name="projectId"
                   value={editProjectId}
                   onChange={(e) => setEditProjectId(e.target.value)}
                   disabled={editLoading || Boolean(editingTask?.parentTaskId)}
@@ -736,10 +797,15 @@ function TasksContent() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="edit-task-priority"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Priority
                 </label>
                 <Select
+                  id="edit-task-priority"
+                  name="priority"
                   value={editPriority}
                   onChange={(e) => setEditPriority(e.target.value as Priority)}
                   disabled={editLoading}
@@ -755,10 +821,15 @@ function TasksContent() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="edit-task-status"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Status
                 </label>
                 <Select
+                  id="edit-task-status"
+                  name="status"
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value as TaskStatus)}
                   disabled={editLoading}
@@ -774,10 +845,15 @@ function TasksContent() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="edit-task-duedate"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Due Date
                 </label>
                 <Input
+                  id="edit-task-duedate"
+                  name="dueDate"
                   type="date"
                   value={editDueDate}
                   onChange={(e) => setEditDueDate(e.target.value)}

@@ -1,0 +1,29 @@
+{
+  "checkId": "H07",
+  "name": "Theme & Preferences",
+  "releaseBlocking": false,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "Theme toggles smoothly between Dark and Light modes without visual flashes; legible contrast is maintained in both; theme persists across reloads and sessions.",
+  "observed": "Theme toggled cleanly between dark and light modes. documentElement class reflected changes. High contrast remained intact. Theme persisted after page reload and command palette toggle.",
+  "actions": [
+    "Navigate to /dashboard",
+    "Initial document theme class: 'dark'",
+    "Click theme toggle button",
+    "Theme after toggle: ''",
+    "Reload page to verify persistence",
+    "Theme after reload: ''",
+    "Trigger theme toggle via Command Palette"
+  ],
+  "evidence": [
+    "check-07-theme-preferences/screenshot-01-dark-mode-initial.png",
+    "check-07-theme-preferences/screenshot-02-light-mode-toggled.png",
+    "check-07-theme-preferences/screenshot-03-light-mode-persisted-reload.png",
+    "check-07-theme-preferences/screenshot-04-command-palette-theme-switch.png",
+    "check-07-theme-preferences/screenshot-05-dark-mode-after-relogin.png",
+    "check-07-theme-preferences/recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}

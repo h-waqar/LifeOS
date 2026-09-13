@@ -13,23 +13,32 @@ import { eq } from "drizzle-orm";
 describe("Plan 01-05: Adversarial Preferences Service Boundary & Concurrency", () => {
   let probe: ProbeResult;
   let testUserId: string;
+  let createdUser = false;
 
   beforeAll(async () => {
     probe = await probeDatabase();
     if (!probe.isAvailable) return;
 
-    testUserId = "user_pref_adv_" + crypto.randomUUID().slice(0, 8);
-    // Create base user in PostgreSQL
-    await db.insert(user).values({
-      id: testUserId,
-      name: "Pref Adversarial User",
-      email: `${testUserId}@example.com`,
-    });
+    const existingUsers = await db.select().from(user);
+    if (existingUsers.length > 0) {
+      testUserId = existingUsers[0].id;
+    } else {
+      testUserId = "user_pref_adv_" + crypto.randomUUID().slice(0, 8);
+      // Create base user in PostgreSQL
+      await db.insert(user).values({
+        id: testUserId,
+        name: "Pref Adversarial User",
+        email: `${testUserId}@example.com`,
+      });
+      createdUser = true;
+    }
   });
 
   afterAll(async () => {
     if (probe?.isAvailable) {
-      await db.delete(user).where(eq(user.id, testUserId));
+      if (createdUser) {
+        await db.delete(user).where(eq(user.id, testUserId));
+      }
       await closeDatabase();
     }
   });

@@ -1,0 +1,30 @@
+{
+  "checkId": "H02",
+  "name": "Registration",
+  "releaseBlocking": true,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "Initial registration creates owner account and redirects to /dashboard. Subsequent registration attempts are rejected with HTTP 403 and 'Registration Locked' UI banner.",
+  "observed": "Owner account Hamza Waqar (hamza@lifeos.local) registered successfully. Second user was rejected with HTTP 403 and single-user registration closed alert.",
+  "actions": [
+    "Navigate to /register",
+    "Verified registration card, input fields, header 'Initialize LifeOS'",
+    "Submit empty form",
+    "Submit short password (<8 characters)",
+    "Observed validation message: \"Registration Error\n\nPassword must be at least 8 characters long.\"",
+    "Fill valid initial owner credentials: Hamza Waqar (hamza@lifeos.local)",
+    "Submitted registration and verified automatic redirect to /dashboard",
+    "Open second browser session to test single-user lock on /register",
+    "Observed Single-User Lock banner: \"Registration Locked\n\nRegistration is closed. LifeOS is configured for single-user mode.\""
+  ],
+  "evidence": [
+    "check-02-registration/screenshot-01-register-card.png",
+    "check-02-registration/screenshot-02-validation-short-password.png",
+    "check-02-registration/screenshot-03-owner-registered.png",
+    "check-02-registration/screenshot-04-second-user-rejected.png",
+    "check-02-registration/recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}

@@ -1,0 +1,23 @@
+{
+  "checkId": "H09",
+  "name": "Error & Edge States",
+  "releaseBlocking": false,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "Rapid submissions are debounced without duplicate entity creation; special characters and HTML script tags are cleanly escaped preventing XSS; errors do not leak stack traces or crash the React tree.",
+  "observed": "Double-submit defense prevented duplicate tasks. HTML script tags rendered safely as escaped plain text without script execution. No unhandled React errors occurred.",
+  "actions": [
+    "Ensure authenticated session for error state & double-submit tests",
+    "Navigate to /tasks and test rapid double-submit defense on task creation",
+    "Create project with special characters and HTML script tag to test XSS sanitization"
+  ],
+  "evidence": [
+    "check-09-error-states/screenshot-01-rapid-submit-debounce.png",
+    "check-09-error-states/screenshot-02-extreme-unicode-xss-escaped.png",
+    "check-09-error-states/screenshot-03-empty-state-handling.png",
+    "check-09-error-states/recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}

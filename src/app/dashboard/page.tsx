@@ -51,6 +51,10 @@ export default function DashboardPage() {
   const [projectPriority, setProjectPriority] = React.useState<Priority>("medium");
   const [projectStatus, setProjectStatus] = React.useState<ProjectStatus>("active");
 
+  const isSubmittingTaskRef = React.useRef(false);
+  const isSubmittingProjectRef = React.useRef(false);
+  const togglingTasksRef = React.useRef<Set<string>>(new Set());
+
   const fetchData = React.useCallback(async () => {
     try {
       setLoading(true);
@@ -91,6 +95,9 @@ export default function DashboardPage() {
   }, [session, sessionLoading, router, fetchData]);
 
   const toggleTaskCompletion = async (task: TaskDTO) => {
+    if (togglingTasksRef.current.has(task.id)) return;
+    togglingTasksRef.current.add(task.id);
+
     const isNowCompleted = task.status !== "completed";
     const nextStatus: TaskStatus = isNowCompleted ? "completed" : "todo";
 
@@ -115,13 +122,16 @@ export default function DashboardPage() {
       );
     } catch (err: any) {
       toast.error(err.message || "Could not update task");
+    } finally {
+      togglingTasksRef.current.delete(task.id);
     }
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!taskTitle.trim()) return;
+    if (isSubmittingTaskRef.current || !taskTitle.trim()) return;
 
+    isSubmittingTaskRef.current = true;
     setActionLoading(true);
     try {
       const payload: Record<string, unknown> = {
@@ -157,14 +167,16 @@ export default function DashboardPage() {
     } catch (err: any) {
       toast.error(err.message || "Failed to create task");
     } finally {
+      isSubmittingTaskRef.current = false;
       setActionLoading(false);
     }
   };
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectName.trim()) return;
+    if (isSubmittingProjectRef.current || !projectName.trim()) return;
 
+    isSubmittingProjectRef.current = true;
     setActionLoading(true);
     try {
       const payload: Record<string, unknown> = {
@@ -196,6 +208,7 @@ export default function DashboardPage() {
     } catch (err: any) {
       toast.error(err.message || "Failed to create project");
     } finally {
+      isSubmittingProjectRef.current = false;
       setActionLoading(false);
     }
   };
@@ -328,7 +341,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Tasks & Active Projects Split */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2">
           {/* Recent Tasks */}
           <Card className="flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -451,10 +464,15 @@ export default function DashboardPage() {
         >
           <form onSubmit={handleCreateTask} className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="dashboard-task-title"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Task Title *
               </label>
               <Input
+                id="dashboard-task-title"
+                name="title"
                 placeholder="What needs to be done?"
                 value={taskTitle}
                 onChange={(e) => setTaskTitle(e.target.value)}
@@ -465,10 +483,15 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="dashboard-task-desc"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Description
               </label>
               <Textarea
+                id="dashboard-task-desc"
+                name="description"
                 placeholder="Optional notes or details..."
                 value={taskDescription}
                 onChange={(e) => setTaskDescription(e.target.value)}
@@ -478,10 +501,15 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="dashboard-task-project"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Project
                 </label>
                 <Select
+                  id="dashboard-task-project"
+                  name="projectId"
                   value={taskProjectId}
                   onChange={(e) => setTaskProjectId(e.target.value)}
                   disabled={actionLoading}
@@ -496,10 +524,15 @@ export default function DashboardPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="dashboard-task-priority"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Priority
                 </label>
                 <Select
+                  id="dashboard-task-priority"
+                  name="priority"
                   value={taskPriority}
                   onChange={(e) => setTaskPriority(e.target.value as Priority)}
                   disabled={actionLoading}
@@ -537,10 +570,15 @@ export default function DashboardPage() {
         >
           <form onSubmit={handleCreateProject} className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="dashboard-project-name"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Project Name *
               </label>
               <Input
+                id="dashboard-project-name"
+                name="name"
                 placeholder="Project title..."
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
@@ -551,10 +589,15 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="dashboard-project-desc"
+                className="text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Description
               </label>
               <Textarea
+                id="dashboard-project-desc"
+                name="description"
                 placeholder="Project scope and goals..."
                 value={projectDescription}
                 onChange={(e) => setProjectDescription(e.target.value)}
@@ -564,10 +607,15 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="dashboard-project-status"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Status
                 </label>
                 <Select
+                  id="dashboard-project-status"
+                  name="status"
                   value={projectStatus}
                   onChange={(e) => setProjectStatus(e.target.value as ProjectStatus)}
                   disabled={actionLoading}
@@ -581,10 +629,15 @@ export default function DashboardPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-muted-foreground">
+                <label
+                  htmlFor="dashboard-project-priority"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
                   Priority
                 </label>
                 <Select
+                  id="dashboard-project-priority"
+                  name="priority"
                   value={projectPriority}
                   onChange={(e) => setProjectPriority(e.target.value as Priority)}
                   disabled={actionLoading}

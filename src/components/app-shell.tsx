@@ -42,6 +42,19 @@ export function AppShell({ children }: AppShellProps) {
     setMobileMenuOpen(false);
   }, [pathname]);
 
+  // Close mobile drawer on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+    if (mobileMenuOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen]);
+
   const navItems = [
     {
       name: "Dashboard",

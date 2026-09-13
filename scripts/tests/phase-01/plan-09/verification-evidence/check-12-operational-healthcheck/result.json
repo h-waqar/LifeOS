@@ -1,0 +1,23 @@
+{
+  "checkId": "H12",
+  "name": "Operational Healthcheck",
+  "releaseBlocking": false,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "GET /api/health returns HTTP 200 with JSON { status: 'healthy', database: 'connected', latencyMs: number } and security cache headers; unauthenticated access succeeds; zero secrets leaked.",
+  "observed": "GET /api/health responded with HTTP 200 OK, latency 0ms, and security cache-control headers. Zero database credentials or host details were exposed.",
+  "actions": [
+    "Query GET /api/health via browser",
+    "HTTP Status: 200",
+    "Cache-Control: no-cache, no-store, must-revalidate",
+    "Response Payload: {\"status\":\"healthy\",\"database\":\"connected\",\"latencyMs\":0,\"timestamp\":\"2026-09-13T15:07:49.131Z\"}"
+  ],
+  "evidence": [
+    "check-12-operational-healthcheck/screenshot-01-health-endpoint-200.png",
+    "check-12-operational-healthcheck/screenshot-02-health-unauthenticated.png",
+    "check-12-operational-healthcheck/recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}

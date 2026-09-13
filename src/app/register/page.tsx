@@ -20,6 +20,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [isLocked, setIsLocked] = React.useState(false);
+  const isSubmittingRef = React.useRef(false);
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -33,6 +34,7 @@ export default function RegisterPage() {
     setErrorMsg(null);
     setIsLocked(false);
 
+    if (isSubmittingRef.current) return;
     if (!name.trim() || !email.trim() || !password) {
       setErrorMsg("Please fill in all required fields.");
       return;
@@ -43,6 +45,7 @@ export default function RegisterPage() {
       return;
     }
 
+    isSubmittingRef.current = true;
     setLoading(true);
     try {
       const res = await signUp.email({
@@ -79,6 +82,7 @@ export default function RegisterPage() {
       }
       toast.error(message);
     } finally {
+      isSubmittingRef.current = false;
       setLoading(false);
     }
   };

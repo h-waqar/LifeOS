@@ -1,0 +1,30 @@
+{
+  "checkId": "H03",
+  "name": "Dashboard",
+  "releaseBlocking": false,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "Dashboard displays real-time KPI metrics (Active Projects, Pending Tasks, Completed, Critical), recent tasks feed with inline toggle, and quick-add modals for tasks and projects.",
+  "observed": "KPI metrics dynamically updated on creation of task and project. Task checkbox immediately triggered strikethrough styling and completed metric incremented. Refreshed state was consistent with database.",
+  "actions": [
+    "Navigate to /dashboard",
+    "Verified empty KPI state: Active Projects=0, Pending Tasks=0",
+    "Click 'New Task' quick action button",
+    "Fill task title: 'Dashboard Test Root Task', priority: 'Critical'",
+    "Click 'New Project' quick action button",
+    "Fill project name: 'Strategic Life Vision'",
+    "Toggle completion checkbox on recent task",
+    "Reload page to verify dashboard state persistence"
+  ],
+  "evidence": [
+    "check-03-dashboard/screenshot-01-empty-dashboard.png",
+    "check-03-dashboard/screenshot-02-quick-create-task.png",
+    "check-03-dashboard/screenshot-03-quick-create-project.png",
+    "check-03-dashboard/screenshot-04-task-completion-toggle.png",
+    "check-03-dashboard/screenshot-05-refreshed-dashboard.png",
+    "check-03-dashboard/recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}
