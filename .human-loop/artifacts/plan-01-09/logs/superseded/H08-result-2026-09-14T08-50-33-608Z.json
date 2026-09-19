@@ -1,0 +1,27 @@
+{
+  "checkId": "H08",
+  "name": "Command Palette",
+  "releaseBlocking": false,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "Command palette opens on Ctrl+K/search trigger; search input autofocuses; commands filter dynamically; navigation and quick-creation actions trigger modals; closes on Escape.",
+  "observed": "Command palette dialog opened immediately. Filter input responded to typing. Navigation to /tasks executed seamlessly. Create New Task action triggered modal. Escape dismissed palette cleanly.",
+  "actions": [
+    "Navigate to /dashboard",
+    "Trigger Ctrl+K shortcut to open command palette",
+    "Filter commands with query 'tasks'",
+    "Execute 'Go to Tasks' command",
+    "Open palette and trigger 'Create New Task' action",
+    "Reopen palette to test arrow key navigation"
+  ],
+  "evidence": [
+    ".human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-01-palette-open-ctrl-k.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-02-search-filtered-tasks.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-03-quick-action-task-modal.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-04-arrow-navigation-highlight.png",
+    ".human-loop/artifacts/plan-01-09/recordings/H08-recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}

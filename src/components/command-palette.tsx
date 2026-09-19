@@ -36,6 +36,9 @@ export function CommandPalette({
   const [internalOpen, setInternalOpen] = React.useState(false);
   const router = useRouter();
   const { resolvedTheme, toggleTheme } = useTheme();
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const triggerElementRef = React.useRef<HTMLElement | null>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
 
   const isControlled = controlledOpen !== undefined;
   const isOpen = isControlled ? controlledOpen : internalOpen;
@@ -51,16 +54,92 @@ export function CommandPalette({
     [isControlled, onOpenChange]
   );
 
+  // Focus management: autofocus search input on open, lock scroll, and restore focus on close
+  React.useEffect(() => {
+    if (isOpen) {
+      const currentActive =
+        typeof document !== "undefined"
+          ? (document.activeElement as HTMLElement)
+          : null;
+      if (
+        currentActive &&
+        (!contentRef.current || !contentRef.current.contains(currentActive))
+      ) {
+        triggerElementRef.current = currentActive;
+      }
+      document.body.style.overflow = "hidden";
+
+      // Explicitly focus search input immediately
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+      const focusTimer = setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 0);
+
+      return () => {
+        clearTimeout(focusTimer);
+        document.body.style.overflow = "unset";
+        if (
+          triggerElementRef.current &&
+          typeof document !== "undefined" &&
+          document.contains(triggerElementRef.current) &&
+          triggerElementRef.current !== document.body
+        ) {
+          triggerElementRef.current.focus();
+        }
+      };
+    }
+  }, [isOpen]);
+
+  // Focus trap & Escape listener for open palette
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        return;
+      }
+
+      if (e.key === "Tab") {
+        e.preventDefault();
+        // Prevent focus from escaping the palette dialog
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }
+    };
+
+    const handleFocusIn = (e: FocusEvent) => {
+      if (!contentRef.current) return;
+      if (e.target instanceof Node && !contentRef.current.contains(e.target)) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("focusin", handleFocusIn);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("focusin", handleFocusIn);
+    };
+  }, [isOpen, setOpen]);
+
   // Global Ctrl+K / Cmd+K listener
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      if (
+        (e.key === "k" || e.key === "K" || e.code === "KeyK") &&
+        (e.metaKey || e.ctrlKey)
+      ) {
         e.preventDefault();
         setOpen(!isOpen);
-      }
-      if (e.key === "Escape" && isOpen) {
-        e.preventDefault();
-        setOpen(false);
       }
     };
 
@@ -91,17 +170,19 @@ export function CommandPalette({
         aria-hidden="true"
       />
       <div
+        ref={contentRef}
         className="relative z-50 w-full max-w-lg overflow-hidden rounded-xl border bg-card text-card-foreground shadow-2xl animate-in fade-in zoom-in-95 duration-150"
         data-testid="command-palette-dialog"
       >
         <Command
           className="flex h-full w-full flex-col overflow-hidden rounded-xl bg-card text-card-foreground"
           label="Command Menu"
+          loop
         >
           <div className="flex items-center border-b px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <Command.Input
-              autoFocus
+              ref={inputRef}
               placeholder="Type a command or search..."
               className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
               data-testid="command-palette-input"

@@ -9,7 +9,8 @@
   "actions": [
     "Ensure authenticated session for error state & double-submit tests",
     "Navigate to /tasks and test rapid double-submit defense on task creation",
-    "Create project with special characters and HTML script tag to test XSS sanitization"
+    "Create project with special characters and HTML script tag to test XSS sanitization",
+    "Verify empty state handling and non-existent entity views"
   ],
   "evidence": [
     ".human-loop/artifacts/plan-01-09/screenshots/H09-screenshot-01-rapid-submit-debounce.png",

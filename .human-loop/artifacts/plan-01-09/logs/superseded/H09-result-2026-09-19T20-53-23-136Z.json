@@ -1,0 +1,19 @@
+{
+  "checkId": "H09",
+  "name": "Error & Edge States",
+  "releaseBlocking": true,
+  "status": "FAIL",
+  "humanApproval": "PENDING",
+  "expected": "Error and edge state handling passes according to H09 specification.",
+  "observed": "Check failed with error: CDP Evaluate Error: Uncaught (\n      (() => {\n        const el = document.querySelector(\"[data-testid=\\\"submit-task-btn\\\"]\");\n        if (!el) throw new Error(\"Element not found for click: \" + \"[data-testid=\\\"submit-task-btn\\\"]\");\n        el.scrollIntoView({ block: 'center', inline: 'center' });\n        el.focus();\n        el.click();\n      })()\n    )",
+  "actions": [
+    "Ensure user account exists for edge state testing",
+    "Navigate to /tasks and test validation rejection on empty task"
+  ],
+  "evidence": [],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": [
+    "CDP Evaluate Error: Uncaught (\n      (() => {\n        const el = document.querySelector(\"[data-testid=\\\"submit-task-btn\\\"]\");\n        if (!el) throw new Error(\"Element not found for click: \" + \"[data-testid=\\\"submit-task-btn\\\"]\");\n        el.scrollIntoView({ block: 'center', inline: 'center' });\n        el.focus();\n        el.click();\n      })()\n    )"
+  ]
+}

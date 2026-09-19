@@ -4,15 +4,17 @@
   "releaseBlocking": false,
   "status": "PASS",
   "humanApproval": "PENDING",
-  "expected": "Command palette opens on Ctrl+K/search trigger; search input autofocuses; commands filter dynamically; navigation and quick-creation actions trigger modals; closes on Escape.",
-  "observed": "Command palette dialog opened immediately. Filter input responded to typing. Navigation to /tasks executed seamlessly. Create New Task action triggered modal. Escape dismissed palette cleanly.",
+  "expected": "Command palette opens on Ctrl+K/search trigger; search input autofocuses; commands filter dynamically; arrow keys navigate selection; navigation executes on Enter; closes on Escape; focus restores to trigger.",
+  "observed": "Command palette opened via Ctrl+K. Search input immediately active (INPUT#command-palette-input). Filtering verified (true). Arrow navigation verified (cmd-dashboard -> cmd-goals). Enter executed navigation to /tasks. Escape dismissed palette cleanly (closed=true, focusRestored=true).",
   "actions": [
+    "Ensure user account exists for command palette testing",
     "Navigate to /dashboard",
-    "Trigger Ctrl+K shortcut to open command palette",
+    "Trigger Ctrl+K shortcut to open command palette and verify autofocus",
     "Filter commands with query 'tasks'",
-    "Execute 'Go to Tasks' command",
+    "Execute 'Go to Tasks' command via Enter key",
     "Open palette and trigger 'Create New Task' action",
-    "Reopen palette to test arrow key navigation"
+    "Reopen palette to test arrow key navigation and loop wrap",
+    "Dismiss palette via Escape and verify focus restoration"
   ],
   "evidence": [
     ".human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-01-palette-open-ctrl-k.png",

@@ -5,12 +5,13 @@
   "status": "PASS",
   "humanApproval": "PENDING",
   "expected": "Keyboard-only navigation provides prominent visual focus indicators; modal dialogs maintain focus trap and dismiss on Escape; labels are programmatically associated; color contrast meets WCAG AA standards.",
-  "observed": "Visible focus rings appeared on inputs and buttons. Modal dialogs trapped focus and cleanly dismissed on Escape key. Input labels were connected via htmlFor/id attributes.",
+  "observed": "Tab navigation verified on /login (INPUT#login-email -> INPUT#login-password -> BUTTON#login-submit -> A#register-link). Labels associated (2 inputs). Modal ARIA semantics verified (role=dialog, aria-modal=true). Focus trap maintained (true, elements: INPUT (dashboard-task-title), TEXTAREA (dashboard-task-desc), SELECT (dashboard-task-project)...). Escape dismissed modal cleanly (closed=true).",
   "actions": [
     "Ensure user account exists for accessibility testing",
-    "Navigate to /login and verify keyboard focus rings",
+    "Navigate to /login and verify keyboard focus navigation",
     "Verify app shell focus indicators on dashboard",
-    "Open modal to verify focus trap and escape dismissal"
+    "Open modal to verify focus trap and escape dismissal",
+    "Dismiss modal with Escape key and verify dismissal"
   ],
   "evidence": [
     ".human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-01-login-focus-ring.png",

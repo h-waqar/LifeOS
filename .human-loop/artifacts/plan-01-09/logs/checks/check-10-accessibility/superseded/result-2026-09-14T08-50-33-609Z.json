@@ -1,0 +1,25 @@
+{
+  "checkId": "H10",
+  "name": "Accessibility",
+  "releaseBlocking": false,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "Keyboard-only navigation provides prominent visual focus indicators; modal dialogs maintain focus trap and dismiss on Escape; labels are programmatically associated; color contrast meets WCAG AA standards.",
+  "observed": "Visible focus rings appeared on inputs and buttons. Modal dialogs trapped focus and cleanly dismissed on Escape key. Input labels were connected via htmlFor/id attributes.",
+  "actions": [
+    "Ensure user account exists for accessibility testing",
+    "Navigate to /login and verify keyboard focus rings",
+    "Verify app shell focus indicators on dashboard",
+    "Open modal to verify focus trap and escape dismissal"
+  ],
+  "evidence": [
+    ".human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-01-login-focus-ring.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-02-app-shell-focus-ring.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-03-modal-focus-trap.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-04-high-contrast-wcag-aa.png",
+    ".human-loop/artifacts/plan-01-09/recordings/H10-recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}

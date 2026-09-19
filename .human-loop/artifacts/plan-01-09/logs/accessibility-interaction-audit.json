@@ -1,9 +1,9 @@
 {
   "loginTabOrder": [
-    "BODY (testId: LSign In to LifeOSEnter your c)",
-    "BODY (testId: LSign In to LifeOSEnter your c)",
-    "BODY (testId: LSign In to LifeOSEnter your c)",
-    "BODY (testId: LSign In to LifeOSEnter your c)",
+    "INPUT (testId: login-email)",
+    "INPUT (testId: login-password)",
+    "BUTTON (testId: login-submit)",
+    "A (testId: register-link)",
     "BODY (testId: LSign In to LifeOSEnter your c)"
   ],
   "loginFormLabels": [
@@ -36,22 +36,22 @@
   },
   "focusTrapMaintained": true,
   "modalElementsVisited": [
+    "INPUT (dashboard-task-title)",
+    "TEXTAREA (dashboard-task-desc)",
+    "SELECT (dashboard-task-project)",
+    "SELECT (dashboard-task-priority)",
+    "BUTTON (Cancel)",
+    "BUTTON (Create Task)",
     "BUTTON ()",
-    "BUTTON ()",
-    "BUTTON ()",
-    "BUTTON ()",
-    "BUTTON ()",
-    "BUTTON ()",
-    "BUTTON ()",
-    "BUTTON ()"
+    "INPUT (dashboard-task-title)"
   ],
   "modalDismissedOnEscape": true,
   "commandPaletteAutofocus": {
-    "tagName": "BODY",
-    "placeholder": null,
-    "isInput": false
+    "tagName": "INPUT",
+    "placeholder": "Type a command or search...",
+    "isInput": true
   },
-  "activeCommandArrowNav": "none",
+  "activeCommandArrowNav": "Go to Projects",
   "darkContrast": {
     "bodyBg": "rgb(9, 9, 11)",
     "headingColor": "rgb(250, 250, 250)",

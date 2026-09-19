@@ -1,0 +1,33 @@
+{
+  "checkId": "H06",
+  "name": "Responsive & Mobile Viewports",
+  "releaseBlocking": true,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "Desktop renders with collapsible sidebar and 4-column KPI grid; Tablet reflows into 2x2 grid; Mobile displays top header with hamburger menu, slide-out navigation drawer, clean touch targets, and zero horizontal page overflow.",
+  "observed": "Seamless adaptation across 1440x900 desktop, 768x1024 tablet, and 390x844 mobile viewports. Mobile drawer opened smoothly with backdrop blur. Task hierarchy rendered legible and wrap-safe. Zero horizontal window scrolling occurred.",
+  "actions": [
+    "Ensure authenticated session for responsive tests",
+    "Set viewport to Desktop (1440x900)",
+    "Test sidebar collapse/expand toggle",
+    "Set viewport to Tablet (768x1024)",
+    "Set viewport to Mobile (390x844) with touch emulation enabled",
+    "Tap mobile hamburger menu button to open slide-out drawer",
+    "Navigate to /tasks on mobile to verify tree wrapping and layout",
+    "Trigger command palette on mobile header",
+    "Verified zero horizontal overflow on mobile: true"
+  ],
+  "evidence": [
+    ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-01-desktop-1440x900.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-02-desktop-sidebar-collapsed.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-03-tablet-768x1024-grid.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-04-mobile-390x844-header.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-05-mobile-drawer-open.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-06-mobile-task-hierarchy.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-07-mobile-command-palette.png",
+    ".human-loop/artifacts/plan-01-09/recordings/H06-recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}

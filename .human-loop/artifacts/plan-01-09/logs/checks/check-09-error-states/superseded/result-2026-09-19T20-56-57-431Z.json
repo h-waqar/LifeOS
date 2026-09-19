@@ -1,0 +1,22 @@
+{
+  "checkId": "H09",
+  "name": "Error & Edge States",
+  "releaseBlocking": true,
+  "status": "FAIL",
+  "humanApproval": "PENDING",
+  "expected": "Error and edge state handling passes according to H09 specification.",
+  "observed": "Check failed with error: CDP Evaluate Error: Uncaught (\n      (() => {\n        const el = document.querySelector(\"[data-testid=\\\"task-search-input\\\"]\");\n        if (!el) throw new Error(\"Element not found for fill: \" + \"[data-testid=\\\"task-search-input\\\"]\");\n        el.focus();\n        const isTextArea = el instanceof HTMLTextAreaElement;\n        const proto = isTextArea ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;\n        const descriptor = Object.getOwnPropertyDescriptor(proto, 'value');\n        if (descriptor && descriptor.set) {\n          descriptor.set.call(el, \"xyz-non-existent-query-999\");\n        } else {\n          el.value = \"xyz-non-existent-query-999\";\n        }\n        el.dispatchEvent(new Event('input', { bubbles: true }));\n        el.dispatchEvent(new Event('change', { bubbles: true }));\n      })()\n    )",
+  "actions": [
+    "Ensure user account exists for edge state testing",
+    "Navigate to /tasks and test validation rejection on empty task",
+    "Apply non-matching filter to trigger empty state"
+  ],
+  "evidence": [
+    ".human-loop/artifacts/plan-01-09/screenshots/H09-screenshot-01-empty-title-validation.png"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": [
+    "CDP Evaluate Error: Uncaught (\n      (() => {\n        const el = document.querySelector(\"[data-testid=\\\"task-search-input\\\"]\");\n        if (!el) throw new Error(\"Element not found for fill: \" + \"[data-testid=\\\"task-search-input\\\"]\");\n        el.focus();\n        const isTextArea = el instanceof HTMLTextAreaElement;\n        const proto = isTextArea ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;\n        const descriptor = Object.getOwnPropertyDescriptor(proto, 'value');\n        if (descriptor && descriptor.set) {\n          descriptor.set.call(el, \"xyz-non-existent-query-999\");\n        } else {\n          el.value = \"xyz-non-existent-query-999\";\n        }\n        el.dispatchEvent(new Event('input', { bubbles: true }));\n        el.dispatchEvent(new Event('change', { bubbles: true }));\n      })()\n    )"
+  ]
+}

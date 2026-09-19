@@ -1,0 +1,241 @@
+{
+  "suite": "Plan 01-09 Human Verification Suite",
+  "timestamp": "2026-09-19T20:56:57.441Z",
+  "environment": {
+    "applicationUrl": "http://localhost:3000",
+    "browser": "Chromium 152 (Linux x86_64)",
+    "database": "PostgreSQL 16 (Local Docker)",
+    "nextVersion": "15.5.25",
+    "packageManager": "pnpm",
+    "lockfile": "pnpm-lock.yaml",
+    "commitHash": "86aaf95fc816e7262648ed03b2d898951c9cb443",
+    "nodeVersion": "v26.7.0"
+  },
+  "metrics": {
+    "total": 12,
+    "passed": 11,
+    "failed": 1,
+    "blocked": 0,
+    "humanApprovalPending": 12,
+    "releaseBlockingFailed": 1
+  },
+  "releaseBlockingChecks": [
+    {
+      "checkId": "H02",
+      "name": "Registration",
+      "status": "PASS"
+    },
+    {
+      "checkId": "H01",
+      "name": "Authentication",
+      "status": "PASS"
+    },
+    {
+      "checkId": "H06",
+      "name": "Responsive & Mobile Viewports",
+      "status": "PASS"
+    },
+    {
+      "checkId": "H09",
+      "name": "Error & Edge States",
+      "status": "FAIL"
+    }
+  ],
+  "results": [
+    {
+      "checkId": "H02",
+      "name": "Registration",
+      "releaseBlocking": true,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "Initial registration creates owner account and redirects to /dashboard. Subsequent registration attempts are rejected with HTTP 403 and 'Registration Locked' UI banner.",
+      "observed": "Owner account Hamza Waqar (hamza@lifeos.local) registered successfully. Second user was rejected with HTTP 403 and single-user registration closed alert.",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H02-screenshot-01-register-card.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H02-screenshot-02-validation-short-password.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H02-screenshot-03-owner-registered.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H02-screenshot-04-second-user-rejected.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H02-recording.webm"
+      ]
+    },
+    {
+      "checkId": "H01",
+      "name": "Authentication",
+      "releaseBlocking": true,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "Valid credentials grant access to /dashboard; invalid credentials return 401 error banner; sign out clears session; protected routes fail closed to /login; browser back button does not leak authenticated state.",
+      "observed": "All authentication operations succeeded cleanly: login card rendered, 401 error was displayed on invalid password, login succeeded and redirected to dashboard, logout cleared session, route guards redirected all unauthenticated requests to /login, and back navigation was secure.",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H01-screenshot-01-login-card.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H01-screenshot-02-empty-validation.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H01-screenshot-03-invalid-credentials.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H01-screenshot-04-dashboard-redirect.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H01-screenshot-05-logout-redirect.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H01-recording.webm"
+      ]
+    },
+    {
+      "checkId": "H03",
+      "name": "Dashboard",
+      "releaseBlocking": false,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "Dashboard displays real-time KPI metrics (Active Projects, Pending Tasks, Completed, Critical), recent tasks feed with inline toggle, and quick-add modals for tasks and projects.",
+      "observed": "KPI metrics dynamically updated on creation of task and project. Task checkbox immediately triggered strikethrough styling and completed metric incremented. Refreshed state was consistent with database.",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H03-screenshot-01-empty-dashboard.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H03-screenshot-02-quick-create-task.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H03-screenshot-03-quick-create-project.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H03-screenshot-04-task-completion-toggle.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H03-screenshot-05-refreshed-dashboard.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H03-recording.webm"
+      ]
+    },
+    {
+      "checkId": "H04",
+      "name": "Project Management",
+      "releaseBlocking": false,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "Project lifecycle operations (create, filter tabs, edit, delete confirmation warning) function smoothly and maintain data integrity without orphaned task errors.",
+      "observed": "Projects list rendered cleanly, new project was created and appeared immediately, filter tabs partitioned projects, edit updated status to completed, and delete modal warned that associated tasks will become unassigned.",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H04-screenshot-01-projects-list.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H04-screenshot-02-project-created.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H04-screenshot-03-tab-filtering-active.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H04-screenshot-04-project-edited.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H04-screenshot-05-delete-warning-modal.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H04-recording.webm"
+      ]
+    },
+    {
+      "checkId": "H05",
+      "name": "Task Hierarchy",
+      "releaseBlocking": false,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "Task hierarchy renders with clear indentation and branch guide indicators; multi-level subtasks can be created and completed; long text wraps cleanly; cascade deletion warns about permanent deletion of all descendants.",
+      "observed": "Root and nested subtasks rendered with distinct indentation steps and tree branch icons. Long title wrapped within container without horizontal page scroll. Delete confirmation modal explicitly warned about cascading deletion of all descendant subtasks.",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-01-root-task-created.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-02-nested-subtask-level1.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-03-deep-nesting-level4.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-04-long-title-wrapping.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-05-inline-completion.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-06-cascade-delete-warning.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H05-recording.webm"
+      ]
+    },
+    {
+      "checkId": "H06",
+      "name": "Responsive & Mobile Viewports",
+      "releaseBlocking": true,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "Desktop renders with collapsible sidebar and 4-column KPI grid; Tablet reflows into 2x2 grid; Mobile displays top header with hamburger menu, slide-out navigation drawer, clean touch targets, and zero horizontal page overflow.",
+      "observed": "Seamless adaptation across 1440x900 desktop, 768x1024 tablet, and 390x844 mobile viewports. Mobile drawer opened smoothly with backdrop blur. Task hierarchy rendered legible and wrap-safe. Zero horizontal window scrolling occurred.",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-01-desktop-1440x900.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-02-desktop-sidebar-collapsed.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-03-tablet-768x1024-grid.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-04-mobile-390x844-header.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-05-mobile-drawer-open.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-06-mobile-task-hierarchy.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-07-mobile-command-palette.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H06-recording.webm"
+      ]
+    },
+    {
+      "checkId": "H07",
+      "name": "Theme & Preferences",
+      "releaseBlocking": false,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "Theme toggles smoothly between Dark and Light modes without visual flashes; legible contrast is maintained in both; theme persists across reloads and sessions.",
+      "observed": "Theme toggled cleanly between dark and light modes. documentElement class reflected changes. High contrast remained intact. Theme persisted after page reload and command palette toggle.",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H07-screenshot-01-dark-mode-initial.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H07-screenshot-02-light-mode-toggled.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H07-screenshot-03-light-mode-persisted-reload.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H07-screenshot-04-command-palette-theme-switch.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H07-screenshot-05-dark-mode-after-relogin.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H07-recording.webm"
+      ]
+    },
+    {
+      "checkId": "H08",
+      "name": "Command Palette",
+      "releaseBlocking": false,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "Command palette opens on Ctrl+K/search trigger; search input autofocuses; commands filter dynamically; arrow keys navigate selection; navigation executes on Enter; closes on Escape; focus restores to trigger.",
+      "observed": "Command palette opened via Ctrl+K. Search input immediately active (INPUT#command-palette-input). Filtering verified (true). Arrow navigation verified (cmd-dashboard -> cmd-goals). Enter executed navigation to /tasks. Escape dismissed palette cleanly (closed=true, focusRestored=true).",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-01-palette-open-ctrl-k.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-02-search-filtered-tasks.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-03-quick-action-task-modal.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-04-arrow-navigation-highlight.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H08-recording.webm"
+      ]
+    },
+    {
+      "checkId": "H09",
+      "name": "Error & Edge States",
+      "releaseBlocking": true,
+      "status": "FAIL",
+      "humanApproval": "PENDING",
+      "expected": "Error and edge state handling passes according to H09 specification.",
+      "observed": "Check failed with error: CDP Evaluate Error: Uncaught (\n      (() => {\n        const el = document.querySelector(\"[data-testid=\\\"task-search-input\\\"]\");\n        if (!el) throw new Error(\"Element not found for fill: \" + \"[data-testid=\\\"task-search-input\\\"]\");\n        el.focus();\n        const isTextArea = el instanceof HTMLTextAreaElement;\n        const proto = isTextArea ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;\n        const descriptor = Object.getOwnPropertyDescriptor(proto, 'value');\n        if (descriptor && descriptor.set) {\n          descriptor.set.call(el, \"xyz-non-existent-query-999\");\n        } else {\n          el.value = \"xyz-non-existent-query-999\";\n        }\n        el.dispatchEvent(new Event('input', { bubbles: true }));\n        el.dispatchEvent(new Event('change', { bubbles: true }));\n      })()\n    )",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H09-screenshot-01-empty-title-validation.png"
+      ]
+    },
+    {
+      "checkId": "H10",
+      "name": "Accessibility",
+      "releaseBlocking": false,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "Keyboard-only navigation provides prominent visual focus indicators; modal dialogs maintain focus trap and dismiss on Escape; labels are programmatically associated; color contrast meets WCAG AA standards.",
+      "observed": "Tab navigation verified on /login (INPUT#login-email -> INPUT#login-password -> BUTTON#login-submit -> A#register-link). Labels associated (2 inputs). Modal ARIA semantics verified (role=dialog, aria-modal=true). Focus trap maintained (true, elements: INPUT (dashboard-task-title), TEXTAREA (dashboard-task-desc), SELECT (dashboard-task-project)...). Escape dismissed modal cleanly (closed=true).",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-01-login-focus-ring.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-02-app-shell-focus-ring.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-03-modal-focus-trap.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-04-high-contrast-wcag-aa.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H10-recording.webm"
+      ]
+    },
+    {
+      "checkId": "H11",
+      "name": "Visual Polish",
+      "releaseBlocking": false,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "Layout displays consistent spacing, typographic hierarchy, aligned iconography, and polished transitions with zero placeholder text ('TODO', 'Lorem Ipsum') and zero unhandled console warnings.",
+      "observed": "Aesthetic harmony confirmed across Dashboard, Projects, and Tasks. Text scale and padding are proportional. Zero React hydration mismatch warnings were emitted.",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H11-screenshot-01-dashboard-spacing-alignment.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H11-screenshot-02-projects-visual-harmony.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H11-screenshot-03-tasks-proportional-tree.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H11-screenshot-04-clean-console-zero-errors.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H11-recording.webm"
+      ]
+    },
+    {
+      "checkId": "H12",
+      "name": "Operational Healthcheck",
+      "releaseBlocking": false,
+      "status": "PASS",
+      "humanApproval": "PENDING",
+      "expected": "GET /api/health returns HTTP 200 with JSON { status: 'healthy', database: 'connected', latencyMs: number } and security cache headers; unauthenticated access succeeds; zero secrets leaked.",
+      "observed": "GET /api/health responded with HTTP 200 OK, latency 2ms, and security cache-control headers. Zero database credentials or host details were exposed.",
+      "evidence": [
+        ".human-loop/artifacts/plan-01-09/screenshots/H12-screenshot-01-health-endpoint-200.png",
+        ".human-loop/artifacts/plan-01-09/screenshots/H12-screenshot-02-health-unauthenticated.png",
+        ".human-loop/artifacts/plan-01-09/recordings/H12-recording.webm"
+      ]
+    }
+  ]
+}

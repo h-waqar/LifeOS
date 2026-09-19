@@ -291,6 +291,7 @@ export class EnhancedChromiumBrowser {
         const el = document.querySelector(${JSON.stringify(selector)});
         if (!el) throw new Error("Element not found for click: " + ${JSON.stringify(selector)});
         el.scrollIntoView({ block: 'center', inline: 'center' });
+        el.focus();
         el.click();
       })()
     `);
@@ -311,18 +312,63 @@ export class EnhancedChromiumBrowser {
   }
 
   async pressKey(key: string, code?: string, modifiers = 0): Promise<void> {
-    await this.evaluate(`
-      document.dispatchEvent(new KeyboardEvent('keydown', {
-        key: ${JSON.stringify(key)},
-        code: ${JSON.stringify(code || key)},
-        ctrlKey: Boolean(${modifiers & 2}),
-        metaKey: Boolean(${modifiers & 4}),
-        shiftKey: Boolean(${modifiers & 8}),
-        altKey: Boolean(${modifiers & 1}),
-        bubbles: true,
-        cancelable: true
-      }));
-    `);
+    const keyCodeMap: Record<string, number> = {
+      Tab: 9,
+      Enter: 13,
+      Escape: 27,
+      Space: 32,
+      ArrowLeft: 37,
+      ArrowUp: 38,
+      ArrowRight: 39,
+      ArrowDown: 40,
+      KeyK: 75,
+      k: 75,
+      K: 75,
+    };
+    const vKey = keyCodeMap[key] || keyCodeMap[code || ""] || (key.length === 1 ? key.toUpperCase().charCodeAt(0) : 0);
+
+    try {
+      await this.send("Input.dispatchKeyEvent", {
+        type: "rawKeyDown",
+        key,
+        code: code || key,
+        windowsVirtualKeyCode: vKey,
+        nativeVirtualKeyCode: vKey,
+        modifiers,
+      });
+
+      if (key.length === 1 && modifiers === 0) {
+        await this.send("Input.dispatchKeyEvent", {
+          type: "char",
+          text: key,
+          unmodifiedText: key,
+          modifiers,
+        });
+      }
+
+      await this.send("Input.dispatchKeyEvent", {
+        type: "keyUp",
+        key,
+        code: code || key,
+        windowsVirtualKeyCode: vKey,
+        nativeVirtualKeyCode: vKey,
+        modifiers,
+      });
+    } catch {
+      await this.evaluate(`
+        const target = document.activeElement || document;
+        target.dispatchEvent(new KeyboardEvent('keydown', {
+          key: ${JSON.stringify(key)},
+          code: ${JSON.stringify(code || key)},
+          ctrlKey: Boolean(${modifiers & 2}),
+          metaKey: Boolean(${modifiers & 4}),
+          shiftKey: Boolean(${modifiers & 8}),
+          altKey: Boolean(${modifiers & 1}),
+          bubbles: true,
+          cancelable: true
+        }));
+      `);
+    }
     await new Promise((r) => setTimeout(r, 150));
   }
 

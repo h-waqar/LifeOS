@@ -1,4 +1,7 @@
 import { EnhancedChromiumBrowser } from "./enhanced-cdp";
+import { db, closeDatabase } from "@/server/db";
+import { user, account } from "@/server/db/schema/auth";
+import { hashPassword } from "better-auth/crypto";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -16,6 +19,36 @@ async function runInteractiveAccessibilityAudit() {
   const auditResults: Record<string, any> = {};
 
   try {
+    // 0. Ensure user account exists for authentication
+    const users = await db.select().from(user);
+    if (users.length === 0) {
+      console.log("-> 0. Seeding initial user for audit");
+      const userId = crypto.randomUUID();
+      const hashedPassword = await hashPassword("StrongMasterPassword123!");
+      await db.insert(user).values({
+        id: userId,
+        name: "Hamza Waqar",
+        email: "hamza@lifeos.local",
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      await db.insert(account).values({
+        id: crypto.randomUUID(),
+        userId,
+        accountId: userId,
+        providerId: "credential",
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+
+    // Clear session cookies so /login tests unauthenticated interaction
+    try {
+      await browser.send("Network.clearBrowserCookies");
+    } catch {}
+
     // 1. Keyboard Navigation & Focus Ring on /login
     console.log("-> 1. Testing Keyboard Navigation on /login");
     await browser.navigate(`${APP_URL}/login`);
@@ -211,12 +244,15 @@ async function runInteractiveAccessibilityAudit() {
     console.log("\n=== Accessibility & Interaction Audit Summary ===");
     console.log(JSON.stringify(auditResults, null, 2));
 
-    const outPath = path.join(__dirname, "../../../../.human-loop/artifacts/plan-01-09/logs/accessibility-interaction-audit.json");
-    fs.writeFileSync(outPath, JSON.stringify(auditResults, null, 2));
-    console.log(`Saved audit results to: ${outPath}`);
+    const outPath1 = path.join(__dirname, "../../../../.human-loop/artifacts/plan-01-09/logs/accessibility-interaction-audit.json");
+    const outPath2 = path.join(__dirname, "../../../../.human-loop/artifacts/plan-01-09/accessibility-interaction-audit.json");
+    fs.writeFileSync(outPath1, JSON.stringify(auditResults, null, 2));
+    fs.writeFileSync(outPath2, JSON.stringify(auditResults, null, 2));
+    console.log(`Saved audit results to: ${outPath1} and ${outPath2}`);
 
   } finally {
     await browser.close();
+    await closeDatabase();
   }
 }
 
