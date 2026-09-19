@@ -32,6 +32,17 @@ const projectsQuerySchema = z
     status: z
       .enum(["planning", "active", "paused", "completed", "archived"])
       .optional(),
+    area: z
+      .enum([
+        "health",
+        "career",
+        "finance",
+        "personal_development",
+        "relationships",
+        "general",
+      ])
+      .optional(),
+    goalId: z.string().trim().min(1).optional(),
   })
   .strict();
 
@@ -53,9 +64,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { status } = queryParse.data;
+    const { status, area, goalId } = queryParse.data;
 
-    const projectsList = await listProjects(user.id, { status });
+    const projectsList = await listProjects(user.id, { status, area, goalId });
 
     return NextResponse.json(
       { projects: projectsList },

@@ -14,9 +14,38 @@ import {
 import { userPreferences, preferences } from "./preferences";
 import { auditLog, auditLogs } from "./audit";
 import { projects, project } from "./projects";
-import { tasks, task } from "./tasks";
+import { goals, goal } from "./goals";
+import { projectMilestones, projectMilestone } from "./milestones";
+import {
+  habits,
+  habit,
+  habitEntries,
+  habitEntry,
+} from "./habits";
+import {
+  tasks,
+  task,
+  taskDependencies,
+  taskDependency,
+  type RecurrenceRule,
+  type TaskDependency,
+  type NewTaskDependency,
+} from "./tasks";
+import {
+  timeBlocks,
+  timeBlock,
+} from "./time-blocks";
+import {
+  dailyPlans,
+  dailyPlan,
+  eveningReviews,
+  eveningReview,
+  type DailyPlan,
+  type NewDailyPlan,
+  type EveningReview,
+  type NewEveningReview,
+} from "./daily-plans";
 
-// Table re-exports
 export {
   user,
   session,
@@ -34,33 +63,43 @@ export {
   auditLogs,
   projects,
   project,
+  goals,
+  goal,
+  projectMilestones,
+  projectMilestone,
+  habits,
+  habit,
+  habitEntries,
+  habitEntry,
   tasks,
   task,
+  taskDependencies,
+  taskDependency,
+  timeBlocks,
+  timeBlock,
+  dailyPlans,
+  dailyPlan,
+  eveningReviews,
+  eveningReview,
 };
 
-// Drizzle Relations
-export const userRelations = relations(user, ({ one, many }) => ({
-  preferences: one(userPreferences, {
-    fields: [user.id],
-    references: [userPreferences.userId],
-  }),
+// Drizzle Relations Declarations
+export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   passkeys: many(passkey),
-  auditLogs: many(auditLog),
   projects: many(projects),
+  goals: many(goals),
+  projectMilestones: many(projectMilestones),
+  habits: many(habits),
+  habitEntries: many(habitEntries),
   tasks: many(tasks),
+  taskDependencies: many(taskDependencies),
+  timeBlocks: many(timeBlocks),
+  dailyPlans: many(dailyPlans),
+  eveningReviews: many(eveningReviews),
+  auditLogs: many(auditLog),
 }));
-
-export const userPreferencesRelations = relations(
-  userPreferences,
-  ({ one }) => ({
-    user: one(user, {
-      fields: [userPreferences.userId],
-      references: [user.id],
-    }),
-  })
-);
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
@@ -90,12 +129,77 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
   }),
 }));
 
+export const goalsRelations = relations(goals, ({ one, many }) => ({
+  user: one(user, {
+    fields: [goals.userId],
+    references: [user.id],
+  }),
+  parentGoal: one(goals, {
+    fields: [goals.parentGoalId],
+    references: [goals.id],
+    relationName: "goalHierarchy",
+  }),
+  childGoals: many(goals, {
+    relationName: "goalHierarchy",
+  }),
+  projects: many(projects),
+  habits: many(habits),
+  tasks: many(tasks),
+  timeBlocks: many(timeBlocks),
+}));
+
 export const projectsRelations = relations(projects, ({ one, many }) => ({
   user: one(user, {
     fields: [projects.userId],
     references: [user.id],
   }),
+  goal: one(goals, {
+    fields: [projects.goalId],
+    references: [goals.id],
+  }),
   tasks: many(tasks),
+  milestones: many(projectMilestones),
+  timeBlocks: many(timeBlocks),
+}));
+
+export const projectMilestonesRelations = relations(
+  projectMilestones,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [projectMilestones.userId],
+      references: [user.id],
+    }),
+    project: one(projects, {
+      fields: [projectMilestones.projectId],
+      references: [projects.id],
+    }),
+    tasks: many(tasks),
+  })
+);
+
+export const habitsRelations = relations(habits, ({ one, many }) => ({
+  user: one(user, {
+    fields: [habits.userId],
+    references: [user.id],
+  }),
+  goal: one(goals, {
+    fields: [habits.goalId],
+    references: [goals.id],
+  }),
+  entries: many(habitEntries),
+  tasks: many(tasks),
+  timeBlocks: many(timeBlocks),
+}));
+
+export const habitEntriesRelations = relations(habitEntries, ({ one }) => ({
+  user: one(user, {
+    fields: [habitEntries.userId],
+    references: [user.id],
+  }),
+  habit: one(habits, {
+    fields: [habitEntries.habitId],
+    references: [habits.id],
+  }),
 }));
 
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
@@ -107,6 +211,18 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
     fields: [tasks.projectId],
     references: [projects.id],
   }),
+  goal: one(goals, {
+    fields: [tasks.goalId],
+    references: [goals.id],
+  }),
+  milestone: one(projectMilestones, {
+    fields: [tasks.milestoneId],
+    references: [projectMilestones.id],
+  }),
+  habit: one(habits, {
+    fields: [tasks.habitId],
+    references: [habits.id],
+  }),
   parentTask: one(tasks, {
     fields: [tasks.parentTaskId],
     references: [tasks.id],
@@ -114,6 +230,75 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   }),
   subtasks: many(tasks, {
     relationName: "subtasks",
+  }),
+  dependencies: many(taskDependencies, {
+    relationName: "taskBlockedBy",
+  }),
+  dependents: many(taskDependencies, {
+    relationName: "taskBlocks",
+  }),
+  timeBlocks: many(timeBlocks),
+}));
+
+export const taskDependenciesRelations = relations(
+  taskDependencies,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [taskDependencies.userId],
+      references: [user.id],
+    }),
+    task: one(tasks, {
+      fields: [taskDependencies.taskId],
+      references: [tasks.id],
+      relationName: "taskBlockedBy",
+    }),
+    dependsOnTask: one(tasks, {
+      fields: [taskDependencies.dependsOnTaskId],
+      references: [tasks.id],
+      relationName: "taskBlocks",
+    }),
+  })
+);
+
+export const timeBlocksRelations = relations(timeBlocks, ({ one }) => ({
+  user: one(user, {
+    fields: [timeBlocks.userId],
+    references: [user.id],
+  }),
+  task: one(tasks, {
+    fields: [timeBlocks.taskId],
+    references: [tasks.id],
+  }),
+  project: one(projects, {
+    fields: [timeBlocks.projectId],
+    references: [projects.id],
+  }),
+  goal: one(goals, {
+    fields: [timeBlocks.goalId],
+    references: [goals.id],
+  }),
+  habit: one(habits, {
+    fields: [timeBlocks.habitId],
+    references: [habits.id],
+  }),
+}));
+
+export const dailyPlansRelations = relations(dailyPlans, ({ one, many }) => ({
+  user: one(user, {
+    fields: [dailyPlans.userId],
+    references: [user.id],
+  }),
+  eveningReview: one(eveningReviews),
+}));
+
+export const eveningReviewsRelations = relations(eveningReviews, ({ one }) => ({
+  user: one(user, {
+    fields: [eveningReviews.userId],
+    references: [user.id],
+  }),
+  dailyPlan: one(dailyPlans, {
+    fields: [eveningReviews.dailyPlanId],
+    references: [dailyPlans.id],
   }),
 }));
 
@@ -139,11 +324,29 @@ export type NewUserPreferences = typeof userPreferences.$inferInsert;
 export type AuditLog = typeof auditLog.$inferSelect;
 export type NewAuditLog = typeof auditLog.$inferInsert;
 
+export type Goal = typeof goals.$inferSelect;
+export type NewGoal = typeof goals.$inferInsert;
+
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
 
+export type ProjectMilestone = typeof projectMilestones.$inferSelect;
+export type NewProjectMilestone = typeof projectMilestones.$inferInsert;
+
+export type Habit = typeof habits.$inferSelect;
+export type NewHabit = typeof habits.$inferInsert;
+
+export type HabitEntry = typeof habitEntries.$inferSelect;
+export type NewHabitEntry = typeof habitEntries.$inferInsert;
+
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
+
+export type TimeBlock = typeof timeBlocks.$inferSelect;
+export type NewTimeBlock = typeof timeBlocks.$inferInsert;
+
+export type { DailyPlan, NewDailyPlan, EveningReview, NewEveningReview };
+export type { TaskDependency, NewTaskDependency, RecurrenceRule };
 
 /**
  * Explicit list of foundational table names.
@@ -166,3 +369,18 @@ export const CORE_DOMAIN_TABLE_NAMES = [
   "projects",
   "tasks",
 ] as const;
+
+/**
+ * Approved Phase 2 table names.
+ */
+export const PHASE_2_TABLE_NAMES = [
+  "task_dependencies",
+  "goals",
+  "project_milestones",
+  "habits",
+  "habit_entries",
+  "time_blocks",
+  "daily_plans",
+  "evening_reviews",
+] as const;
+

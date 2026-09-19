@@ -1,0 +1,69 @@
+{
+  "loginTabOrder": [
+    "BODY (testId: LSign In to LifeOSEnter your c)",
+    "BODY (testId: LSign In to LifeOSEnter your c)",
+    "BODY (testId: LSign In to LifeOSEnter your c)",
+    "BODY (testId: LSign In to LifeOSEnter your c)",
+    "BODY (testId: LSign In to LifeOSEnter your c)"
+  ],
+  "loginFormLabels": [
+    {
+      "id": "email",
+      "name": "email",
+      "type": "email",
+      "hasLabelFor": true,
+      "labelText": "Email address",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "isAccessible": true
+    },
+    {
+      "id": "password",
+      "name": "password",
+      "type": "password",
+      "hasLabelFor": true,
+      "labelText": "Password",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "isAccessible": true
+    }
+  ],
+  "modalAria": {
+    "role": "dialog",
+    "ariaModal": "true",
+    "ariaLabelledby": "_r_0_",
+    "titleText": "Create New Task"
+  },
+  "focusTrapMaintained": true,
+  "modalElementsVisited": [
+    "BUTTON ()",
+    "BUTTON ()",
+    "BUTTON ()",
+    "BUTTON ()",
+    "BUTTON ()",
+    "BUTTON ()",
+    "BUTTON ()",
+    "BUTTON ()"
+  ],
+  "modalDismissedOnEscape": true,
+  "commandPaletteAutofocus": {
+    "tagName": "BODY",
+    "placeholder": null,
+    "isInput": false
+  },
+  "activeCommandArrowNav": "none",
+  "darkContrast": {
+    "bodyBg": "rgb(9, 9, 11)",
+    "headingColor": "rgb(250, 250, 250)",
+    "headingContrast": 19.06,
+    "mutedColor": "rgb(161, 161, 170)",
+    "mutedContrast": 7.76
+  },
+  "lightContrast": {
+    "bodyBg": "rgb(255, 255, 255)",
+    "headingColor": "rgb(9, 9, 11)",
+    "headingContrast": 19.9,
+    "mutedColor": "rgb(113, 113, 122)",
+    "mutedContrast": 4.83
+  }
+}

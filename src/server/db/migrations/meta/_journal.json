@@ -50,6 +50,41 @@
       "when": 1789218000000,
       "tag": "0006_task_hierarchy_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789219000000,
+      "tag": "0007_task_management_extensions",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789220000000,
+      "tag": "0008_goals_and_projects_hierarchy",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789230000000,
+      "tag": "0009_habits_and_streaks_engine",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789240000000,
+      "tag": "0010_calendar_and_time_blocking_engine",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789544840648,
+      "tag": "0011_daily_planning_and_evening_review",
+      "breakpoints": true
     }
   ]
 }

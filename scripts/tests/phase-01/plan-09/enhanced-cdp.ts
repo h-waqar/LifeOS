@@ -351,7 +351,11 @@ export class EnhancedChromiumBrowser {
   }
 
   async screenshot(filePath: string, fullPage = false): Promise<void> {
-    const dir = path.dirname(filePath);
+    const resolved = path.resolve(filePath);
+    const dir = path.dirname(resolved);
+    if (fs.existsSync(path.join(dir, "package.json")) && fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
+      throw new Error(`[enhanced-cdp] Attempted to save screenshot directly to repository root: ${resolved}`);
+    }
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -361,7 +365,7 @@ export class EnhancedChromiumBrowser {
       captureBeyondViewport: fullPage,
     });
 
-    fs.writeFileSync(filePath, Buffer.from(data, "base64"));
+    fs.writeFileSync(resolved, Buffer.from(data, "base64"));
   }
 
   async startRecording(frameDir: string): Promise<void> {
@@ -411,17 +415,21 @@ export class EnhancedChromiumBrowser {
       );
     }
 
-    const outDir = path.dirname(outputWebmPath);
+    const resolvedWebm = path.resolve(outputWebmPath);
+    const outDir = path.dirname(resolvedWebm);
+    if (fs.existsSync(path.join(outDir, "package.json")) && fs.existsSync(path.join(outDir, "pnpm-workspace.yaml"))) {
+      throw new Error(`[enhanced-cdp] Attempted to save recording directly to repository root: ${resolvedWebm}`);
+    }
     if (!fs.existsSync(outDir)) {
       fs.mkdirSync(outDir, { recursive: true });
     }
 
     try {
       execSync(
-        `ffmpeg -y -framerate 4 -i "${frameDir}/frame_%05d.jpg" -c:v libvpx-vp9 -b:v 1M -pix_fmt yuv420p "${outputWebmPath}"`,
+        `ffmpeg -y -framerate 4 -i "${frameDir}/frame_%05d.jpg" -c:v libvpx-vp9 -b:v 1M -pix_fmt yuv420p "${resolvedWebm}"`,
         { stdio: "ignore", timeout: 15000 }
       );
-      return fs.existsSync(outputWebmPath);
+      return fs.existsSync(resolvedWebm);
     } catch (e) {
       console.warn(`[cdp] ffmpeg video generation warning: ${e}`);
       return false;

@@ -5,16 +5,123 @@ import { project, task, preferences } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import * as path from "node:path";
 import * as fs from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
-const EVIDENCE_BASE_DIR = path.resolve(
-  process.cwd(),
-  "scripts/tests/phase-01/plan-09/verification-evidence"
-);
-const ARTIFACTS_BASE_DIR = path.resolve(
-  process.cwd(),
-  ".human-loop/artifacts/plan-01-09"
-);
+export function findRepoRoot(startDir = __dirname): string {
+  let current = startDir;
+  while (current !== path.dirname(current)) {
+    if (
+      fs.existsSync(path.join(current, "package.json")) &&
+      fs.existsSync(path.join(current, "pnpm-workspace.yaml"))
+    ) {
+      return current;
+    }
+    current = path.dirname(current);
+  }
+  return path.resolve(__dirname, "../../../..");
+}
+
+export const REPO_ROOT = findRepoRoot();
+
+export const ARTIFACT_CONFIG = {
+  repoRoot: REPO_ROOT,
+  pendingDir: path.join(REPO_ROOT, ".human-loop/pending/plan-01-09"),
+  verifiedDir: path.join(REPO_ROOT, ".human-loop/verified/plan-01-09"),
+  artifactsDir: path.join(REPO_ROOT, ".human-loop/artifacts/plan-01-09"),
+  screenshotsDir: path.join(REPO_ROOT, ".human-loop/artifacts/plan-01-09/screenshots"),
+  recordingsDir: path.join(REPO_ROOT, ".human-loop/artifacts/plan-01-09/recordings"),
+  logsDir: path.join(REPO_ROOT, ".human-loop/artifacts/plan-01-09/logs"),
+  artifactReportsDir: path.join(REPO_ROOT, ".human-loop/artifacts/plan-01-09/reports"),
+  docsQaDir: path.join(REPO_ROOT, "docs/qa/phase-01/plan-09"),
+  reportPath: path.join(REPO_ROOT, "docs/qa/phase-01/plan-09/human-loop-verification-report.md"),
+  summaryJsonPath: path.join(REPO_ROOT, "docs/qa/phase-01/plan-09/verification-results.json"),
+  artifactSummaryJsonPath: path.join(REPO_ROOT, ".human-loop/artifacts/plan-01-09/reports/verification-results.json"),
+  executionLogPath: path.join(REPO_ROOT, ".human-loop/artifacts/plan-01-09/logs/verification-runner.log"),
+};
+
+export const EVIDENCE_BASE_DIR = path.join(ARTIFACT_CONFIG.logsDir, "checks");
+export const ARTIFACTS_BASE_DIR = ARTIFACT_CONFIG.artifactsDir;
+
+export function assertNotRepoRoot(targetPath: string): void {
+  const resolved = path.resolve(targetPath);
+  const dir = path.dirname(resolved);
+  if (dir === REPO_ROOT || resolved === REPO_ROOT) {
+    throw new Error(
+      `[artifact-safety] VIOLATION: Verification runner is prohibited from writing generated artifacts directly to repository root: ${resolved}`
+    );
+  }
+}
+
+export function logRunner(message: string): void {
+  console.log(message);
+  try {
+    const logLine = `[${new Date().toISOString()}] ${message}\n`;
+    const dir = path.dirname(ARTIFACT_CONFIG.executionLogPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.appendFileSync(ARTIFACT_CONFIG.executionLogPath, logLine);
+  } catch {}
+}
+
+export function safeCopyArtifact(sourcePath: string, destPath: string): void {
+  assertNotRepoRoot(destPath);
+  if (!fs.existsSync(sourcePath)) return;
+  const dir = path.dirname(destPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  if (fs.existsSync(destPath)) {
+    const srcBuf = fs.readFileSync(sourcePath);
+    const destBuf = fs.readFileSync(destPath);
+    if (!srcBuf.equals(destBuf)) {
+      const stat = fs.statSync(destPath);
+      const iso = stat.mtime.toISOString().replace(/[:.]/g, "-");
+      const parsed = path.parse(destPath);
+      const supersededDir = path.join(parsed.dir, "superseded");
+      if (!fs.existsSync(supersededDir)) {
+        fs.mkdirSync(supersededDir, { recursive: true });
+      }
+      const backupPath = path.join(supersededDir, `${parsed.name}-${iso}${parsed.ext}`);
+      fs.copyFileSync(destPath, backupPath);
+      logRunner(`[artifact-safety] Preserved previous evidence at: ${path.relative(REPO_ROOT, backupPath)}`);
+    }
+  }
+
+  fs.copyFileSync(sourcePath, destPath);
+}
+
+export function safeWriteArtifact(targetPath: string, content: Buffer | string): void {
+  assertNotRepoRoot(targetPath);
+  const dir = path.dirname(targetPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  if (fs.existsSync(targetPath)) {
+    const existing = fs.readFileSync(targetPath);
+    const newBuf = Buffer.isBuffer(content) ? content : Buffer.from(content);
+    if (!existing.equals(newBuf)) {
+      const stat = fs.statSync(targetPath);
+      const iso = stat.mtime.toISOString().replace(/[:.]/g, "-");
+      const parsed = path.parse(targetPath);
+      const supersededDir = path.join(parsed.dir, "superseded");
+      if (!fs.existsSync(supersededDir)) {
+        fs.mkdirSync(supersededDir, { recursive: true });
+      }
+      const backupPath = path.join(supersededDir, `${parsed.name}-${iso}${parsed.ext}`);
+      fs.copyFileSync(targetPath, backupPath);
+      logRunner(`[artifact-safety] Preserved previous evidence at: ${path.relative(REPO_ROOT, backupPath)}`);
+    }
+  }
+
+  fs.writeFileSync(targetPath, content);
+}
 
 export interface VerificationCheckResult {
   checkId: string;
@@ -31,29 +138,38 @@ export interface VerificationCheckResult {
   defects: string[];
 }
 
-// Ensure base directories exist
-function ensureDirs() {
-  if (!fs.existsSync(EVIDENCE_BASE_DIR)) {
-    fs.mkdirSync(EVIDENCE_BASE_DIR, { recursive: true });
-  }
-  const artifactSubdirs = ["screenshots", "recordings", "reports"];
-  for (const sub of artifactSubdirs) {
-    const dir = path.join(ARTIFACTS_BASE_DIR, sub);
+// Ensure base directories exist safely
+export function ensureDirs(): void {
+  const dirs = [
+    EVIDENCE_BASE_DIR,
+    ARTIFACT_CONFIG.screenshotsDir,
+    ARTIFACT_CONFIG.recordingsDir,
+    ARTIFACT_CONFIG.logsDir,
+    ARTIFACT_CONFIG.artifactReportsDir,
+    ARTIFACT_CONFIG.docsQaDir,
+    path.join(ARTIFACT_CONFIG.docsQaDir, "historical"),
+  ];
+  for (const dir of dirs) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
   }
 }
 
-function copyToArtifacts(checkId: string, relPath: string, absSource: string) {
+export function copyToArtifacts(checkId: string, relPath: string, absSource: string): string {
+  assertNotRepoRoot(absSource);
   const fileName = path.basename(absSource);
+  let dest = "";
   if (fileName.endsWith(".png")) {
-    const dest = path.join(ARTIFACTS_BASE_DIR, "screenshots", `${checkId}-${fileName}`);
-    fs.copyFileSync(absSource, dest);
+    const destName = fileName.startsWith(`${checkId}-`) ? fileName : `${checkId}-${fileName}`;
+    dest = path.join(ARTIFACT_CONFIG.screenshotsDir, destName);
+    safeCopyArtifact(absSource, dest);
   } else if (fileName.endsWith(".webm")) {
-    const dest = path.join(ARTIFACTS_BASE_DIR, "recordings", `${checkId}-${fileName}`);
-    fs.copyFileSync(absSource, dest);
+    const destName = fileName.startsWith(`${checkId}-`) ? fileName : `${checkId}-${fileName}`;
+    dest = path.join(ARTIFACT_CONFIG.recordingsDir, destName);
+    safeCopyArtifact(absSource, dest);
   }
+  return dest ? path.relative(REPO_ROOT, dest) : relPath;
 }
 
 async function ensureAuthenticated(browser: EnhancedChromiumBrowser): Promise<void> {
@@ -1799,25 +1915,47 @@ export async function runFullVerificationSuite(options?: {
     H12: "check-12-operational-healthcheck",
   };
 
-  // Write check-specific result.json in each check directory
+  // Normalize evidence paths across all results so they are repository-relative
   for (const r of results) {
-    const dirName = CHECK_DIR_MAP[r.checkId] || (r.evidence[0] ? r.evidence[0].split("/")[0] : `check-${r.checkId.toLowerCase()}`);
-    const checkDir = path.join(EVIDENCE_BASE_DIR, dirName);
-    if (!fs.existsSync(checkDir)) {
-      fs.mkdirSync(checkDir, { recursive: true });
-    }
-    const resultJsonPath = path.join(checkDir, "result.json");
-    fs.writeFileSync(resultJsonPath, JSON.stringify(r, null, 2));
+    r.evidence = r.evidence.map((ev) => {
+      if (ev.startsWith(".human-loop/")) return ev;
+      const base = path.basename(ev);
+      if (base.endsWith(".png")) {
+        const name = base.startsWith(`${r.checkId}-`) ? base : `${r.checkId}-${base}`;
+        return `.human-loop/artifacts/plan-01-09/screenshots/${name}`;
+      }
+      if (base.endsWith(".webm")) {
+        const name = base.startsWith(`${r.checkId}-`) ? base : `${r.checkId}-${base}`;
+        return `.human-loop/artifacts/plan-01-09/recordings/${name}`;
+      }
+      return ev;
+    });
   }
 
-  // Write aggregated verification-results.json in evidence directory
+  // Write check-specific result.json in logs directory
+  for (const r of results) {
+    const dirName = CHECK_DIR_MAP[r.checkId] || `check-${r.checkId.toLowerCase()}`;
+    const checkDir = path.join(EVIDENCE_BASE_DIR, dirName);
+    const resultJsonPath = path.join(checkDir, "result.json");
+    safeWriteArtifact(resultJsonPath, JSON.stringify(r, null, 2));
+
+    // Also write top-level check summary in logs directory
+    const checkLogPath = path.join(ARTIFACT_CONFIG.logsDir, `${r.checkId}-result.json`);
+    safeWriteArtifact(checkLogPath, JSON.stringify(r, null, 2));
+  }
+
+  // Aggregated summary payload
   const summaryJson = {
     suite: "Plan 01-09 Human Verification Suite",
     timestamp: new Date().toISOString(),
     environment: {
       applicationUrl: APP_URL,
-      browser: "Chromium 152 (Arch Linux x86_64)",
+      browser: "Chromium 152 (Linux x86_64)",
       database: "PostgreSQL 16 (Local Docker)",
+      nextVersion: "15.5.25",
+      packageManager: "pnpm",
+      lockfile: "pnpm-lock.yaml",
+      commitHash: "86aaf95fc816e7262648ed03b2d898951c9cb443",
       nodeVersion: process.version,
     },
     metrics: {
@@ -1843,19 +1981,23 @@ export async function runFullVerificationSuite(options?: {
     })),
   };
 
+  // Write summary JSON to designated documentation directory: docs/qa/phase-01/plan-09/
+  safeWriteArtifact(ARTIFACT_CONFIG.summaryJsonPath, JSON.stringify(summaryJson, null, 2));
+
+  // Also write to logs evidence directory
   const evidenceSummaryPath = path.join(EVIDENCE_BASE_DIR, "verification-results.json");
-  fs.writeFileSync(evidenceSummaryPath, JSON.stringify(summaryJson, null, 2));
+  safeWriteArtifact(evidenceSummaryPath, JSON.stringify(summaryJson, null, 2));
 
-  // Also mirror to .human-loop artifacts
-  const artifactSummaryPath = path.join(ARTIFACTS_BASE_DIR, "reports", "verification-results.json");
-  fs.writeFileSync(artifactSummaryPath, JSON.stringify(summaryJson, null, 2));
+  // Mirror to .human-loop artifacts
+  safeWriteArtifact(ARTIFACT_CONFIG.artifactSummaryJsonPath, JSON.stringify(summaryJson, null, 2));
 
-  console.log("\n==================================================");
-  console.log(`VERIFICATION SUMMARY: ${summaryJson.metrics.passed}/${summaryJson.metrics.total} Checks Executed Successfully`);
-  console.log(`Release-Blocking Checks: ${summaryJson.metrics.releaseBlockingFailed === 0 ? "ALL PASSED" : "FAILED"}`);
-  console.log(`Human Approval Status: ${summaryJson.metrics.humanApprovalPending} PENDING HUMAN AUDIT`);
-  console.log(`Evidence Directory: ${EVIDENCE_BASE_DIR}`);
-  console.log("==================================================\n");
+  logRunner("\n==================================================");
+  logRunner(`VERIFICATION SUMMARY: ${summaryJson.metrics.passed}/${summaryJson.metrics.total} Checks Executed Successfully`);
+  logRunner(`Release-Blocking Checks: ${summaryJson.metrics.releaseBlockingFailed === 0 ? "ALL PASSED" : "FAILED"}`);
+  logRunner(`Human Approval Status: ${summaryJson.metrics.humanApprovalPending} PENDING HUMAN AUDIT`);
+  logRunner(`Artifacts Directory: ${path.relative(REPO_ROOT, ARTIFACT_CONFIG.artifactsDir)}`);
+  logRunner(`Documentation Directory: ${path.relative(REPO_ROOT, ARTIFACT_CONFIG.docsQaDir)}`);
+  logRunner("==================================================\n");
 
   return summaryJson;
 }

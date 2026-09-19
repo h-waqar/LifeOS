@@ -42,6 +42,16 @@ const tasksQuerySchema = z
       .optional(),
     projectId: z.string().trim().min(1).optional(),
     priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+    energyLevel: z.enum(["low", "medium", "high"]).optional(),
+    scheduledDate: z.string().trim().min(1).optional(),
+    overdue: z
+      .enum(["true", "false", "1", "0"])
+      .optional()
+      .transform((val) => val === "true" || val === "1"),
+    sortBy: z
+      .enum(["priority_score", "due_date", "created_at", "title"])
+      .optional(),
+    sortDir: z.enum(["asc", "desc"]).optional(),
   })
   .strict();
 
@@ -64,12 +74,26 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { status, projectId, priority } = queryParse.data;
+    const {
+      status,
+      projectId,
+      priority,
+      energyLevel,
+      scheduledDate,
+      overdue,
+      sortBy,
+      sortDir,
+    } = queryParse.data;
 
     const tasksList = await listTasks(user.id, {
       status,
       projectId,
       priority,
+      energyLevel,
+      scheduledDate,
+      overdue,
+      sortBy,
+      sortDir,
     });
 
     return NextResponse.json(

@@ -1,0 +1,27 @@
+{
+  "checkId": "H04",
+  "name": "Project Management",
+  "releaseBlocking": false,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "Project lifecycle operations (create, filter tabs, edit, delete confirmation warning) function smoothly and maintain data integrity without orphaned task errors.",
+  "observed": "Projects list rendered cleanly, new project was created and appeared immediately, filter tabs partitioned projects, edit updated status to completed, and delete modal warned that associated tasks will become unassigned.",
+  "actions": [
+    "Navigate to /projects",
+    "Click 'New Project' button and fill form",
+    "Test status filter tabs",
+    "Click edit on 'Personal Operating System MVP'",
+    "Click delete project button to inspect cascade safety warning dialog"
+  ],
+  "evidence": [
+    ".human-loop/artifacts/plan-01-09/screenshots/H04-screenshot-01-projects-list.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H04-screenshot-02-project-created.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H04-screenshot-03-tab-filtering-active.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H04-screenshot-04-project-edited.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H04-screenshot-05-delete-warning-modal.png",
+    ".human-loop/artifacts/plan-01-09/recordings/H04-recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}

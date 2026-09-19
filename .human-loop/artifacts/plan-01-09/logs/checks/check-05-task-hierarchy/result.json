@@ -1,0 +1,30 @@
+{
+  "checkId": "H05",
+  "name": "Task Hierarchy",
+  "releaseBlocking": false,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "Task hierarchy renders with clear indentation and branch guide indicators; multi-level subtasks can be created and completed; long text wraps cleanly; cascade deletion warns about permanent deletion of all descendants.",
+  "observed": "Root and nested subtasks rendered with distinct indentation steps and tree branch icons. Long title wrapped within container without horizontal page scroll. Delete confirmation modal explicitly warned about cascading deletion of all descendant subtasks.",
+  "actions": [
+    "Navigate to /tasks",
+    "Create root task: 'Root Epic: Launch LifeOS Personal Beta'",
+    "Add nested subtask (Level 1): 'Child Task: Configure Production DNS & TLS'",
+    "Add grandchild subtask (Level 2): 'Grandchild Task: Provision Cloudflare Origin Certificate'",
+    "Stress test text wrapping with long subtask title",
+    "Toggle completion checkbox on child task",
+    "Trigger delete on root task to verify cascade warning"
+  ],
+  "evidence": [
+    ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-01-root-task-created.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-02-nested-subtask-level1.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-03-deep-nesting-level4.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-04-long-title-wrapping.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-05-inline-completion.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H05-screenshot-06-cascade-delete-warning.png",
+    ".human-loop/artifacts/plan-01-09/recordings/H05-recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}

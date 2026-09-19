@@ -177,12 +177,6 @@ describe("Foundational Database Schema (Drizzle ORM)", () => {
 
     it("ensures deferred domain tables do not exist in the schema (anti-regression for vertical-slice rule)", () => {
       const deferredDomainEntities = [
-        "goal",
-        "goals",
-        "habit",
-        "habits",
-        "timeBlock",
-        "timeBlocks",
         "calendar",
         "calendars",
         "note",
@@ -211,9 +205,14 @@ describe("Foundational Database Schema (Drizzle ORM)", () => {
       }
     });
 
-    it("ensures approved Plan 01-07 core domain tables exist in the schema", () => {
+    it("ensures approved core domain tables exist in the schema", () => {
       expect((schema as Record<string, unknown>).projects).toBeDefined();
       expect((schema as Record<string, unknown>).tasks).toBeDefined();
+      expect((schema as Record<string, unknown>).goals).toBeDefined();
+      expect((schema as Record<string, unknown>).projectMilestones).toBeDefined();
+      expect((schema as Record<string, unknown>).habits).toBeDefined();
+      expect((schema as Record<string, unknown>).habitEntries).toBeDefined();
+      expect((schema as Record<string, unknown>).timeBlocks).toBeDefined();
     });
   });
 });

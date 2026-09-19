@@ -1,0 +1,39 @@
+{
+  "checkId": "H01",
+  "name": "Authentication",
+  "releaseBlocking": true,
+  "status": "PASS",
+  "humanApproval": "PENDING",
+  "expected": "Valid credentials grant access to /dashboard; invalid credentials return 401 error banner; sign out clears session; protected routes fail closed to /login; browser back button does not leak authenticated state.",
+  "observed": "All authentication operations succeeded cleanly: login card rendered, 401 error was displayed on invalid password, login succeeded and redirected to dashboard, logout cleared session, route guards redirected all unauthenticated requests to /login, and back navigation was secure.",
+  "actions": [
+    "Clear browser session cookies to inspect unauthenticated sign-in view",
+    "Navigate to /login",
+    "Inspected login card, email/password inputs, and Sign In action button",
+    "Test empty submission validation",
+    "Submit invalid credentials (hamza@lifeos.local / WrongPassword999!)",
+    "Observed 401 error banner: \"Invalid email or password\"",
+    "Submit valid credentials (hamza@lifeos.local / StrongMasterPassword123!)",
+    "Successfully authenticated and redirected to /dashboard",
+    "Click sign out button in sidebar",
+    "User signed out and redirected to /login",
+    "Verify route guard: direct navigation to /dashboard",
+    "Route guard intercepted /dashboard and redirected to /login",
+    "Verify route guard: direct navigation to /projects",
+    "Verify route guard: direct navigation to /tasks",
+    "Test browser back navigation security",
+    "Browser back navigation stayed safely on login: true",
+    "Re-authenticate primary user to prepare active session for subsequent checks"
+  ],
+  "evidence": [
+    ".human-loop/artifacts/plan-01-09/screenshots/H01-screenshot-01-login-card.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H01-screenshot-02-empty-validation.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H01-screenshot-03-invalid-credentials.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H01-screenshot-04-dashboard-redirect.png",
+    ".human-loop/artifacts/plan-01-09/screenshots/H01-screenshot-05-logout-redirect.png",
+    ".human-loop/artifacts/plan-01-09/recordings/H01-recording.webm"
+  ],
+  "consoleErrors": [],
+  "deviations": [],
+  "defects": []
+}

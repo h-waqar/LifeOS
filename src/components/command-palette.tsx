@@ -12,6 +12,11 @@ import {
   LogOut,
   PlusCircle,
   Search,
+  Sparkles,
+  Target,
+  Flame,
+  Calendar,
+  CalendarCheck,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { signOut } from "@/lib/auth-client";
@@ -20,11 +25,13 @@ import { toast } from "sonner";
 interface CommandPaletteProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onOpenQuickCapture?: () => void;
 }
 
 export function CommandPalette({
   open: controlledOpen,
   onOpenChange,
+  onOpenQuickCapture,
 }: CommandPaletteProps = {}) {
   const [internalOpen, setInternalOpen] = React.useState(false);
   const router = useRouter();
@@ -118,6 +125,14 @@ export function CommandPalette({
                 <span>Go to Dashboard</span>
               </Command.Item>
               <Command.Item
+                onSelect={() => runCommand(() => router.push("/goals"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-goals"
+              >
+                <Target className="mr-2 h-4 w-4" />
+                <span>Go to Goals</span>
+              </Command.Item>
+              <Command.Item
                 onSelect={() => runCommand(() => router.push("/projects"))}
                 className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                 data-testid="cmd-projects"
@@ -133,12 +148,91 @@ export function CommandPalette({
                 <CheckSquare className="mr-2 h-4 w-4" />
                 <span>Go to Tasks</span>
               </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/calendar"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-calendar"
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                <span>Go to Calendar</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/habits"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-habits"
+              >
+                <Flame className="mr-2 h-4 w-4 text-orange-500" />
+                <span>Go to Habits</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/daily-plan"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-daily-plan"
+              >
+                <CalendarCheck className="mr-2 h-4 w-4 text-primary" />
+                <span>Go to Daily Plan</span>
+              </Command.Item>
             </Command.Group>
 
             <Command.Group
               heading="Quick Actions"
               className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
             >
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/daily-plan?mode=morning"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-morning-routine"
+              >
+                <Sun className="mr-2 h-4 w-4 text-amber-500" />
+                <span>Start Morning Routine</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/daily-plan?mode=evening"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-evening-review"
+              >
+                <Moon className="mr-2 h-4 w-4 text-indigo-500" />
+                <span>Start Evening Review</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/calendar?action=new"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-new-time-block"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                <span>Create Time Block</span>
+              </Command.Item>
+              {onOpenQuickCapture && (
+                <Command.Item
+                  onSelect={() => runCommand(() => onOpenQuickCapture())}
+                  className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                  data-testid="cmd-quick-capture"
+                >
+                  <Sparkles className="mr-2 h-4 w-4 text-primary" />
+                  <div className="flex flex-1 items-center justify-between">
+                    <span>Universal Quick Capture</span>
+                    <kbd className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                      Q
+                    </kbd>
+                  </div>
+                </Command.Item>
+              )}
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/habits?action=new"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-new-habit"
+              >
+                <PlusCircle className="mr-2 h-4 w-4 text-orange-500" />
+                <span>Create New Habit</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/goals?action=new"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-new-goal"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                <span>Create New Goal</span>
+              </Command.Item>
               <Command.Item
                 onSelect={() => runCommand(() => router.push("/tasks?action=new"))}
                 className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"

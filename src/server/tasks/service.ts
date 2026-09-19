@@ -1,9 +1,23 @@
 import { z } from "zod";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc, asc, inArray } from "drizzle-orm";
 import { db } from "@/server/db";
-import { tasks, projects, type Task } from "@/server/db/schema";
+import {
+  tasks,
+  projects,
+  taskDependencies,
+  type Task,
+  type RecurrenceRule,
+  type TaskDependency,
+} from "@/server/db/schema";
 import { AuthorizationError } from "@/server/auth/guard";
 import { createAuditLog } from "@/server/audit";
+import {
+  calculateTaskPriorityScore,
+  compareTasksByPriority,
+} from "./priority";
+import { calculateNextOccurrence } from "./recurrence";
+import { parseQuickCaptureInput } from "./quick-capture";
+import { recalculateGoalProgress } from "@/server/goals/service";
 
 // Server-only runtime protection
 if (typeof window !== "undefined" && !process.env.VITEST) {
@@ -37,6 +51,7 @@ export interface TaskDTO {
   userId: string;
   projectId: string | null;
   parentTaskId: string | null;
+  milestoneId: string | null;
   title: string;
   description: string | null;
   status:
@@ -47,32 +62,85 @@ export interface TaskDTO {
     | "completed"
     | "cancelled";
   priority: "low" | "medium" | "high" | "critical";
+  scheduledDate: string | null;
+  energyLevel: "low" | "medium" | "high" | null;
+  recurrenceRule: RecurrenceRule | null;
+  goalId: string | null;
+  habitId: string | null;
+  noteId: string | null;
+  personId: string | null;
+  tags: string[];
   dueDate: string | null;
   estimatedDuration: number | null;
   actualDuration: number | null;
   completedAt: string | null;
+  priorityScore: number;
+  hasUncompletedDependencies?: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export function toTaskDTO(row: Task): TaskDTO {
+export function toTaskDTO(
+  row: Task,
+  extra?: { priorityScore?: number; hasUncompletedDependencies?: boolean }
+): TaskDTO {
+  const score =
+    extra?.priorityScore !== undefined
+      ? extra.priorityScore
+      : calculateTaskPriorityScore(
+          {
+            id: row.id,
+            priority: row.priority,
+            dueDate: row.dueDate,
+            scheduledDate: row.scheduledDate,
+            projectId: row.projectId,
+            goalId: row.goalId,
+            estimatedDuration: row.estimatedDuration,
+            status: row.status,
+            hasUncompletedDependencies: extra?.hasUncompletedDependencies,
+            createdAt: row.createdAt,
+          },
+          new Date()
+        );
+
   return {
     id: row.id,
     userId: row.userId,
     projectId: row.projectId,
     parentTaskId: row.parentTaskId,
+    milestoneId: row.milestoneId ?? null,
     title: row.title,
     description: row.description,
     status: row.status as TaskDTO["status"],
     priority: row.priority as TaskDTO["priority"],
+    scheduledDate: row.scheduledDate ? row.scheduledDate.toISOString() : null,
+    energyLevel: (row.energyLevel as TaskDTO["energyLevel"]) ?? null,
+    recurrenceRule: (row.recurrenceRule as RecurrenceRule) ?? null,
+    goalId: row.goalId ?? null,
+    habitId: row.habitId ?? null,
+    noteId: row.noteId ?? null,
+    personId: row.personId ?? null,
+    tags: Array.isArray(row.tags) ? row.tags : [],
     dueDate: row.dueDate ? row.dueDate.toISOString() : null,
     estimatedDuration: row.estimatedDuration,
     actualDuration: row.actualDuration,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
+    priorityScore: score,
+    hasUncompletedDependencies: extra?.hasUncompletedDependencies ?? false,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
 }
+
+export const recurrenceRuleSchema = z
+  .object({
+    frequency: z.enum(["daily", "weekly", "monthly", "custom"]),
+    interval: z.number().int().min(1).default(1),
+    daysOfWeek: z.array(z.number().int().min(0).max(6)).optional(),
+    endDate: z.string().datetime().optional(),
+    count: z.number().int().min(1).optional(),
+  })
+  .strict();
 
 export const createTaskSchema = z
   .object({
@@ -97,6 +165,18 @@ export const createTaskSchema = z
       ])
       .optional(),
     priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+    scheduledDate: z
+      .string()
+      .datetime({ message: "scheduledDate must be a valid ISO 8601 date string" })
+      .nullish(),
+    energyLevel: z.enum(["low", "medium", "high"]).nullish(),
+    recurrenceRule: recurrenceRuleSchema.nullish(),
+    goalId: z.string().trim().min(1).nullish(),
+    milestoneId: z.string().trim().min(1).nullish(),
+    habitId: z.string().trim().min(1).nullish(),
+    noteId: z.string().trim().min(1).nullish(),
+    personId: z.string().trim().min(1).nullish(),
+    tags: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
     projectId: z.string().trim().min(1).nullish(),
     parentTaskId: z.string().trim().min(1).nullish(),
     dueDate: z
@@ -152,6 +232,18 @@ export const updateTaskSchema = z
       ])
       .optional(),
     priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+    scheduledDate: z
+      .string()
+      .datetime({ message: "scheduledDate must be a valid ISO 8601 date string" })
+      .nullish(),
+    energyLevel: z.enum(["low", "medium", "high"]).nullish(),
+    recurrenceRule: recurrenceRuleSchema.nullish(),
+    goalId: z.string().trim().min(1).nullish(),
+    milestoneId: z.string().trim().min(1).nullish(),
+    habitId: z.string().trim().min(1).nullish(),
+    noteId: z.string().trim().min(1).nullish(),
+    personId: z.string().trim().min(1).nullish(),
+    tags: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
     projectId: z.string().trim().min(1).nullish(),
     parentTaskId: z.string().trim().min(1).nullish(),
     dueDate: z
@@ -354,6 +446,15 @@ export async function createTask(
             description: validated.description ?? null,
             status: finalStatus,
             priority: validated.priority ?? "medium",
+            scheduledDate: validated.scheduledDate ? new Date(validated.scheduledDate) : null,
+            energyLevel: validated.energyLevel ?? null,
+            recurrenceRule: validated.recurrenceRule ?? null,
+            goalId: validated.goalId ?? null,
+            milestoneId: validated.milestoneId ?? null,
+            habitId: validated.habitId ?? null,
+            noteId: validated.noteId ?? null,
+            personId: validated.personId ?? null,
+            tags: validated.tags ?? [],
             dueDate: validated.dueDate ? new Date(validated.dueDate) : null,
             estimatedDuration: validated.estimatedDuration ?? null,
             actualDuration: validated.actualDuration ?? null,
@@ -379,6 +480,23 @@ export async function createTask(
           tx
         );
 
+        // Trigger goal progress recalculation if task belongs to a goal or a project linked to a goal
+        if (inserted.goalId) {
+          await recalculateGoalProgress(safeUserId, inserted.goalId, tx);
+        }
+        if (finalProjectId) {
+          const [p] = await tx
+            .select({ goalId: projects.goalId })
+            .from(projects)
+            .where(
+              and(eq(projects.userId, safeUserId), eq(projects.id, finalProjectId))
+            )
+            .limit(1);
+          if (p?.goalId) {
+            await recalculateGoalProgress(safeUserId, p.goalId, tx);
+          }
+        }
+
         return toTaskDTO(inserted);
       });
     } catch (err: any) {
@@ -395,8 +513,20 @@ export async function createTask(
   });
 }
 
+export interface ListTasksFilters {
+  status?: string;
+  projectId?: string;
+  priority?: string;
+  energyLevel?: "low" | "medium" | "high";
+  scheduledDate?: string;
+  overdue?: boolean;
+  sortBy?: "priority_score" | "due_date" | "created_at" | "title";
+  sortDir?: "asc" | "desc";
+}
+
 /**
- * Retrieves a single task strictly scoped to the authenticated user.
+ * Retrieves a single task strictly scoped to the authenticated user,
+ * dynamically calculating priority score and dependency blocking status.
  */
 export async function getTask(
   authenticatedUserId: string,
@@ -415,19 +545,29 @@ export async function getTask(
     return null;
   }
 
-  return toTaskDTO(results[0]);
+  // Check if task has any uncompleted dependencies
+  const depResult = await db.execute(sql`
+    SELECT 1
+    FROM task_dependencies td
+    JOIN tasks t ON t.id = td.depends_on_task_id AND t.user_id = td.user_id
+    WHERE td.user_id = ${safeUserId} AND td.task_id = ${safeTaskId} AND t.status != 'completed'
+    LIMIT 1;
+  `);
+
+  const hasUncompletedDependencies = Boolean(
+    depResult.rows && depResult.rows.length > 0
+  );
+
+  return toTaskDTO(results[0], { hasUncompletedDependencies });
 }
 
 /**
- * Lists tasks strictly scoped to the authenticated user with optional filtering.
+ * Lists tasks strictly scoped to the authenticated user with multi-criteria filtering,
+ * dependency blocking detection, dynamic priority scoring, and deterministic sorting.
  */
 export async function listTasks(
   authenticatedUserId: string,
-  filters?: {
-    status?: string;
-    projectId?: string;
-    priority?: string;
-  }
+  filters?: ListTasksFilters
 ): Promise<TaskDTO[]> {
   const safeUserId = validateUserId(authenticatedUserId);
 
@@ -442,13 +582,119 @@ export async function listTasks(
   if (filters?.priority) {
     conditions.push(eq(tasks.priority, filters.priority as Task["priority"]));
   }
+  if (filters?.energyLevel) {
+    conditions.push(eq(tasks.energyLevel, filters.energyLevel));
+  }
+  if (filters?.scheduledDate) {
+    conditions.push(
+      sql`DATE(${tasks.scheduledDate}) = DATE(${filters.scheduledDate})`
+    );
+  }
+  if (filters?.overdue) {
+    conditions.push(
+      and(
+        sql`${tasks.dueDate} < NOW()`,
+        sql`${tasks.status} NOT IN ('completed', 'cancelled')`
+      )!
+    );
+  }
 
   const rows = await db
     .select()
     .from(tasks)
     .where(and(...conditions));
 
-  return rows.map(toTaskDTO);
+  // Single aggregate query to determine which user tasks have uncompleted dependencies
+  const blockedResult = await db.execute(sql`
+    SELECT td.task_id
+    FROM task_dependencies td
+    JOIN tasks t ON t.id = td.depends_on_task_id AND t.user_id = td.user_id
+    WHERE td.user_id = ${safeUserId} AND t.status != 'completed'
+    GROUP BY td.task_id;
+  `);
+
+  const blockedTaskIds = new Set<string>(
+    (blockedResult.rows || []).map((r: any) => String(r.task_id))
+  );
+
+  const now = new Date();
+  const dtoList = rows.map((row) => {
+    const hasUncompleted = blockedTaskIds.has(row.id);
+    const score = calculateTaskPriorityScore(
+      {
+        id: row.id,
+        priority: row.priority,
+        dueDate: row.dueDate,
+        scheduledDate: row.scheduledDate,
+        projectId: row.projectId,
+        goalId: row.goalId,
+        estimatedDuration: row.estimatedDuration,
+        status: row.status,
+        hasUncompletedDependencies: hasUncompleted,
+        createdAt: row.createdAt,
+      },
+      now
+    );
+    return toTaskDTO(row, {
+      priorityScore: score,
+      hasUncompletedDependencies: hasUncompleted,
+    });
+  });
+
+  const sortBy = filters?.sortBy ?? "priority_score";
+  const sortDir =
+    filters?.sortDir ??
+    (sortBy === "priority_score" || sortBy === "created_at" ? "desc" : "asc");
+
+  dtoList.sort((a, b) => {
+    if (sortBy === "priority_score") {
+      const diff = b.priorityScore - a.priorityScore;
+      if (diff !== 0) return sortDir === "asc" ? -diff : diff;
+      return compareTasksByPriority(
+        {
+          id: a.id,
+          priority: a.priority,
+          dueDate: a.dueDate ? new Date(a.dueDate) : null,
+          scheduledDate: a.scheduledDate ? new Date(a.scheduledDate) : null,
+          projectId: a.projectId,
+          goalId: a.goalId,
+          estimatedDuration: a.estimatedDuration,
+          status: a.status,
+          createdAt: new Date(a.createdAt),
+        },
+        {
+          id: b.id,
+          priority: b.priority,
+          dueDate: b.dueDate ? new Date(b.dueDate) : null,
+          scheduledDate: b.scheduledDate ? new Date(b.scheduledDate) : null,
+          projectId: b.projectId,
+          goalId: b.goalId,
+          estimatedDuration: b.estimatedDuration,
+          status: b.status,
+          createdAt: new Date(b.createdAt),
+        },
+        now
+      );
+    }
+    if (sortBy === "due_date") {
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      const diff = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      return sortDir === "asc" ? diff : -diff;
+    }
+    if (sortBy === "created_at") {
+      const diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return sortDir === "asc" ? diff : -diff;
+    }
+    if (sortBy === "title") {
+      const cmp = a.title.localeCompare(b.title);
+      return sortDir === "asc" ? cmp : -cmp;
+    }
+    return 0;
+  });
+
+  return dtoList;
 }
 
 /**
@@ -604,6 +850,22 @@ export async function updateTask(
         updates.description = validated.description;
       if (validated.status !== undefined) updates.status = nextStatus;
       if (validated.priority !== undefined) updates.priority = validated.priority;
+      if (validated.scheduledDate !== undefined)
+        updates.scheduledDate = validated.scheduledDate
+          ? new Date(validated.scheduledDate)
+          : null;
+      if (validated.energyLevel !== undefined)
+        updates.energyLevel = validated.energyLevel ?? null;
+      if (validated.recurrenceRule !== undefined)
+        updates.recurrenceRule = validated.recurrenceRule ?? null;
+      if (validated.goalId !== undefined) updates.goalId = validated.goalId ?? null;
+      if (validated.milestoneId !== undefined)
+        updates.milestoneId = validated.milestoneId ?? null;
+      if (validated.habitId !== undefined) updates.habitId = validated.habitId ?? null;
+      if (validated.noteId !== undefined) updates.noteId = validated.noteId ?? null;
+      if (validated.personId !== undefined)
+        updates.personId = validated.personId ?? null;
+      if (validated.tags !== undefined) updates.tags = validated.tags ?? [];
       if (validated.projectId !== undefined) updates.projectId = nextProjectId;
       if (validated.parentTaskId !== undefined)
         updates.parentTaskId = validated.parentTaskId;
@@ -622,6 +884,89 @@ export async function updateTask(
         .set(updates)
         .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
         .returning();
+
+      // 6. Recurrence spawning on completion
+      if (
+        nextStatus === "completed" &&
+        existing.status !== "completed" &&
+        (updates.recurrenceRule !== undefined
+          ? updates.recurrenceRule
+          : existing.recurrenceRule)
+      ) {
+        const rule = (updates.recurrenceRule !== undefined
+          ? updates.recurrenceRule
+          : existing.recurrenceRule) as RecurrenceRule;
+
+        const baseDate =
+          existing.dueDate ??
+          existing.scheduledDate ??
+          nextCompletedAt ??
+          new Date();
+        const nextOccurrence = calculateNextOccurrence(baseDate, rule);
+
+        if (nextOccurrence) {
+          let nextDueDate: Date | null = null;
+          let nextScheduledDate: Date | null = null;
+
+          if (existing.dueDate) {
+            nextDueDate = calculateNextOccurrence(existing.dueDate, rule);
+          }
+          if (existing.scheduledDate) {
+            nextScheduledDate = calculateNextOccurrence(
+              existing.scheduledDate,
+              rule
+            );
+          }
+          if (!nextDueDate && !nextScheduledDate) {
+            nextDueDate = nextOccurrence;
+          }
+
+          const [spawned] = await tx
+            .insert(tasks)
+            .values({
+              userId: safeUserId,
+              projectId: nextProjectId,
+              parentTaskId: existing.parentTaskId,
+              title: existing.title,
+              description: existing.description,
+              status: "todo",
+              priority: existing.priority,
+              scheduledDate: nextScheduledDate,
+              energyLevel: existing.energyLevel,
+              recurrenceRule: rule,
+              goalId: existing.goalId,
+              habitId: existing.habitId,
+              noteId: existing.noteId,
+              personId: existing.personId,
+              tags: existing.tags ?? [],
+              dueDate: nextDueDate,
+              estimatedDuration: existing.estimatedDuration,
+              actualDuration: null,
+              completedAt: null,
+            })
+            .returning();
+
+          await createAuditLog(
+            {
+              userId: safeUserId,
+              category: "mutation",
+              action: "task.recurrence_spawned",
+              status: "success",
+              details: {
+                originalTaskId: safeTaskId,
+                newTaskId: spawned.id,
+                nextDueDate: nextDueDate ? nextDueDate.toISOString() : null,
+                nextScheduledDate: nextScheduledDate
+                  ? nextScheduledDate.toISOString()
+                  : null,
+              },
+              ipAddress: actorInfo?.ipAddress,
+              userAgent: actorInfo?.userAgent,
+            },
+            tx
+          );
+        }
+      }
 
       // 6. Propagate project change to descendant subtasks if project changed
       if (
@@ -659,6 +1004,34 @@ export async function updateTask(
         tx
       );
 
+      // Trigger goal progress recalculation if status, projectId, or goalId changed
+      if (updated.goalId) {
+        await recalculateGoalProgress(safeUserId, updated.goalId, tx);
+      }
+      if (existing.goalId && existing.goalId !== updated.goalId) {
+        await recalculateGoalProgress(safeUserId, existing.goalId, tx);
+      }
+      if (updated.projectId) {
+        const [p] = await tx
+          .select({ goalId: projects.goalId })
+          .from(projects)
+          .where(and(eq(projects.userId, safeUserId), eq(projects.id, updated.projectId)))
+          .limit(1);
+        if (p?.goalId) {
+          await recalculateGoalProgress(safeUserId, p.goalId, tx);
+        }
+      }
+      if (existing.projectId && existing.projectId !== updated.projectId) {
+        const [pOld] = await tx
+          .select({ goalId: projects.goalId })
+          .from(projects)
+          .where(and(eq(projects.userId, safeUserId), eq(projects.id, existing.projectId)))
+          .limit(1);
+        if (pOld?.goalId) {
+          await recalculateGoalProgress(safeUserId, pOld.goalId, tx);
+        }
+      }
+
       return toTaskDTO(updated);
     });
   } catch (err: any) {
@@ -691,7 +1064,7 @@ export async function deleteTask(
     db.transaction(async (tx) => {
       // Acquire row-level lock before deletion
       const [existing] = await tx
-        .select({ id: tasks.id })
+        .select({ id: tasks.id, projectId: tasks.projectId, goalId: tasks.goalId })
         .from(tasks)
         .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
         .for("update")
@@ -710,6 +1083,21 @@ export async function deleteTask(
         throw new NotFoundError("Task not found.");
       }
 
+      // Trigger goal progress recalculation if deleted task belonged to a goal or a project linked to a goal
+      if (existing.goalId) {
+        await recalculateGoalProgress(safeUserId, existing.goalId, tx);
+      }
+      if (existing.projectId) {
+        const [p] = await tx
+          .select({ goalId: projects.goalId })
+          .from(projects)
+          .where(and(eq(projects.userId, safeUserId), eq(projects.id, existing.projectId)))
+          .limit(1);
+        if (p?.goalId) {
+          await recalculateGoalProgress(safeUserId, p.goalId, tx);
+        }
+      }
+
       await createAuditLog(
         {
           userId: safeUserId,
@@ -725,5 +1113,287 @@ export async function deleteTask(
 
       return { success: true };
     })
+  );
+}
+
+/**
+ * Adds a dependency between two tasks owned by the authenticated user within an atomic transaction.
+ * Enforces DAG cycle prevention via PostgreSQL trigger and row-level checks.
+ */
+export async function addTaskDependency(
+  authenticatedUserId: string,
+  taskId: string,
+  dependsOnTaskId: string,
+  actorInfo?: { ipAddress?: string | null; userAgent?: string | null }
+): Promise<{ success: true; dependency: TaskDependency }> {
+  const safeUserId = validateUserId(authenticatedUserId);
+  const safeTaskId = validateEntityId(taskId, "Task");
+  const safeDependsOnTaskId = validateEntityId(
+    dependsOnTaskId,
+    "Prerequisite Task"
+  );
+
+  if (safeTaskId === safeDependsOnTaskId) {
+    throw new InvariantViolationError("A task cannot depend on itself.");
+  }
+
+  return await withDeadlockRetry(async () =>
+    db.transaction(async (tx) => {
+      // 1. Verify both tasks exist and belong to the authenticated user (share lock)
+      const rows = await tx
+        .select({ id: tasks.id })
+        .from(tasks)
+        .where(
+          and(
+            eq(tasks.userId, safeUserId),
+            inArray(tasks.id, [safeTaskId, safeDependsOnTaskId])
+          )
+        )
+        .for("share");
+
+      if (rows.length < 2) {
+        throw new NotFoundError("One or both tasks not found.");
+      }
+
+      try {
+        const [inserted] = await tx
+          .insert(taskDependencies)
+          .values({
+            userId: safeUserId,
+            taskId: safeTaskId,
+            dependsOnTaskId: safeDependsOnTaskId,
+          })
+          .returning();
+
+        await createAuditLog(
+          {
+            userId: safeUserId,
+            category: "mutation",
+            action: "task.dependency_added",
+            status: "success",
+            details: {
+              taskId: safeTaskId,
+              dependsOnTaskId: safeDependsOnTaskId,
+              dependencyId: inserted.id,
+            },
+            ipAddress: actorInfo?.ipAddress,
+            userAgent: actorInfo?.userAgent,
+          },
+          tx
+        );
+
+        return { success: true, dependency: inserted };
+      } catch (err: any) {
+        const cause = err?.cause || err;
+
+        // Unique violation: dependency already exists
+        if (err?.code === "23505" || cause?.code === "23505") {
+          const [existing] = await tx
+            .select()
+            .from(taskDependencies)
+            .where(
+              and(
+                eq(taskDependencies.userId, safeUserId),
+                eq(taskDependencies.taskId, safeTaskId),
+                eq(taskDependencies.dependsOnTaskId, safeDependsOnTaskId)
+              )
+            )
+            .limit(1);
+
+          return { success: true, dependency: existing };
+        }
+
+        // Cycle violation trigger (check_violation or explicit error message)
+        if (
+          err?.code === "23514" ||
+          cause?.code === "23514" ||
+          err?.message?.includes("cycle detected") ||
+          cause?.message?.includes("cycle detected") ||
+          err?.detail?.includes("cycle detected") ||
+          cause?.detail?.includes("cycle detected")
+        ) {
+          throw new InvariantViolationError(
+            "Circular task dependency detected: this dependency would create a cycle."
+          );
+        }
+
+        throw err;
+      }
+    })
+  );
+}
+
+/**
+ * Removes a dependency between two tasks owned by the authenticated user.
+ */
+export async function removeTaskDependency(
+  authenticatedUserId: string,
+  taskId: string,
+  dependsOnTaskId: string,
+  actorInfo?: { ipAddress?: string | null; userAgent?: string | null }
+): Promise<{ success: true }> {
+  const safeUserId = validateUserId(authenticatedUserId);
+  const safeTaskId = validateEntityId(taskId, "Task");
+  const safeDependsOnTaskId = validateEntityId(
+    dependsOnTaskId,
+    "Prerequisite Task"
+  );
+
+  return await withDeadlockRetry(async () =>
+    db.transaction(async (tx) => {
+      const [deleted] = await tx
+        .delete(taskDependencies)
+        .where(
+          and(
+            eq(taskDependencies.userId, safeUserId),
+            eq(taskDependencies.taskId, safeTaskId),
+            eq(taskDependencies.dependsOnTaskId, safeDependsOnTaskId)
+          )
+        )
+        .returning({ id: taskDependencies.id });
+
+      if (!deleted) {
+        throw new NotFoundError("Task dependency not found.");
+      }
+
+      await createAuditLog(
+        {
+          userId: safeUserId,
+          category: "mutation",
+          action: "task.dependency_removed",
+          status: "success",
+          details: {
+            taskId: safeTaskId,
+            dependsOnTaskId: safeDependsOnTaskId,
+          },
+          ipAddress: actorInfo?.ipAddress,
+          userAgent: actorInfo?.userAgent,
+        },
+        tx
+      );
+
+      return { success: true };
+    })
+  );
+}
+
+/**
+ * Retrieves the prerequisite tasks (blockedBy) and dependent tasks (blocks) for a given task.
+ */
+export async function getTaskDependencies(
+  authenticatedUserId: string,
+  taskId: string
+): Promise<{ blockedBy: TaskDTO[]; blocks: TaskDTO[] }> {
+  const safeUserId = validateUserId(authenticatedUserId);
+  const safeTaskId = validateEntityId(taskId, "Task");
+
+  // Verify task exists and belongs to the authenticated user
+  const [taskRow] = await db
+    .select({ id: tasks.id })
+    .from(tasks)
+    .where(and(eq(tasks.userId, safeUserId), eq(tasks.id, safeTaskId)))
+    .limit(1);
+
+  if (!taskRow) {
+    throw new NotFoundError("Task not found.");
+  }
+
+  // 1. Blocked By: tasks that this task depends on
+  const blockedByRows = await db
+    .select({ task: tasks })
+    .from(taskDependencies)
+    .innerJoin(
+      tasks,
+      and(
+        eq(tasks.id, taskDependencies.dependsOnTaskId),
+        eq(tasks.userId, safeUserId)
+      )
+    )
+    .where(
+      and(
+        eq(taskDependencies.userId, safeUserId),
+        eq(taskDependencies.taskId, safeTaskId)
+      )
+    );
+
+  // 2. Blocks: tasks that depend on this task
+  const blocksRows = await db
+    .select({ task: tasks })
+    .from(taskDependencies)
+    .innerJoin(
+      tasks,
+      and(
+        eq(tasks.id, taskDependencies.taskId),
+        eq(tasks.userId, safeUserId)
+      )
+    )
+    .where(
+      and(
+        eq(taskDependencies.userId, safeUserId),
+        eq(taskDependencies.dependsOnTaskId, safeTaskId)
+      )
+    );
+
+  return {
+    blockedBy: blockedByRows.map((r) => toTaskDTO(r.task)),
+    blocks: blocksRows.map((r) => toTaskDTO(r.task)),
+  };
+}
+
+/**
+ * Universal Quick Capture parser and executor.
+ * Parses raw text with inline syntax (!priority, ^due, *scheduled, @energy, #project, ~duration, +tags)
+ * and atomically creates the task.
+ */
+export async function quickCaptureTask(
+  authenticatedUserId: string,
+  input: { raw: string; overrideProjectId?: string | null },
+  actorInfo?: { ipAddress?: string | null; userAgent?: string | null }
+): Promise<TaskDTO> {
+  const safeUserId = validateUserId(authenticatedUserId);
+
+  if (!input.raw || !input.raw.trim()) {
+    throw new InvariantViolationError("Quick capture input cannot be empty.");
+  }
+
+  const parsed = parseQuickCaptureInput(input.raw);
+  if (!parsed.title) {
+    throw new InvariantViolationError("Task title cannot be empty.");
+  }
+
+  let resolvedProjectId: string | null = null;
+
+  if (input.overrideProjectId !== undefined) {
+    resolvedProjectId = input.overrideProjectId;
+  } else if (parsed.projectName) {
+    const [matchedProject] = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(
+        and(
+          eq(projects.userId, safeUserId),
+          sql`LOWER(${projects.name}) = LOWER(${parsed.projectName})`
+        )
+      )
+      .limit(1);
+
+    if (matchedProject) {
+      resolvedProjectId = matchedProject.id;
+    }
+  }
+
+  return await createTask(
+    safeUserId,
+    {
+      title: parsed.title,
+      priority: parsed.priority,
+      dueDate: parsed.dueDate,
+      scheduledDate: parsed.scheduledDate,
+      energyLevel: parsed.energyLevel,
+      projectId: resolvedProjectId,
+      estimatedDuration: parsed.estimatedDuration,
+      tags: parsed.tags,
+    },
+    actorInfo
   );
 }

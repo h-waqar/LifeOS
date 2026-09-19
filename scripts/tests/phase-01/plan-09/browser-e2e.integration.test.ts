@@ -6,12 +6,13 @@ import { user } from "@/server/db/schema/auth";
 import { spawn, ChildProcess } from "node:child_process";
 import * as path from "node:path";
 import * as fs from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
-const SCREENSHOT_DIR = path.resolve(
-  process.cwd(),
-  "scripts/tests/phase-01/plan-09/screenshots"
-);
+const SCREENSHOT_DIR = path.resolve(__dirname, "screenshots");
 
 describe("Plan 01-09: Real Production Browser E2E Verification Suite", () => {
   let serverProcess: ChildProcess | null = null;

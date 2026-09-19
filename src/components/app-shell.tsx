@@ -15,12 +15,18 @@ import {
   Command,
   PanelLeftClose,
   PanelLeftOpen,
+  Sparkles,
+  Target,
+  Flame,
+  Calendar,
+  CalendarCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
 import { useSession, signOut } from "@/lib/auth-client";
 import { CommandPalette } from "@/components/command-palette";
+import { QuickCaptureModal } from "@/components/quick-capture-modal";
 import { toast } from "sonner";
 
 interface AppShellProps {
@@ -36,6 +42,35 @@ export function AppShell({ children }: AppShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
+  const [quickCaptureOpen, setQuickCaptureOpen] = React.useState(false);
+
+  // Global keydown shortcut for Quick Capture ('Q' or 'C' when not in text input)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (
+        (e.key === "q" || e.key === "Q" || e.key === "c" || e.key === "C") &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey
+      ) {
+        e.preventDefault();
+        setQuickCaptureOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Close mobile drawer on route change
   React.useEffect(() => {
@@ -62,6 +97,16 @@ export function AppShell({ children }: AppShellProps) {
       icon: LayoutDashboard,
     },
     {
+      name: "Daily Plan",
+      href: "/daily-plan",
+      icon: CalendarCheck,
+    },
+    {
+      name: "Goals",
+      href: "/goals",
+      icon: Target,
+    },
+    {
       name: "Projects",
       href: "/projects",
       icon: FolderKanban,
@@ -70,6 +115,16 @@ export function AppShell({ children }: AppShellProps) {
       name: "Tasks",
       href: "/tasks",
       icon: CheckSquare,
+    },
+    {
+      name: "Calendar",
+      href: "/calendar",
+      icon: Calendar,
+    },
+    {
+      name: "Habits",
+      href: "/habits",
+      icon: Flame,
     },
   ];
 
@@ -92,6 +147,16 @@ export function AppShell({ children }: AppShellProps) {
       <CommandPalette
         open={commandPaletteOpen}
         onOpenChange={setCommandPaletteOpen}
+        onOpenQuickCapture={() => setQuickCaptureOpen(true)}
+      />
+
+      {/* Universal Quick Capture Modal */}
+      <QuickCaptureModal
+        isOpen={quickCaptureOpen}
+        onClose={() => setQuickCaptureOpen(false)}
+        onTaskCreated={() => {
+          router.refresh();
+        }}
       />
 
       {/* Desktop Sidebar */}
@@ -138,8 +203,8 @@ export function AppShell({ children }: AppShellProps) {
           </button>
         </div>
 
-        {/* Quick Search / Command Button */}
-        <div className="p-3">
+        {/* Quick Search & Quick Capture Buttons */}
+        <div className="p-3 space-y-1.5">
           <button
             onClick={() => setCommandPaletteOpen(true)}
             className={cn(
@@ -155,6 +220,26 @@ export function AppShell({ children }: AppShellProps) {
                 <span className="flex-1 text-left">Quick search...</span>
                 <kbd className="pointer-events-none rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
                   ⌘K
+                </kbd>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => setQuickCaptureOpen(true)}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 text-xs font-medium text-primary shadow-xs hover:bg-primary/20 transition-all",
+              sidebarCollapsed && "justify-center px-0"
+            )}
+            title="Universal Quick Capture (Q / C)"
+            data-testid="quick-capture-button"
+          >
+            <Sparkles className="h-4 w-4 shrink-0" />
+            {!sidebarCollapsed && (
+              <>
+                <span className="flex-1 text-left">Quick Capture</span>
+                <kbd className="pointer-events-none rounded border border-primary/30 bg-primary/15 px-1.5 font-mono text-[10px] font-bold text-primary">
+                  Q
                 </kbd>
               </>
             )}
@@ -179,7 +264,7 @@ export function AppShell({ children }: AppShellProps) {
                   sidebarCollapsed && "justify-center px-2"
                 )}
                 title={sidebarCollapsed ? item.name : undefined}
-                data-testid={`nav-${item.name.toLowerCase()}`}
+                data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, "-")}`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!sidebarCollapsed && <span>{item.name}</span>}
@@ -298,6 +383,7 @@ export function AppShell({ children }: AppShellProps) {
                           ? "bg-primary text-primary-foreground"
                           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
+                      data-testid={`mobile-nav-${item.name.toLowerCase().replace(/\s+/g, "-")}`}
                     >
                       <Icon className="h-5 w-5" />
                       <span>{item.name}</span>
@@ -357,7 +443,17 @@ export function AppShell({ children }: AppShellProps) {
             </button>
             <span className="font-bold tracking-tight">LifeOS</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setQuickCaptureOpen(true)}
+              aria-label="Quick capture task"
+              title="Universal Quick Capture"
+              className="text-primary hover:text-primary hover:bg-primary/10"
+            >
+              <Sparkles className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"

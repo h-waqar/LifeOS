@@ -4,14 +4,21 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { AppShell } from "@/components/app-shell";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  StatusBadge,
+  PriorityBadge,
+  ScoreBadge,
+  EnergyBadge,
+  Badge,
+} from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
-import type { TaskDTO, ProjectDTO, TaskStatus, Priority } from "@/types";
+import { QuickCaptureModal } from "@/components/quick-capture-modal";
+import type { TaskDTO, ProjectDTO, TaskStatus, Priority, EnergyLevel } from "@/types";
 import {
   CheckSquare,
   Plus,
@@ -24,6 +31,11 @@ import {
   Loader2,
   Calendar,
   FolderKanban,
+  Sparkles,
+  Link2,
+  Zap,
+  ArrowUpDown,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,9 +52,15 @@ function TasksContent() {
   const [projects, setProjects] = React.useState<ProjectDTO[]>([]);
   const [loading, setLoading] = React.useState(true);
 
-  // Filters
+  // Filters & Sorting
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [projectFilter, setProjectFilter] = React.useState<string>("all");
+  const [energyFilter, setEnergyFilter] = React.useState<string>("all");
+  const [sortBy, setSortBy] = React.useState<string>("priority_score");
+  const [sortDir, setSortDir] = React.useState<"asc" | "desc">("desc");
+
+  // Quick Capture Modal
+  const [isQuickCaptureOpen, setIsQuickCaptureOpen] = React.useState(false);
 
   // Create Modal
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
@@ -52,7 +70,9 @@ function TasksContent() {
   const [projectId, setProjectId] = React.useState<string>("");
   const [status, setStatus] = React.useState<TaskStatus>("todo");
   const [priority, setPriority] = React.useState<Priority>("medium");
+  const [energyLevel, setEnergyLevel] = React.useState<EnergyLevel | "">("");
   const [dueDate, setDueDate] = React.useState("");
+  const [scheduledDate, setScheduledDate] = React.useState("");
   const [createLoading, setCreateLoading] = React.useState(false);
 
   // Edit Modal
@@ -63,13 +83,26 @@ function TasksContent() {
   const [editProjectId, setEditProjectId] = React.useState<string>("");
   const [editStatus, setEditStatus] = React.useState<TaskStatus>("todo");
   const [editPriority, setEditPriority] = React.useState<Priority>("medium");
+  const [editEnergyLevel, setEditEnergyLevel] = React.useState<EnergyLevel | "">("");
   const [editDueDate, setEditDueDate] = React.useState("");
+  const [editScheduledDate, setEditScheduledDate] = React.useState("");
   const [editLoading, setEditLoading] = React.useState(false);
 
   // Delete Modal
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [deletingTask, setDeletingTask] = React.useState<TaskDTO | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
+
+  // Task Dependencies Modal
+  const [isDepsOpen, setIsDepsOpen] = React.useState(false);
+  const [selectedDepsTask, setSelectedDepsTask] = React.useState<TaskDTO | null>(null);
+  const [depsLoading, setDepsLoading] = React.useState(false);
+  const [depsData, setDepsData] = React.useState<{
+    blockedBy: TaskDTO[];
+    blocks: TaskDTO[];
+  }>({ blockedBy: [], blocks: [] });
+  const [newPrereqId, setNewPrereqId] = React.useState<string>("");
+  const [depsActionLoading, setDepsActionLoading] = React.useState(false);
 
   const isCreatingRef = React.useRef(false);
   const isEditingRef = React.useRef(false);
@@ -82,6 +115,9 @@ function TasksContent() {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (projectFilter !== "all") params.set("projectId", projectFilter);
+      if (energyFilter !== "all") params.set("energyLevel", energyFilter);
+      params.set("sortBy", sortBy);
+      params.set("sortDir", sortDir);
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
 
@@ -109,7 +145,7 @@ function TasksContent() {
     } finally {
       setLoading(false);
     }
-  }, [router, statusFilter, projectFilter]);
+  }, [router, statusFilter, projectFilter, energyFilter, sortBy, sortDir]);
 
   React.useEffect(() => {
     if (!sessionLoading) {
@@ -205,8 +241,14 @@ function TasksContent() {
       if (createParentId) {
         payload.parentTaskId = createParentId;
       }
+      if (energyLevel) {
+        payload.energyLevel = energyLevel;
+      }
       if (dueDate) {
         payload.dueDate = new Date(dueDate).toISOString();
+      }
+      if (scheduledDate) {
+        payload.scheduledDate = new Date(scheduledDate).toISOString();
       }
 
       const res = await fetch("/api/tasks", {
@@ -228,6 +270,9 @@ function TasksContent() {
       setIsCreateOpen(false);
       setTitle("");
       setDescription("");
+      setEnergyLevel("");
+      setDueDate("");
+      setScheduledDate("");
       setCreateParentId(null);
     } catch (err: any) {
       toast.error(err.message || "Failed to create task");
@@ -244,8 +289,12 @@ function TasksContent() {
     setEditProjectId(task.projectId || "");
     setEditStatus(task.status);
     setEditPriority(task.priority);
+    setEditEnergyLevel(task.energyLevel || "");
     setEditDueDate(
       task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : ""
+    );
+    setEditScheduledDate(
+      task.scheduledDate ? new Date(task.scheduledDate).toISOString().slice(0, 10) : ""
     );
     setIsEditOpen(true);
   };
@@ -264,6 +313,8 @@ function TasksContent() {
         description: editDescription.trim() || null,
         projectId: editProjectId.trim() || null,
         dueDate: editDueDate ? new Date(editDueDate).toISOString() : null,
+        scheduledDate: editScheduledDate ? new Date(editScheduledDate).toISOString() : null,
+        energyLevel: editEnergyLevel || null,
       };
 
       const res = await fetch(`/api/tasks/${editingTask.id}`, {
@@ -289,6 +340,84 @@ function TasksContent() {
     } finally {
       isEditingRef.current = false;
       setEditLoading(false);
+    }
+  };
+
+  const openDependencies = async (task: TaskDTO) => {
+    setSelectedDepsTask(task);
+    setIsDepsOpen(true);
+    setDepsLoading(true);
+    setNewPrereqId("");
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/dependencies`);
+      if (!res.ok) {
+        throw new Error("Failed to load task dependencies");
+      }
+      const data = await res.json();
+      setDepsData({
+        blockedBy: data.blockedBy || [],
+        blocks: data.blocks || [],
+      });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load dependencies");
+    } finally {
+      setDepsLoading(false);
+    }
+  };
+
+  const handleAddPrerequisite = async () => {
+    if (!selectedDepsTask || !newPrereqId || depsActionLoading) return;
+    setDepsActionLoading(true);
+    try {
+      const res = await fetch(`/api/tasks/${selectedDepsTask.id}/dependencies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dependsOnTaskId: newPrereqId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to add prerequisite");
+      }
+
+      toast.success("Prerequisite added!");
+      setNewPrereqId("");
+      const depRes = await fetch(`/api/tasks/${selectedDepsTask.id}/dependencies`);
+      if (depRes.ok) {
+        const d = await depRes.json();
+        setDepsData(d);
+      }
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add dependency");
+    } finally {
+      setDepsActionLoading(false);
+    }
+  };
+
+  const handleRemovePrerequisite = async (prereqId: string) => {
+    if (!selectedDepsTask || depsActionLoading) return;
+    setDepsActionLoading(true);
+    try {
+      const res = await fetch(
+        `/api/tasks/${selectedDepsTask.id}/dependencies/${prereqId}`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to remove prerequisite");
+      }
+
+      toast.success("Prerequisite removed!");
+      setDepsData((prev) => ({
+        ...prev,
+        blockedBy: prev.blockedBy.filter((t) => t.id !== prereqId),
+      }));
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove prerequisite");
+    } finally {
+      setDepsActionLoading(false);
     }
   };
 
@@ -390,6 +519,18 @@ function TasksContent() {
                 </span>
                 <StatusBadge status={node.status} />
                 <PriorityBadge priority={node.priority} />
+                <ScoreBadge score={node.priorityScore} />
+                <EnergyBadge energy={node.energyLevel} />
+                {node.hasUncompletedDependencies && (
+                  <Badge
+                    variant="warning"
+                    className="text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                    title="Task is blocked by unfinished prerequisites"
+                    data-testid={`blocked-badge-${node.id}`}
+                  >
+                    ⚠️ Blocked
+                  </Badge>
+                )}
               </div>
 
               {node.description && (
@@ -405,10 +546,16 @@ function TasksContent() {
                     {project.name}
                   </span>
                 )}
+                {node.scheduledDate && (
+                  <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                    <Calendar className="h-3 w-3" />
+                    Scheduled: {new Date(node.scheduledDate).toLocaleDateString()}
+                  </span>
+                )}
                 {node.dueDate && (
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {new Date(node.dueDate).toLocaleDateString()}
+                    Due: {new Date(node.dueDate).toLocaleDateString()}
                   </span>
                 )}
                 {node.completedAt && (
@@ -421,6 +568,16 @@ function TasksContent() {
           </div>
 
           <div className="flex items-center gap-1 shrink-0 ml-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => openDependencies(node)}
+              title="Manage Task Dependencies"
+              data-testid={`manage-deps-${node.id}`}
+            >
+              <Link2 className="h-3.5 w-3.5" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -487,50 +644,121 @@ function TasksContent() {
               Hierarchical execution engine: manage root tasks and nested subtasks
             </p>
           </div>
-          <Button
-            onClick={openCreateRoot}
-            className="gap-2"
-            data-testid="create-task-btn"
-          >
-            <Plus className="h-4 w-4" />
-            <span>New Task</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsQuickCaptureOpen(true)}
+              className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+              data-testid="quick-capture-modal-btn"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Quick Capture</span>
+              <kbd className="hidden sm:inline-block rounded border border-primary/30 bg-primary/15 px-1 font-mono text-[10px] font-bold">
+                Q
+              </kbd>
+            </Button>
+            <Button
+              onClick={openCreateRoot}
+              className="gap-2"
+              data-testid="create-task-btn"
+            >
+              <Plus className="h-4 w-4" />
+              <span>New Task</span>
+            </Button>
+          </div>
         </div>
 
-        {/* Filters bar */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
-          <div className="flex flex-wrap gap-1.5">
-            {statusFilterTabs.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => setStatusFilter(tab.value)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                  statusFilter === tab.value
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+        {/* Filters & Sorting Bar */}
+        <div className="flex flex-col gap-3 border-b pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Status tabs */}
+            <div className="flex flex-wrap gap-1.5">
+              {statusFilterTabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setStatusFilter(tab.value)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                    statusFilter === tab.value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Energy filter tabs */}
+            <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border">
+              <span className="text-[11px] font-semibold text-muted-foreground px-2">
+                Energy:
+              </span>
+              {[
+                { label: "All", value: "all" },
+                { label: "⚡ High", value: "high" },
+                { label: "⚡ Med", value: "medium" },
+                { label: "☕ Low", value: "low" },
+              ].map((pill) => (
+                <button
+                  key={pill.value}
+                  onClick={() => setEnergyFilter(pill.value)}
+                  className={`rounded-md px-2.5 py-0.5 text-xs font-medium transition-all ${
+                    energyFilter === pill.value
+                      ? "bg-background text-foreground shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  data-testid={`energy-filter-${pill.value}`}
+                >
+                  {pill.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              Project:
-            </span>
-            <Select
-              value={projectFilter}
-              onChange={(e) => setProjectFilter(e.target.value)}
-              className="h-8 text-xs w-44"
-            >
-              <option value="all">All Projects</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </Select>
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                Project:
+              </span>
+              <Select
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                className="h-8 text-xs w-44"
+              >
+                <option value="all">All Projects</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1">
+                <ArrowUpDown className="h-3 w-3" />
+                Sort:
+              </span>
+              <Select
+                value={sortBy}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSortBy(val);
+                  setSortDir(
+                    val === "priority_score" || val === "created_at"
+                      ? "desc"
+                      : "asc"
+                  );
+                }}
+                className="h-8 text-xs w-48"
+                data-testid="tasks-sort-by"
+              >
+                <option value="priority_score">Priority Score (High → Low)</option>
+                <option value="due_date">Due Date (Earliest First)</option>
+                <option value="created_at">Created Date (Newest First)</option>
+                <option value="title">Title (Alphabetical A-Z)</option>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -708,6 +936,48 @@ function TasksContent() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="create-task-energy"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
+                  Energy Level
+                </label>
+                <Select
+                  id="create-task-energy"
+                  name="energyLevel"
+                  value={energyLevel}
+                  onChange={(e) => setEnergyLevel(e.target.value as EnergyLevel | "")}
+                  disabled={createLoading}
+                  data-testid="new-task-energy"
+                >
+                  <option value="">(None)</option>
+                  <option value="high">⚡ High Energy</option>
+                  <option value="medium">⚡ Medium Energy</option>
+                  <option value="low">☕ Low Energy</option>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="create-task-scheduled"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
+                  Scheduled Date
+                </label>
+                <Input
+                  id="create-task-scheduled"
+                  name="scheduledDate"
+                  type="date"
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  disabled={createLoading}
+                  data-testid="new-task-scheduled"
+                />
+              </div>
+            </div>
+
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
@@ -863,6 +1133,48 @@ function TasksContent() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="edit-task-energy"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
+                  Energy Level
+                </label>
+                <Select
+                  id="edit-task-energy"
+                  name="energyLevel"
+                  value={editEnergyLevel}
+                  onChange={(e) => setEditEnergyLevel(e.target.value as EnergyLevel | "")}
+                  disabled={editLoading}
+                  data-testid="edit-task-energy"
+                >
+                  <option value="">(None)</option>
+                  <option value="high">⚡ High Energy</option>
+                  <option value="medium">⚡ Medium Energy</option>
+                  <option value="low">☕ Low Energy</option>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="edit-task-scheduled"
+                  className="text-xs font-semibold uppercase text-muted-foreground"
+                >
+                  Scheduled Date
+                </label>
+                <Input
+                  id="edit-task-scheduled"
+                  name="scheduledDate"
+                  type="date"
+                  value={editScheduledDate}
+                  onChange={(e) => setEditScheduledDate(e.target.value)}
+                  disabled={editLoading}
+                  data-testid="edit-task-scheduled"
+                />
+              </div>
+            </div>
+
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
@@ -920,6 +1232,164 @@ function TasksContent() {
                 Delete Task
               </Button>
             </div>
+          </div>
+        </Modal>
+
+        {/* Quick Capture Modal */}
+        <QuickCaptureModal
+          isOpen={isQuickCaptureOpen}
+          onClose={() => setIsQuickCaptureOpen(false)}
+          onTaskCreated={() => {
+            fetchData();
+          }}
+        />
+
+        {/* Task Dependencies Modal */}
+        <Modal
+          isOpen={isDepsOpen}
+          onClose={() => setIsDepsOpen(false)}
+          title="Task Dependencies"
+          description={
+            selectedDepsTask
+              ? `Manage dependencies for: "${selectedDepsTask.title}"`
+              : ""
+          }
+        >
+          <div className="space-y-5 pt-2" data-testid="task-dependencies-modal">
+            {depsLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <>
+                {/* 1. Prerequisites (Blocked By) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Blocked By (Prerequisites)
+                    </h4>
+                    <span className="text-xs text-muted-foreground">
+                      {depsData.blockedBy.length} prerequisite
+                      {depsData.blockedBy.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+
+                  {depsData.blockedBy.length === 0 ? (
+                    <div className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">
+                      No prerequisite tasks. This task is not blocked.
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {depsData.blockedBy.map((prereq) => (
+                        <div
+                          key={prereq.id}
+                          className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs"
+                          data-testid={`prereq-item-${prereq.id}`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span className="font-medium truncate">
+                              {prereq.title}
+                            </span>
+                            <StatusBadge status={prereq.status} />
+                          </div>
+                          <button
+                            onClick={() => handleRemovePrerequisite(prereq.id)}
+                            disabled={depsActionLoading}
+                            className="ml-2 rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            title="Remove prerequisite"
+                            aria-label={`Remove prerequisite ${prereq.title}`}
+                            data-testid={`remove-prereq-${prereq.id}`}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Prerequisite input */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <Select
+                      value={newPrereqId}
+                      onChange={(e) => setNewPrereqId(e.target.value)}
+                      className="h-9 text-xs flex-1"
+                      disabled={depsActionLoading}
+                      data-testid="add-prereq-select"
+                    >
+                      <option value="">
+                        Select task that must be completed first...
+                      </option>
+                      {tasks
+                        .filter(
+                          (t) =>
+                            t.id !== selectedDepsTask?.id &&
+                            !depsData.blockedBy.some((b) => b.id === t.id)
+                        )
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.title} ({t.status})
+                          </option>
+                        ))}
+                    </Select>
+                    <Button
+                      size="sm"
+                      onClick={handleAddPrerequisite}
+                      disabled={!newPrereqId || depsActionLoading}
+                      loading={depsActionLoading}
+                      className="h-9 gap-1 text-xs"
+                      data-testid="add-prereq-btn"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Add</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 2. Dependents (Blocks) */}
+                <div className="space-y-2 border-t pt-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Blocks (Dependent Tasks)
+                    </h4>
+                    <span className="text-xs text-muted-foreground">
+                      {depsData.blocks.length} dependent
+                      {depsData.blocks.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+
+                  {depsData.blocks.length === 0 ? (
+                    <div className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">
+                      No other tasks are waiting on this task.
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {depsData.blocks.map((dep) => (
+                        <div
+                          key={dep.id}
+                          className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs"
+                        >
+                          <span className="font-medium truncate">
+                            {dep.title}
+                          </span>
+                          <StatusBadge status={dep.status} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end pt-2 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsDepsOpen(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </Modal>
       </div>
