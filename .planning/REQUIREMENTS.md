@@ -8,32 +8,32 @@
 Requirements for initial release across the 9 planned phases. Each maps directly to roadmap phases.
 
 ### Authentication & Authorization
-- [ ] **AUTH-01**: User can authenticate securely via Better Auth (password/session cookies) and maintain persistent session across page reloads.
-- [ ] **AUTH-02**: All server actions and API endpoints enforce server-side resource ownership validation against the authenticated user's user_id, maintaining strict separation between authentication and authorization.
-- [ ] **AUTH-03**: User can log out from any page and invalidate active session tokens via Better Auth.
-- [ ] **AUTH-04**: User can manage account settings and update master credentials.
+- [x] **AUTH-01**: User can authenticate securely via Better Auth (password/session cookies) and maintain persistent session across page reloads.
+- [x] **AUTH-02**: All server actions and API endpoints enforce server-side resource ownership validation against the authenticated user's user_id, maintaining strict separation between authentication and authorization.
+- [x] **AUTH-03**: User can log out from any page and invalidate active session tokens via Better Auth.
+- [x] **AUTH-04**: User can manage account settings and update master credentials.
 
 ### Application Shell, Design System & Settings
-- [ ] **SHELL-01**: User can navigate between all primary modules via a responsive, keyboard-accessible sidebar navigation shell.
-- [ ] **SHELL-02**: User can trigger a global command palette (Cmd+K) from any screen to perform actions or navigate.
-- [ ] **SHELL-03**: User can configure application preferences (dark/light theme, date/time formats, working hours).
-- [ ] **SHELL-04**: User can access an audit log detailing sensitive mutations, security events, and AI-performed actions.
+- [x] **SHELL-01**: User can navigate between all primary modules via a responsive, keyboard-accessible sidebar navigation shell.
+- [x] **SHELL-02**: User can trigger a global command palette (Cmd+K) from any screen to perform actions or navigate.
+- [x] **SHELL-03**: User can configure application preferences (dark/light theme, date/time formats, working hours).
+- [x] **SHELL-04**: User can access an audit log detailing sensitive mutations, security events, and AI-performed actions.
 
 ### Dashboard
-- [ ] **DASH-01**: User can view the "Today" dashboard displaying current date, priority tasks, scheduled time blocks, habits, and upcoming deadlines.
-- [ ] **DASH-02**: Dashboard automatically ranks and highlights highest-value tasks based on priority scoring (Importance + Urgency + Deadline).
-- [ ] **DASH-03**: User can execute quick actions directly from the dashboard (create task, log habit, start timer).
-- [ ] **DASH-04**: Dashboard presents goal and project health summaries requiring immediate attention.
+- [x] **DASH-01**: User can view the "Today" dashboard displaying current date, priority tasks, scheduled time blocks, habits, and upcoming deadlines.
+- [x] **DASH-02**: Dashboard automatically ranks and highlights highest-value tasks based on priority scoring (Importance + Urgency + Deadline).
+- [x] **DASH-03**: User can execute quick actions directly from the dashboard (create task, log habit, start timer).
+- [x] **DASH-04**: Dashboard presents goal and project health summaries requiring immediate attention.
 
 ### Task Management
-- [ ] **TASK-01**: User can create a task with title, description, status (Inbox, Todo, In Progress, Blocked, Done, Archived), and priority (P0, P1, P2, P3).
-- [ ] **TASK-02**: User can assign due dates, scheduled dates, estimated duration (minutes), and energy levels (High, Medium, Low) to tasks.
-- [ ] **TASK-03**: User can link a task to a Project, Goal, Habit, Note, or Person without data duplication.
-- [ ] **TASK-04**: User can create subtasks and define task-to-task dependencies (blocking/prerequisite tasks).
-- [ ] **TASK-05**: User can configure recurrence rules for repeating tasks (daily, weekly, monthly, custom).
-- [ ] **TASK-06**: User can filter, sort, and group tasks by status, project, priority, due date, and energy level.
-- [ ] **TASK-07**: User can mark tasks as completed, recording actual duration and completion timestamp.
-- [ ] **TASK-08**: Universal Quick Capture allows instant creation of tasks with zero friction from any view.
+- [x] **TASK-01**: User can create a task with title, description, status (Inbox, Todo, In Progress, Blocked, Done, Archived), and priority (P0, P1, P2, P3).
+- [x] **TASK-02**: User can assign due dates, scheduled dates, estimated duration (minutes), and energy levels (High, Medium, Low) to tasks.
+- [x] **TASK-03**: User can link a task to a Project, Goal, Habit, Note, or Person without data duplication.
+- [x] **TASK-04**: User can create subtasks and define task-to-task dependencies (blocking/prerequisite tasks).
+- [x] **TASK-05**: User can configure recurrence rules for repeating tasks (daily, weekly, monthly, custom).
+- [x] **TASK-06**: User can filter, sort, and group tasks by status, project, priority, due date, and energy level.
+- [x] **TASK-07**: User can mark tasks as completed, recording actual duration and completion timestamp.
+- [x] **TASK-08**: Universal Quick Capture allows instant creation of tasks with zero friction from any view.
 
 ### Projects
 - [ ] **PROJ-01**: User can create projects with title, description, area, status (Planning, Active, Paused, Completed), target deadline, and linked goal.
@@ -48,22 +48,22 @@ Requirements for initial release across the 9 planned phases. Each maps directly
 - [ ] **GOAL-04**: User can link goals to life Areas (Health, Career, Finance, Personal Development, Relationships).
 
 ### Daily Planning & Evening Review
-- [ ] **PLAN-01**: User can complete a guided Morning Daily Plan: pick 3-5 priority tasks, review habit intentions, and allocate time blocks.
-- [ ] **PLAN-02**: User can complete a guided Evening Review: mark completed items, enter daily reflections, and calculate daily productivity score.
-- [ ] **PLAN-03**: Uncompleted daily tasks can be carried over, rescheduled, or returned to the backlog with one click.
-- [ ] **PLAN-04**: System tracks daily plan completion history for weekly and monthly trend analysis.
+- [x] **PLAN-01**: User can complete a guided Morning Daily Plan: pick 3-5 priority tasks, review habit intentions, and allocate time blocks.
+- [x] **PLAN-02**: User can complete a guided Evening Review: mark completed items, enter daily reflections, and calculate daily productivity score.
+- [x] **PLAN-03**: Uncompleted daily tasks can be carried over, rescheduled, or returned to the backlog with one click.
+- [x] **PLAN-04**: System tracks daily plan completion history for weekly and monthly trend analysis.
 
 ### Calendar & Time Blocking
-- [ ] **CAL-01**: User can view a day, week, and month calendar displaying scheduled time blocks and deadlines.
-- [ ] **CAL-02**: User can create time blocks directly linked to canonical tasks (drag-and-drop or click-to-block).
-- [ ] **CAL-03**: Completed time blocks reflect actual time spent and update linked task analytics.
-- [ ] **CAL-04**: System prevents overlapping hard commitments and highlights scheduling conflicts.
+- [x] **CAL-01**: User can view a day, week, and month calendar displaying scheduled time blocks and deadlines.
+- [x] **CAL-02**: User can create time blocks directly linked to canonical tasks (drag-and-drop or click-to-block).
+- [x] **CAL-03**: Completed time blocks reflect actual time spent and update linked task analytics.
+- [x] **CAL-04**: System prevents overlapping hard commitments and highlights scheduling conflicts.
 
 ### Habits & Streaks
-- [ ] **HABT-01**: User can create habits with frequency rules (Daily, Weekdays, X times per week, Specific days) and time-of-day cues.
-- [ ] **HABT-02**: User can log habit completions with a single click from the Dashboard or Habit Tracker.
-- [ ] **HABT-03**: System calculates current streak, longest streak, and completion rate percentages accurately.
-- [ ] **HABT-04**: User can link habits to long-term goals or identity statements.
+- [x] **HABT-01**: User can create habits with frequency rules (Daily, Weekdays, X times per week, Specific days) and time-of-day cues.
+- [x] **HABT-02**: User can log habit completions with a single click from the Dashboard or Habit Tracker.
+- [x] **HABT-03**: System calculates current streak, longest streak, and completion rate percentages accurately.
+- [x] **HABT-04**: User can link habits to long-term goals or identity statements.
 
 ### Notes, Knowledge Graph & Search
 - [ ] **NOTE-01**: User can create and edit rich Markdown notes with headings, checklists, code blocks, and math.
@@ -120,10 +120,10 @@ Requirements for initial release across the 9 planned phases. Each maps directly
 - [ ] **INTEL-04**: Schedule optimization recommendations suggesting optimal focus blocks based on historical productivity and energy levels.
 
 ### Security, Audit & Data Portability
-- [ ] **SEC-01**: Sensitive credentials (API keys, OAuth tokens) are encrypted at rest using AES-256-GCM.
-- [ ] **SEC-02**: Complete audit log records every mutating action, authentication attempt, and AI tool execution.
-- [ ] **SEC-03**: User can export the entire database in standardized JSON and Markdown formats at any time.
-- [ ] **SEC-04**: Database backup and restore verification scripts guarantee zero data loss.
+- [x] **SEC-01**: Sensitive credentials (API keys, OAuth tokens) are encrypted at rest using AES-256-GCM.
+- [x] **SEC-02**: Complete audit log records every mutating action, authentication attempt, and AI tool execution.
+- [ ] **SEC-03**: User can export the entire database in standardized JSON and Markdown formats at any time. *(Deferred to data portability milestone)*
+- [ ] **SEC-04**: Database backup and restore verification scripts guarantee zero data loss. *(Deferred to Phase 8 backup adapter)*
 
 ## v2 Requirements
 
@@ -149,30 +149,30 @@ Deferred to future releases after v1 roadmap execution:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
-| AUTH-04 | Phase 1 | Pending |
-| SHELL-01 | Phase 1 | Pending |
-| SHELL-02 | Phase 1 | Pending |
-| SHELL-03 | Phase 1 | Pending |
-| SHELL-04 | Phase 1 | Pending |
-| SEC-01 | Phase 1 | Pending |
-| SEC-02 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Satisfied |
+| AUTH-02 | Phase 1 | Satisfied |
+| AUTH-03 | Phase 1 | Satisfied |
+| AUTH-04 | Phase 1 | Satisfied |
+| SHELL-01 | Phase 1 | Satisfied |
+| SHELL-02 | Phase 1 | Satisfied |
+| SHELL-03 | Phase 1 | Satisfied |
+| SHELL-04 | Phase 1 | Satisfied |
+| SEC-01 | Phase 1 | Satisfied |
+| SEC-02 | Phase 1 | Satisfied |
 | SEC-03 | Phase 1 | Pending |
 | SEC-04 | Phase 1 | Pending |
-| DASH-01 | Phase 2 | Pending |
-| DASH-02 | Phase 2 | Pending |
-| DASH-03 | Phase 2 | Pending |
-| DASH-04 | Phase 2 | Pending |
-| TASK-01 | Phase 2 | Pending |
-| TASK-02 | Phase 2 | Pending |
-| TASK-03 | Phase 2 | Pending |
-| TASK-04 | Phase 2 | Pending |
-| TASK-05 | Phase 2 | Pending |
-| TASK-06 | Phase 2 | Pending |
-| TASK-07 | Phase 2 | Pending |
-| TASK-08 | Phase 2 | Pending |
+| DASH-01 | Phase 2 | Complete |
+| DASH-02 | Phase 2 | Complete |
+| DASH-03 | Phase 2 | Complete |
+| DASH-04 | Phase 2 | Complete |
+| TASK-01 | Phase 2 | Complete |
+| TASK-02 | Phase 2 | Complete |
+| TASK-03 | Phase 2 | Complete |
+| TASK-04 | Phase 2 | Complete |
+| TASK-05 | Phase 2 | Complete |
+| TASK-06 | Phase 2 | Complete |
+| TASK-07 | Phase 2 | Complete |
+| TASK-08 | Phase 2 | Complete |
 | PROJ-01 | Phase 2 | Pending |
 | PROJ-02 | Phase 2 | Pending |
 | PROJ-03 | Phase 2 | Pending |
@@ -239,4 +239,4 @@ Deferred to future releases after v1 roadmap execution:
 
 ---
 *Requirements defined: 2026-09-10*
-*Last updated: 2026-09-10 after approving audit decisions*
+*Last updated: 2026-09-14 after Phase 1 closure audit and Phase 2 transition*
