@@ -20,6 +20,7 @@ import {
   Flame,
   Calendar,
   CalendarCheck,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -125,6 +126,11 @@ export function AppShell({ children }: AppShellProps) {
       name: "Habits",
       href: "/habits",
       icon: Flame,
+    },
+    {
+      name: "Notes",
+      href: "/notes",
+      icon: FileText,
     },
   ];
 

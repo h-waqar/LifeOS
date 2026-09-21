@@ -45,6 +45,17 @@ import {
   type EveningReview,
   type NewEveningReview,
 } from "./daily-plans";
+import {
+  notes,
+  noteLinks,
+  type Note,
+  type NewNote,
+  type NoteLink,
+  type NewNoteLink,
+} from "./notes";
+
+const note = notes;
+const noteLink = noteLinks;
 
 export {
   user,
@@ -81,6 +92,10 @@ export {
   dailyPlan,
   eveningReviews,
   eveningReview,
+  notes,
+  note,
+  noteLinks,
+  noteLink,
 };
 
 // Drizzle Relations Declarations
@@ -98,6 +113,8 @@ export const userRelations = relations(user, ({ many }) => ({
   timeBlocks: many(timeBlocks),
   dailyPlans: many(dailyPlans),
   eveningReviews: many(eveningReviews),
+  notes: many(notes),
+  noteLinks: many(noteLinks),
   auditLogs: many(auditLog),
 }));
 
@@ -302,6 +319,44 @@ export const eveningReviewsRelations = relations(eveningReviews, ({ one }) => ({
   }),
 }));
 
+export const notesRelations = relations(notes, ({ one, many }) => ({
+  user: one(user, {
+    fields: [notes.userId],
+    references: [user.id],
+  }),
+  project: one(projects, {
+    fields: [notes.projectId],
+    references: [projects.id],
+  }),
+  goal: one(goals, {
+    fields: [notes.goalId],
+    references: [goals.id],
+  }),
+  task: one(tasks, {
+    fields: [notes.taskId],
+    references: [tasks.id],
+  }),
+  outgoingLinks: many(noteLinks, { relationName: "sourceNote" }),
+  incomingLinks: many(noteLinks, { relationName: "targetNote" }),
+}));
+
+export const noteLinksRelations = relations(noteLinks, ({ one }) => ({
+  user: one(user, {
+    fields: [noteLinks.userId],
+    references: [user.id],
+  }),
+  sourceNote: one(notes, {
+    fields: [noteLinks.sourceNoteId],
+    references: [notes.id],
+    relationName: "sourceNote",
+  }),
+  targetNote: one(notes, {
+    fields: [noteLinks.targetNoteId],
+    references: [notes.id],
+    relationName: "targetNote",
+  }),
+}));
+
 // Inferred TypeScript Model Types
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
@@ -347,6 +402,7 @@ export type NewTimeBlock = typeof timeBlocks.$inferInsert;
 
 export type { DailyPlan, NewDailyPlan, EveningReview, NewEveningReview };
 export type { TaskDependency, NewTaskDependency, RecurrenceRule };
+export type { Note, NewNote, NoteLink, NewNoteLink };
 
 /**
  * Explicit list of foundational table names.
@@ -383,4 +439,13 @@ export const PHASE_2_TABLE_NAMES = [
   "daily_plans",
   "evening_reviews",
 ] as const;
+
+/**
+ * Approved Phase 3 table names.
+ */
+export const PHASE_3_TABLE_NAMES = [
+  "notes",
+  "note_links",
+] as const;
+
 

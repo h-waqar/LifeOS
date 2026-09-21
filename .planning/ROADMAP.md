@@ -83,7 +83,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 03-01: Markdown note editor with wikilinks, tags, and backlink graph inspection
+- [x] 03-01: Markdown note editor with wikilinks, tags, and backlink graph inspection
 - [ ] 03-02: Relationships / People CRM module (Person and Interaction schemas, contact management, follow-up tracking)
 - [ ] 03-03: PostgreSQL full-text search across all entities (notes, tasks, projects, goals, people) and global command palette integration
 - [ ] 03-04: Learning system for tracking books, courses, articles, and skill notes
