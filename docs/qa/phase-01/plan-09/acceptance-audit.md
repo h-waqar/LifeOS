@@ -1,10 +1,10 @@
 # LifeOS Human Acceptance Audit & Release Gate Report: Plan 01-09
 
-> **Audit Date:** September 14, 2026  
+> **Audit Date:** September 14, 2026 (Remediated September 20, 2026)  
 > **Auditor:** Independent QA Acceptance Auditor & Pair Programmer  
 > **Application Target:** LifeOS Phase 1 Foundation (Plan 01-09)  
 > **Environment:** Next.js 15.5.25 Production Build (`http://localhost:3000`), Node.js v26.7.0, PostgreSQL 16 (Local Docker)  
-> **Commit Hash:** `86aaf95fc816e7262648ed03b2d898951c9cb443`  
+> **Commit Hash:** `1c22ed6796383ed9ad35d5597e444ba231457c1e` (Accessibility Remediation; Base Remediation: `86aaf95fc816e7262648ed03b2d898951c9cb443`)  
 > **Authoritative Verification Evidence:** `.human-loop/artifacts/plan-01-09/`  
 > **Authoritative Verification Report:** [`docs/qa/phase-01/plan-09/human-loop-verification-report.md`](human-loop-verification-report.md)  
 > **Release Recommendation:** **CONDITIONAL GO** (Technical, Visual, Interaction, and Accessibility Gates PASSED; Final Governance Sign-Off by Primary User Hamza Pending)
@@ -25,6 +25,15 @@ Previous audits identified three critical areas requiring investigation and reme
 2. **Check H06 (Mobile Task Title Text Clipping):** Long task titles previously truncated with ellipsis rather than wrapping.  
    - **Verification:** Inspection of [`H06-screenshot-06-mobile-task-hierarchy.png`](.human-loop/artifacts/plan-01-09/screenshots/H06-screenshot-06-mobile-task-hierarchy.png) confirms that extreme titles (292 characters) now wrap cleanly across multiple lines within the subtask card using `break-words [overflow-wrap:anywhere]` without any horizontal window scrolling.
 3. **Check H09 (Double-Submit Concurrency Race):** Rapid multi-clicking on creation forms was tested. Synchronous `useRef` guards now block concurrent submissions before asynchronous dispatch, confirmed by automated concurrency test `double-submit-race.test.tsx` and [`H09-screenshot-01-rapid-submit-debounce.png`](.human-loop/artifacts/plan-01-09/screenshots/H09-screenshot-01-rapid-submit-debounce.png).
+4. **Checks H08 & H10 (Command Palette & Modal Accessibility Remediation):**
+   - **Verification:** Inspection of `src/components/command-palette.tsx`, test suite `scripts/tests/phase-01/plan-09/command-palette-accessibility.test.tsx` (10/10 PASS), and live CDP interaction audit confirms:
+     - Search input immediately autofocuses upon palette opening (`data-testid="command-palette-input"`).
+     - Focus restoration returns focus smoothly to the triggering element upon closure.
+     - Focus containment & trapping: Tab key cannot escape the open command palette; document `focusin` listener actively traps focus within the dialog; Escape key dismisses the palette cleanly.
+     - Background scroll locking: Document `body.style.overflow` is locked to `"hidden"` while palette is open and reset to `"unset"` upon dismissal.
+     - Selection navigation & loop wrap: ArrowDown/ArrowUp navigates items with loop wrapping (`<Command loop>`).
+     - Enter execution triggers navigation directly (e.g. to `/tasks`).
+     - Native Chromium DevTools Protocol keyboard inputs (`Input.dispatchKeyEvent`) replace synthetic DOM events.
 
 ---
 
@@ -34,11 +43,11 @@ In strict adherence to the acceptance gate criteria, results are categorized acr
 
 | Evaluation Pillar | Authority | Result | Summary Details |
 |---|---|:---:|---|
-| **1. Automated Test Success** | Vitest Test Runners (`pnpm test`, `pnpm test:integration`) | **PASS** | 238/238 unit tests passed (24 test files); 225/225 integration tests passed (17 test files); 0 TypeScript errors. |
+| **1. Automated Test Success** | Vitest Test Runners (`pnpm test`, `pnpm test:integration`) | **PASS** | 248/248 Phase 1 unit tests passed (25 test files) / 521 repo total; 225/225 Phase 1 integration tests passed (17 test files) / 375 repo total; 0 TypeScript errors. |
 | **2. Browser Execution Success** | Chromium CDP Runner (`execute-human-loop-verification.ts`) | **PASS** | 12/12 checks executed against Next.js production build (`http://localhost:3000`) and PostgreSQL 16; zero runtime crashes. |
 | **3. Genuine Human Visual Verification** | Independent Inspector Visual Review of Captured Screenshots | **PASS** | 55 PNG screenshots inspected; layouts, typography, alert banners, dark/light contrast, and modal centering verified. |
-| **4. Genuine Human Interaction Verification** | CDP Interaction Runner & Interactive Audit Script | **PASS** | Keyboard Tab traversal, Enter activation, Escape modal dismissal, form submission, and back-button route guards verified. |
-| **5. Accessibility Verification** | Interactive Accessibility Audit Script & Computed Metrics | **PASS** | Dialog ARIA attributes verified (`role="dialog"`, `aria-modal="true"`); focus trap verified; WCAG contrast 19:1 (headings) and 4.8:1–7.8:1 (muted). |
+| **4. Genuine Human Interaction Verification** | CDP Interaction Runner & Interactive Audit Script | **PASS** | Keyboard Tab traversal, Enter activation, Escape modal dismissal, form submission, focus restoration, and back-button route guards verified using native CDP keyboard events (`Input.dispatchKeyEvent`). |
+| **5. Accessibility Verification** | Interactive Accessibility Audit Script & Computed Metrics | **PASS** | Dialog ARIA attributes verified (`role="dialog"`, `aria-modal="true"`); focus trap & focus restoration verified; 10/10 command palette accessibility suite passed; WCAG contrast 19:1 (headings) and 4.8:1–7.8:1 (muted). |
 | **6. Final Release Acceptance** | LifeOS Human-Loop Governance Framework | **CONDITIONAL GO** | Technical, visual, interaction, and accessibility criteria are satisfied. Authoritative governance gate holds pending human tester (Hamza) sign-off. |
 
 ---
@@ -119,8 +128,8 @@ In strict adherence to the acceptance gate criteria, results are categorized acr
 - **Finding:** Instantaneous dark/light theme switching without flashes; theme persists across page reload and user sessions; command palette shortcut toggles theme. **PASS.**
 
 ### 5.5 Check H08: Command Palette (`MEDIUM`)
-- **Evidence:** [`H08-screenshot-01-palette-open-ctrl-k.png`](.human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-01-palette-open-ctrl-k.png) to [`H08-screenshot-04-arrow-navigation-highlight.png`](.human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-04-arrow-navigation-highlight.png), [`H08-recording.webm`](.human-loop/artifacts/plan-01-09/recordings/H08-recording.webm).
-- **Finding:** Palette opens via Ctrl+K / search trigger; dynamic filtering works; arrow navigation highlights commands; quick action triggers task modal; Escape dismisses palette cleanly. **PASS.**
+- **Evidence:** [`H08-screenshot-01-palette-open-ctrl-k.png`](.human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-01-palette-open-ctrl-k.png) to [`H08-screenshot-04-arrow-navigation-highlight.png`](.human-loop/artifacts/plan-01-09/screenshots/H08-screenshot-04-arrow-navigation-highlight.png), [`H08-recording.webm`](.human-loop/artifacts/plan-01-09/recordings/H08-recording.webm), and dedicated unit suite [`command-palette-accessibility.test.tsx`](scripts/tests/phase-01/plan-09/command-palette-accessibility.test.tsx).
+- **Finding:** Palette opens via Ctrl+K / search trigger; search input immediately autofocuses; dynamic filtering works; arrow navigation highlights commands with wrap-around loop navigation; Enter executes navigation; Escape dismisses palette cleanly and restores focus to trigger; background scroll locks to hidden. **PASS.**
 
 ### 5.6 Check H09: Error & Edge States (`HIGH`)
 - **Evidence:** [`H09-screenshot-01-rapid-submit-debounce.png`](.human-loop/artifacts/plan-01-09/screenshots/H09-screenshot-01-rapid-submit-debounce.png) to [`H09-screenshot-03-empty-state-handling.png`](.human-loop/artifacts/plan-01-09/screenshots/H09-screenshot-03-empty-state-handling.png), [`H09-recording.webm`](.human-loop/artifacts/plan-01-09/recordings/H09-recording.webm).
@@ -128,7 +137,7 @@ In strict adherence to the acceptance gate criteria, results are categorized acr
 
 ### 5.7 Check H10: Keyboard & Accessibility (`HIGH`)
 - **Evidence:** [`H10-screenshot-01-login-focus-ring.png`](.human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-01-login-focus-ring.png) to [`H10-screenshot-04-high-contrast-wcag-aa.png`](.human-loop/artifacts/plan-01-09/screenshots/H10-screenshot-04-high-contrast-wcag-aa.png), [`H10-recording.webm`](.human-loop/artifacts/plan-01-09/recordings/H10-recording.webm), and live audit [`accessibility-interaction-audit.json`](.human-loop/artifacts/plan-01-09/logs/accessibility-interaction-audit.json).
-- **Finding:** Visible focus indicators (`ring-2 ring-ring`); modal dialog has `role="dialog"`, `aria-modal="true"`, and `aria-labelledby`; focus trap confirmed (Tab navigation is locked inside modal); Escape dismisses modal; form labels connected via `htmlFor`/`id`; contrast ratios verified at 19:1 (headings) and 4.8:1–7.8:1 (muted). **PASS.**
+- **Finding:** Visible focus indicators (`ring-2 ring-ring`); tab navigation traversal on `/login` verified; modal dialog has `role="dialog"`, `aria-modal="true"`, and `aria-labelledby`; focus trap confirmed across 8-tab traversal; Escape dismisses modal and restores focus; form labels connected via `htmlFor`/`id`; contrast ratios verified at 19:1 (headings) and 4.8:1–7.8:1 (muted). **PASS.**
 
 ### 5.8 Check H11: Visual Polish & Typography (`HIGH`)
 - **Evidence:** [`H11-screenshot-01-dashboard-spacing-alignment.png`](.human-loop/artifacts/plan-01-09/screenshots/H11-screenshot-01-dashboard-spacing-alignment.png) to [`H11-screenshot-04-clean-console-zero-errors.png`](.human-loop/artifacts/plan-01-09/screenshots/H11-screenshot-04-clean-console-zero-errors.png), [`H11-recording.webm`](.human-loop/artifacts/plan-01-09/recordings/H11-recording.webm).
@@ -181,6 +190,13 @@ The dedicated interactive browser evaluation ([`accessibility-interaction-audit.
      - Background: `#ffffff` (`rgb(255, 255, 255)`)
      - Primary Heading Text: `#09090b` (`rgb(9, 9, 11)`) -> **19.90:1** contrast ratio (Exceeds WCAG AAA requirement of 7.0:1).
      - Muted Text: `#71717a` (`rgb(113, 113, 122)`) -> **4.83:1** contrast ratio (Exceeds WCAG AA requirement of 4.5:1).
+4. **Command Palette Accessibility & Focus Management:**
+   - Autofocus: Search input immediately receives focus on open (`data-testid="command-palette-input"`).
+   - Scroll locking: `document.body.style.overflow` locked to `hidden` while open, restored to `unset` when closed.
+   - Focus containment: Tab key prevented from escaping palette dialog; document `focusin` boundary traps focus.
+   - Dismissal & Focus restoration: Escape dismisses palette and smoothly restores focus to the triggering element.
+   - Loop navigation: Selection moves with ArrowDown/ArrowUp and wraps around from end to beginning.
+   - Native CDP keyboard dispatch: Protocol-level `Input.dispatchKeyEvent` verified.
 
 ---
 
@@ -206,11 +222,12 @@ RELEASE GATE RECOMMENDATION: CONDITIONAL GO
 ### Rationale
 
 All automated, visual, tactile, and accessibility criteria within the engineering and browser automation boundary are **100% SATISFIED**:
-- 238 unit tests, 225 integration tests pass cleanly.
+- 248 Phase 1 unit tests (25 test files) / 521 repo total pass cleanly; 225 Phase 1 integration tests (17 test files) / 375 repo total pass cleanly.
 - 0 TypeScript errors; Next.js 15.5.25 production build compiles without warnings.
 - All 12 browser checks (H01–H12) pass against the real production build and live PostgreSQL database.
 - Previous visual blockers on Tablet (H06 column crush) and Mobile (H06 title wrapping) are confirmed resolved.
 - Concurrency double-submit race condition (H09) is resolved.
+- Command palette accessibility (H08 autofocus, arrow loop navigation, Enter execution, Escape focus restoration, and H10 focus trap) is resolved and verified by 10 dedicated accessibility tests.
 - 55 authentic screenshots, 12 `.webm` screencast recordings, and structured execution logs are preserved in `.human-loop/artifacts/plan-01-09/`.
 - No repository root pollution exists.
 
@@ -230,8 +247,8 @@ CONDITIONALLY ACCEPTED / CLOSED FOR DEVELOPMENT
 ```
 
 ### 10.3 Internal Verification Summary
-- **Unit tests:** 238/238 PASS
-- **Integration tests:** 225/225 PASS
+- **Unit tests:** 248/248 Phase 1 PASS (521/521 Repository total PASS)
+- **Integration tests:** 225/225 Phase 1 PASS (375/375 Repository total PASS)
 - **Browser checks:** 12/12 PASS
 - **Screenshots reviewed:** 55
 - **Recordings reviewed:** 12

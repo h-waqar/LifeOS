@@ -231,7 +231,7 @@ describe("Phase 1 Plan 01-09 QA Artifact Path & Cleanliness Protection", () => {
       expect(content).toContain("15.5.25");
       expect(content).toContain("pnpm");
       expect(content).toContain("pnpm-lock.yaml");
-      expect(content).toContain("86aaf95fc816e7262648ed03b2d898951c9cb443");
+      expect(content).toContain("1c22ed6796383ed9ad35d5597e444ba231457c1e");
     });
 
     it("confirms the report maintains CONDITIONAL GO recommendation and PENDING human approval", () => {

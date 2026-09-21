@@ -2121,7 +2121,7 @@ export async function runFullVerificationSuite(options?: {
       nextVersion: "15.5.25",
       packageManager: "pnpm",
       lockfile: "pnpm-lock.yaml",
-      commitHash: "86aaf95fc816e7262648ed03b2d898951c9cb443",
+      commitHash: "1c22ed6796383ed9ad35d5597e444ba231457c1e",
       nodeVersion: process.version,
     },
     metrics: {
