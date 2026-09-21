@@ -417,4 +417,83 @@ export interface DashboardOverviewDTO {
   recentTrend?: DashboardRecentTrendDTO;
 }
 
+// ---------------------------------------------------------------------------
+// Phase 3: Notes & Knowledge Graph Types
+// ---------------------------------------------------------------------------
+
+export type NoteType =
+  | "quick"
+  | "meeting"
+  | "research"
+  | "idea"
+  | "journal"
+  | "documentation"
+  | "reference"
+  | "learning";
+
+export interface NoteDTO {
+  id: string;
+  userId: string;
+  title: string;
+  slug: string;
+  content: string;
+  noteType: NoteType;
+  area: LifeArea;
+  tags: string[];
+  isPinned: boolean;
+  isArchived: boolean;
+  projectId: string | null;
+  goalId: string | null;
+  taskId: string | null;
+  outgoingLinksCount?: number;
+  backlinksCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NoteLinkDTO {
+  id: string;
+  userId: string;
+  sourceNoteId: string;
+  targetNoteId: string | null;
+  targetTitle: string;
+  displayText: string | null;
+  createdAt: string;
+}
+
+export interface BacklinkItemDTO {
+  noteId: string;
+  title: string;
+  slug: string;
+  displayText: string | null;
+  snippet: string;
+  updatedAt: string;
+}
+
+export interface CreateNoteInput {
+  title: string;
+  content?: string;
+  noteType?: NoteType;
+  area?: LifeArea;
+  tags?: string[];
+  isPinned?: boolean;
+  projectId?: string | null;
+  goalId?: string | null;
+  taskId?: string | null;
+}
+
+export interface UpdateNoteInput {
+  title?: string;
+  content?: string;
+  noteType?: NoteType;
+  area?: LifeArea;
+  tags?: string[];
+  isPinned?: boolean;
+  isArchived?: boolean;
+  projectId?: string | null;
+  goalId?: string | null;
+  taskId?: string | null;
+}
+
+
 

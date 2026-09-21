@@ -83,7 +83,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 03-01: Markdown note editor with wikilinks, tags, and backlink graph inspection
+- [x] 03-01: Markdown note editor with wikilinks, tags, and backlink graph inspection
 - [ ] 03-02: Relationships / People CRM module (Person and Interaction schemas, contact management, follow-up tracking)
 - [ ] 03-03: PostgreSQL full-text search across all entities (notes, tasks, projects, goals, people) and global command palette integration
 - [ ] 03-04: Learning system for tracking books, courses, articles, and skill notes
@@ -212,7 +212,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 11/11 | Conditionally Accepted | 2026-09-14 |
 | 2. Core Productivity | 6/6 | Completed | 2026-09-17 |
-| 3. Knowledge, Learning & Relationships | 0/4 | Not started | - |
+| 3. Knowledge, Learning & Relationships | 1/4 | In Progress | - |
 | 4. Personal Finance | 0/2 | Not started | - |
 | 5. Content & Social Media | 0/2 | Not started | - |
 | 6. AI Layer & Assistant | 0/3 | Not started | - |
