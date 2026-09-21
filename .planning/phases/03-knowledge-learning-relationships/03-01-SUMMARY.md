@@ -5,7 +5,7 @@
 - **Domain:** Markdown Knowledge Base & Interconnected Note Graph
 - **Status:** Completed & Verified
 - **Date Completed:** 2026-09-21
-- **Requirements Satisfied:** NOTE-01, NOTE-02, NOTE-03, NOTE-04
+- **Requirements Satisfied:** NOTE-01, NOTE-02, NOTE-03; NOTE-04 (Partial: Projects, Goals, Tasks implemented; People & Learning deferred)
 
 ---
 
@@ -20,7 +20,7 @@ Adhering strictly to the **Vertical-Slice Database Scope Rule**, this plan intro
 1. **Schema & Migration (`0012_notes_and_knowledge_graph.sql`):**
    - `notes` table with slug uniqueness per user `(userId, slug)`, life area tagging, note classification (`quick`, `meeting`, `research`, `idea`, `journal`, `documentation`, `reference`, `learning`), and composite foreign keys to `projects`, `goals`, and `tasks`.
    - `note_links` table modeling the directed edges of the knowledge graph `(source_note_id -> target_note_id, target_title, display_text)`.
-   - Strict vertical-slice scoping: premature `person_id` and `learning_id` columns purged from schema, migration, validation, and types (reserved for Plans 03-03 and 03-04).
+   - Strict vertical-slice scoping: premature `person_id` and `learning_id` columns purged from schema, migration, validation, and types (reserved for Plans 03-02 and 03-04).
    - Column-targeted `ON DELETE SET NULL ("project_id")`, `("goal_id")`, `("task_id")`, and `("target_note_id")` preventing unintentional nullification of composite key `user_id`.
    - Applied migration cleanly to live PostgreSQL 16.
 
@@ -74,7 +74,7 @@ All test suites executed against live PostgreSQL 16 and passed with 100% success
 
 | Requirement | Description | Implementation Artifacts | Verification Evidence |
 |---|---|---|---|
-| **NOTE-01** | Markdown notes authoring with title, slug, content, tags, area, and classification | `src/server/db/schema/notes.ts`<br>`src/server/notes/service.ts`<br>`src/app/notes/page.tsx` | `note-validation.test.ts`<br>`note-api.integration.test.ts` |
-| **NOTE-02** | Bidirectional wikilink parser (`[[Title]]` and `[[Title\|Alias]]`) ignoring code blocks | `src/server/notes/wikilinks.ts`<br>`src/components/markdown-renderer.tsx` | `wikilinks.test.ts` (17 tests)<br>`markdown-renderer.test.tsx` (7 tests) |
-| **NOTE-03** | Knowledge graph relational edges, backlink discovery, and dangling link backfill | `src/server/db/schema/notes.ts`<br>`src/server/notes/service.ts` (`syncWikilinks`, `backfillTargetLinks`, `getBacklinks`) | `note-links.integration.test.ts` (8 tests) |
-| **NOTE-04** | Associating notes to projects, goals, and tasks via composite foreign keys | `src/server/db/schema/notes.ts`<br>`src/server/notes/service.ts` (`validateEntityOwnership`) | `note-schema-isolation.integration.test.ts` (7 tests) |
+| **NOTE-01** | Markdown notes authoring with headings, checklists, code blocks, and math | `src/server/db/schema/notes.ts`<br>`src/server/notes/service.ts`<br>`src/components/markdown-renderer.tsx`<br>`src/app/notes/page.tsx` | `markdown-renderer.test.tsx` (7 tests)<br>`note-validation.test.ts` (12 tests)<br>`note-api.integration.test.ts` (10 tests) |
+| **NOTE-02** | Bidirectional wikilinks (`[[Note Title]]`), backlink graph inspection, and relational link indexing | `src/server/notes/wikilinks.ts`<br>`src/server/db/schema/notes.ts`<br>`src/server/notes/service.ts`<br>`src/components/markdown-renderer.tsx`<br>`src/app/notes/page.tsx` | `wikilinks.test.ts` (17 tests)<br>`note-links.integration.test.ts` (8 tests)<br>`markdown-renderer.test.tsx` (7 tests) |
+| **NOTE-03** | Tag notes and organize knowledge by tags, note types, and life areas | `src/server/db/schema/notes.ts` (`area`, `noteType`, `tags`)<br>`src/server/notes/validation.ts`<br>`src/server/notes/service.ts`<br>`src/app/notes/page.tsx` | `note-validation.test.ts` (12 tests)<br>`note-api.integration.test.ts` (10 tests) |
+| **NOTE-04** | Link notes directly to Projects, Goals, Tasks, Learning Items, and People *(Partial in Plan 03-01: Projects, Goals, and Tasks implemented; People and Learning Items deferred to Plans 03-02 and 03-04 per vertical-slice rule)* | `src/server/db/schema/notes.ts` (`projectId`, `goalId`, `taskId`)<br>`src/server/notes/service.ts` (`validateEntityOwnership`)<br>`src/app/notes/page.tsx` | `note-schema-isolation.integration.test.ts` (7 tests)<br>`note-api.integration.test.ts` (10 tests) |
