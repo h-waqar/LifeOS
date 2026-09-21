@@ -13,8 +13,6 @@ CREATE TABLE IF NOT EXISTS "notes" (
   "project_id" text,
   "goal_id" text,
   "task_id" text,
-  "person_id" text,
-  "learning_id" text,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
   CONSTRAINT "notes_user_id_id_unique" UNIQUE("user_id", "id"),
@@ -34,17 +32,17 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'notes_user_project_fk'
   ) THEN
-    ALTER TABLE "notes" ADD CONSTRAINT "notes_user_project_fk" FOREIGN KEY ("user_id", "project_id") REFERENCES "public"."projects"("user_id", "id") ON DELETE set null ON UPDATE no action;
+    ALTER TABLE "notes" ADD CONSTRAINT "notes_user_project_fk" FOREIGN KEY ("user_id", "project_id") REFERENCES "public"."projects"("user_id", "id") ON DELETE set null ("project_id") ON UPDATE no action;
   END IF;
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'notes_user_goal_fk'
   ) THEN
-    ALTER TABLE "notes" ADD CONSTRAINT "notes_user_goal_fk" FOREIGN KEY ("user_id", "goal_id") REFERENCES "public"."goals"("user_id", "id") ON DELETE set null ON UPDATE no action;
+    ALTER TABLE "notes" ADD CONSTRAINT "notes_user_goal_fk" FOREIGN KEY ("user_id", "goal_id") REFERENCES "public"."goals"("user_id", "id") ON DELETE set null ("goal_id") ON UPDATE no action;
   END IF;
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'notes_user_task_fk'
   ) THEN
-    ALTER TABLE "notes" ADD CONSTRAINT "notes_user_task_fk" FOREIGN KEY ("user_id", "task_id") REFERENCES "public"."tasks"("user_id", "id") ON DELETE set null ON UPDATE no action;
+    ALTER TABLE "notes" ADD CONSTRAINT "notes_user_task_fk" FOREIGN KEY ("user_id", "task_id") REFERENCES "public"."tasks"("user_id", "id") ON DELETE set null ("task_id") ON UPDATE no action;
   END IF;
 END $$;
 --> statement-breakpoint
@@ -86,7 +84,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'note_links_target_note_fk'
   ) THEN
-    ALTER TABLE "note_links" ADD CONSTRAINT "note_links_target_note_fk" FOREIGN KEY ("user_id", "target_note_id") REFERENCES "public"."notes"("user_id", "id") ON DELETE cascade ON UPDATE no action;
+    ALTER TABLE "note_links" ADD CONSTRAINT "note_links_target_note_fk" FOREIGN KEY ("user_id", "target_note_id") REFERENCES "public"."notes"("user_id", "id") ON DELETE set null ("target_note_id") ON UPDATE no action;
   END IF;
 END $$;
 --> statement-breakpoint

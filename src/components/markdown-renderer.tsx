@@ -24,51 +24,14 @@ export function MarkdownRenderer({
   }
 
   const renderInline = (text: string) => {
-    // Regex for wikilinks: [[Target Title]] or [[Target Title|Display Text]]
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    const wikilinkRegex = /\[\[([^[\]|\r\n]+)(?:\|([^[\]\r\n]+))?\]\]/g;
-    let match: RegExpExecArray | null;
+    // 1. Split by inline code spans `...` so wikilinks inside code are ignored
+    const codeSpanParts = text.split(/(`[^`]+`)/g);
 
-    while ((match = wikilinkRegex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(renderFormatting(text.slice(lastIndex, match.index)));
-      }
-
-      const targetTitle = match[1].trim();
-      const displayText = match[2]?.trim() || targetTitle;
-
-      parts.push(
-        <button
-          key={`wiki-${match.index}`}
-          type="button"
-          onClick={() => onWikilinkClick?.(targetTitle)}
-          className="inline-flex items-center gap-1 px-1.5 py-0.5 mx-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 underline decoration-blue-500/40 transition-colors"
-          title={`Go to note: ${targetTitle}`}
-        >
-          <span>[[{displayText}]]</span>
-          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
-        </button>
-      );
-
-      lastIndex = match.index + match[0].length;
-    }
-
-    if (lastIndex < text.length) {
-      parts.push(renderFormatting(text.slice(lastIndex)));
-    }
-
-    return parts;
-  };
-
-  const renderFormatting = (text: string) => {
-    // Handle inline code `code`
-    const codeParts = text.split(/(`[^`]+`)/g);
-    return codeParts.map((part, i) => {
+    return codeSpanParts.map((part, partIdx) => {
       if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
         return (
           <code
-            key={`code-${i}`}
+            key={`code-span-${partIdx}`}
             className="px-1.5 py-0.5 rounded bg-muted text-foreground font-mono text-xs border border-border/50"
           >
             {part.slice(1, -1)}
@@ -76,21 +39,59 @@ export function MarkdownRenderer({
         );
       }
 
-      // Handle bold **text**
-      const boldParts = part.split(/(\*\*[^*]+\*\*)/g);
-      return boldParts.map((bPart, j) => {
-        if (bPart.startsWith("**") && bPart.endsWith("**") && bPart.length >= 4) {
-          return <strong key={`b-${j}`} className="font-semibold text-foreground">{bPart.slice(2, -2)}</strong>;
+      // 2. Parse wikilinks in non-code text: [[Target Title]] or [[Target Title|Display Text]]
+      const parts: React.ReactNode[] = [];
+      let lastIndex = 0;
+      const wikilinkRegex = /\[\[([^[\]|\r\n]+)(?:\|([^[\]\r\n]+))?\]\]/g;
+      let match: RegExpExecArray | null;
+
+      while ((match = wikilinkRegex.exec(part)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push(renderFormatting(part.slice(lastIndex, match.index), `${partIdx}-${lastIndex}`));
         }
 
-        // Handle italic *text*
-        const italicParts = bPart.split(/(\*[^*]+\*)/g);
-        return italicParts.map((iPart, k) => {
-          if (iPart.startsWith("*") && iPart.endsWith("*") && iPart.length >= 2) {
-            return <em key={`i-${k}`} className="italic">{iPart.slice(1, -1)}</em>;
-          }
-          return iPart;
-        });
+        const targetTitle = match[1].trim();
+        const displayText = match[2]?.trim() || targetTitle;
+
+        parts.push(
+          <button
+            key={`wiki-${partIdx}-${match.index}`}
+            type="button"
+            onClick={() => onWikilinkClick?.(targetTitle)}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 mx-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 underline decoration-blue-500/40 transition-colors"
+            title={`Go to note: ${targetTitle}`}
+          >
+            <span>[[{displayText}]]</span>
+            <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+          </button>
+        );
+
+        lastIndex = match.index + match[0].length;
+      }
+
+      if (lastIndex < part.length) {
+        parts.push(renderFormatting(part.slice(lastIndex), `${partIdx}-${lastIndex}`));
+      }
+
+      return <React.Fragment key={`span-${partIdx}`}>{parts}</React.Fragment>;
+    });
+  };
+
+  const renderFormatting = (text: string, keyPrefix = "") => {
+    // Handle bold **text**
+    const boldParts = text.split(/(\*\*[^*]+\*\*)/g);
+    return boldParts.map((bPart, j) => {
+      if (bPart.startsWith("**") && bPart.endsWith("**") && bPart.length >= 4) {
+        return <strong key={`b-${keyPrefix}-${j}`} className="font-semibold text-foreground">{bPart.slice(2, -2)}</strong>;
+      }
+
+      // Handle italic *text*
+      const italicParts = bPart.split(/(\*[^*]+\*)/g);
+      return italicParts.map((iPart, k) => {
+        if (iPart.startsWith("*") && iPart.endsWith("*") && iPart.length >= 2) {
+          return <em key={`i-${keyPrefix}-${k}`} className="italic">{iPart.slice(1, -1)}</em>;
+        }
+        return iPart;
       });
     });
   };
@@ -105,11 +106,12 @@ export function MarkdownRenderer({
   for (let idx = 0; idx < lines.length; idx++) {
     const line = lines[idx];
 
-    // Fenced code blocks
-    if (line.trim().startsWith("```")) {
+    // Fenced code blocks (``` or ~~~)
+    const isCodeFence = line.trim().startsWith("```") || line.trim().startsWith("~~~");
+    if (isCodeFence) {
       if (!inCodeBlock) {
         inCodeBlock = true;
-        codeBlockLang = line.trim().slice(3).trim();
+        codeBlockLang = line.trim().replace(/^(`{3,}|~{3,})/, "").trim();
         codeBlockLines = [];
         continue;
       } else {

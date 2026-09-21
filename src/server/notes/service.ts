@@ -72,8 +72,6 @@ function mapNoteToDTO(note: Note, counts?: { outgoing?: number; backlinks?: numb
     projectId: note.projectId,
     goalId: note.goalId,
     taskId: note.taskId,
-    personId: note.personId,
-    learningId: note.learningId,
     outgoingLinksCount: counts?.outgoing ?? 0,
     backlinksCount: counts?.backlinks ?? 0,
     createdAt: note.createdAt.toISOString(),
@@ -258,8 +256,6 @@ export async function createNote(
         projectId: validated.projectId ?? null,
         goalId: validated.goalId ?? null,
         taskId: validated.taskId ?? null,
-        personId: validated.personId ?? null,
-        learningId: validated.learningId ?? null,
       })
       .returning();
 
@@ -340,10 +336,6 @@ export async function updateNote(
           validated.projectId !== undefined ? validated.projectId : existing.projectId,
         goalId: validated.goalId !== undefined ? validated.goalId : existing.goalId,
         taskId: validated.taskId !== undefined ? validated.taskId : existing.taskId,
-        personId:
-          validated.personId !== undefined ? validated.personId : existing.personId,
-        learningId:
-          validated.learningId !== undefined ? validated.learningId : existing.learningId,
         updatedAt: new Date(),
       })
       .where(and(eq(notes.userId, userId), eq(notes.id, id)))
@@ -352,8 +344,36 @@ export async function updateNote(
     // Re-sync outgoing links
     await syncWikilinks(tx, userId, id, extractedLinks);
 
-    // If title changed, update target references
+    // If title changed, reconcile target references across incoming links
     if (validated.title && validated.title !== existing.title) {
+      const oldTitle = existing.title.trim().toLowerCase();
+
+      // Check if any other note still has the old title
+      const otherWithOldTitle = await tx
+        .select({ id: notes.id })
+        .from(notes)
+        .where(
+          and(
+            eq(notes.userId, userId),
+            sql`LOWER(TRIM(${notes.title})) = ${oldTitle}`,
+            sql`${notes.id} != ${id}`
+          )
+        )
+        .limit(1);
+
+      // Links pointing to this note by old title become dangling if no other note has old title
+      await tx
+        .update(noteLinks)
+        .set({ targetNoteId: otherWithOldTitle.length > 0 ? otherWithOldTitle[0].id : null })
+        .where(
+          and(
+            eq(noteLinks.userId, userId),
+            eq(noteLinks.targetNoteId, id),
+            sql`LOWER(TRIM(${noteLinks.targetTitle})) = ${oldTitle}`
+          )
+        );
+
+      // Resolve any dangling links targeting the new title to this note
       await backfillTargetLinks(tx, userId, id, validated.title);
     }
 
@@ -470,7 +490,7 @@ export async function getBacklinks(
     .limit(1);
 
   if (!targetNote) {
-    return [];
+    throw new NotFoundError(`Note with id "${noteId}" not found.`);
   }
 
   // Join note_links with notes (source notes referring to targetNoteId or targetTitle)
@@ -489,6 +509,7 @@ export async function getBacklinks(
     .where(
       and(
         eq(noteLinks.userId, userId),
+        eq(notes.isArchived, false),
         or(
           eq(noteLinks.targetNoteId, noteId),
           sql`LOWER(TRIM(${noteLinks.targetTitle})) = LOWER(TRIM(${targetNote.title}))`

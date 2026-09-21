@@ -29,6 +29,12 @@ describe("Phase 3 Plan 03-01: Wikilink Engine Unit Suite", () => {
       expect(slugifyTitle("")).toBe("");
       expect(slugifyTitle("!@#$%^&*()")).toBe("");
     });
+
+    it("preserves Unicode letters and numbers across languages", () => {
+      expect(slugifyTitle("Café Architecture")).toBe("café-architecture");
+      expect(slugifyTitle("Überblick über LifeOS")).toBe("überblick-über-lifeos");
+      expect(slugifyTitle("日本語メモ")).toBe("日本語メモ");
+    });
   });
 
   describe("parseWikilinks", () => {
@@ -88,6 +94,37 @@ And another normal link: [[Second Valid Note]]
 
       expect(links).toHaveLength(1);
       expect(links[0].targetTitle).toBe("Real Note");
+    });
+
+    it("ignores wikilinks inside tilde code fences and multi-backtick spans", () => {
+      const content = `
+~~~text
+[[Not A Link In Tildes]]
+~~~
+\`\`\`\`markdown
+[[Not A Link In Quad Backticks]]
+\`\`\`\`
+Here is \`\`[[Not A Link In Double Backticks]]\`\`.
+And a valid link: [[Valid Link]]
+      `;
+      const links = parseWikilinks(content);
+      expect(links).toHaveLength(1);
+      expect(links[0].targetTitle).toBe("Valid Link");
+    });
+
+    it("trims whitespace inside [[ Note ]] and normalizes targets", () => {
+      const content = "Link to [[  Whitespace Note  ]] and [[ Trimmed|Alias  ]].";
+      const links = parseWikilinks(content);
+      expect(links).toEqual([
+        { targetTitle: "Whitespace Note", displayText: null },
+        { targetTitle: "Trimmed", displayText: "Alias" },
+      ]);
+    });
+
+    it("ignores empty target links like [[]] or [[   ]]", () => {
+      const content = "Empty: [[]], whitespace: [[   ]], with pipe: [[ |Empty Target ]].";
+      const links = parseWikilinks(content);
+      expect(links).toEqual([]);
     });
 
     it("returns empty array for empty, undefined, or link-less content", () => {

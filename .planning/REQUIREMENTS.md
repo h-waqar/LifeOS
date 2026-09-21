@@ -66,10 +66,10 @@ Requirements for initial release across the 9 planned phases. Each maps directly
 - [x] **HABT-04**: User can link habits to long-term goals or identity statements.
 
 ### Notes, Knowledge Graph & Search
-- [ ] **NOTE-01**: User can create and edit rich Markdown notes with headings, checklists, code blocks, and math.
-- [ ] **NOTE-02**: User can link notes using bidirectional wikilinks ([[Note Title]]) and view backlinks in note inspector.
-- [ ] **NOTE-03**: User can tag notes and organize knowledge into hierarchical topics and life areas.
-- [ ] **NOTE-04**: User can link notes directly to Projects, Goals, Tasks, Learning Items, and People.
+- [x] **NOTE-01**: User can create and edit rich Markdown notes with headings, checklists, code blocks, and math.
+- [x] **NOTE-02**: User can link notes using bidirectional wikilinks ([[Note Title]]) and view backlinks in note inspector.
+- [x] **NOTE-03**: User can tag notes and organize knowledge into hierarchical topics and life areas.
+- [x] **NOTE-04**: User can link notes directly to Projects, Goals, Tasks, Learning Items, and People.
 - [ ] **NOTE-05**: User can perform instant full-text search across all notes, tasks, projects, goals, and people using PostgreSQL full-text indexing.
 - [ ] **NOTE-06**: User can track Learning Items (books, courses, articles) with status, ratings, key takeaways, and linked notes.
 
@@ -193,10 +193,10 @@ Deferred to future releases after v1 roadmap execution:
 | HABT-02 | Phase 2 | Pending |
 | HABT-03 | Phase 2 | Pending |
 | HABT-04 | Phase 2 | Pending |
-| NOTE-01 | Phase 3 | Pending |
-| NOTE-02 | Phase 3 | Pending |
-| NOTE-03 | Phase 3 | Pending |
-| NOTE-04 | Phase 3 | Pending |
+| NOTE-01 | Phase 3 | Complete |
+| NOTE-02 | Phase 3 | Complete |
+| NOTE-03 | Phase 3 | Complete |
+| NOTE-04 | Phase 3 | Complete |
 | NOTE-05 | Phase 3 | Pending |
 | NOTE-06 | Phase 3 | Pending |
 | CRM-01 | Phase 3 | Pending |

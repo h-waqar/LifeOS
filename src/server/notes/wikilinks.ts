@@ -17,7 +17,7 @@ export function slugifyTitle(title: string): string {
   return title
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, "") // remove non-alphanumeric except whitespace and hyphens
+    .replace(/[^\p{L}\p{N}\s_-]/gu, "") // preserve Unicode letters, numbers, spaces, hyphens, and underscores
     .replace(/[\s_-]+/g, "-") // collapse whitespace/underscores into single hyphen
     .replace(/^-+|-+$/g, ""); // trim leading/trailing hyphens
 }
@@ -30,6 +30,7 @@ export function slugifyTitle(title: string): string {
  *
  * Ignores wikilinks inside code blocks:
  * - ```code```
+ * - ~~~code~~~
  * - `inline code`
  */
 export function parseWikilinks(content: string): ExtractedWikilink[] {
@@ -37,10 +38,10 @@ export function parseWikilinks(content: string): ExtractedWikilink[] {
     return [];
   }
 
-  // 1. Mask fenced code blocks (```...```) and inline code (`...`)
+  // 1. Mask fenced code blocks (3+ backticks or 3+ tildes) and inline code (`...`)
   const codeBlockMasked = content
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/`[^`\n]+`/g, " ");
+    .replace(/(?:`{3,}|~{3,})[\s\S]*?(?:`{3,}|~{3,})/g, " ")
+    .replace(/`+[^`\n]*`+/g, " ");
 
   // 2. Regular expression for wikilinks: [[targetTitle]] or [[targetTitle|displayText]]
   const wikilinkRegex = /\[\[([^[\]|\r\n]+)(?:\|([^[\]\r\n]+))?\]\]/g;

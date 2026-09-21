@@ -445,8 +445,6 @@ export interface NoteDTO {
   projectId: string | null;
   goalId: string | null;
   taskId: string | null;
-  personId: string | null;
-  learningId: string | null;
   outgoingLinksCount?: number;
   backlinksCount?: number;
   createdAt: string;
@@ -482,8 +480,6 @@ export interface CreateNoteInput {
   projectId?: string | null;
   goalId?: string | null;
   taskId?: string | null;
-  personId?: string | null;
-  learningId?: string | null;
 }
 
 export interface UpdateNoteInput {
@@ -497,8 +493,6 @@ export interface UpdateNoteInput {
   projectId?: string | null;
   goalId?: string | null;
   taskId?: string | null;
-  personId?: string | null;
-  learningId?: string | null;
 }
 
 

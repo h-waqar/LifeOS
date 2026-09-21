@@ -69,9 +69,6 @@ export const notes = pgTable(
     projectId: text("project_id"),
     goalId: text("goal_id"),
     taskId: text("task_id"),
-    // Forward-compatible entity link IDs (activated in 03-02 and 03-04)
-    personId: text("person_id"),
-    learningId: text("learning_id"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -140,7 +137,7 @@ export const noteLinks = pgTable(
       name: "note_links_target_note_fk",
       columns: [table.userId, table.targetNoteId],
       foreignColumns: [notes.userId, notes.id],
-    }).onDelete("cascade"),
+    }).onDelete("set null"),
     index("note_links_source_idx").on(table.userId, table.sourceNoteId),
     index("note_links_target_idx").on(table.userId, table.targetNoteId),
     index("note_links_target_title_idx").on(table.userId, table.targetTitle),

@@ -82,6 +82,7 @@ function NotesContent() {
   const [areaFilter, setAreaFilter] = React.useState<string>("all");
   const [typeFilter, setTypeFilter] = React.useState<string>("all");
   const [selectedTag, setSelectedTag] = React.useState<string | null>(null);
+  const [showArchived, setShowArchived] = React.useState<boolean>(false);
 
   // Editor State
   const [viewMode, setViewMode] = React.useState<"edit" | "preview" | "split">("split");
@@ -91,9 +92,17 @@ function NotesContent() {
   const [editorArea, setEditorArea] = React.useState<LifeArea>("general");
   const [editorType, setEditorType] = React.useState<NoteType>("quick");
   const [editorTags, setEditorTags] = React.useState<string[]>([]);
+  const [editorProjectId, setEditorProjectId] = React.useState<string>("");
+  const [editorGoalId, setEditorGoalId] = React.useState<string>("");
+  const [editorTaskId, setEditorTaskId] = React.useState<string>("");
   const [isPinned, setIsPinned] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [newTagInput, setNewTagInput] = React.useState("");
+
+  // Domain Entity Lists for Linking
+  const [projectsList, setProjectsList] = React.useState<{ id: string; name: string }[]>([]);
+  const [goalsList, setGoalsList] = React.useState<{ id: string; title: string }[]>([]);
+  const [tasksList, setTasksList] = React.useState<{ id: string; title: string }[]>([]);
 
   // Auth Protection
   React.useEffect(() => {
@@ -101,6 +110,35 @@ function NotesContent() {
       router.push("/login");
     }
   }, [session, sessionLoading, router]);
+
+  // Load Domain Entities
+  React.useEffect(() => {
+    if (!session) return;
+    const loadEntities = async () => {
+      try {
+        const [pRes, gRes, tRes] = await Promise.all([
+          fetch("/api/projects"),
+          fetch("/api/goals"),
+          fetch("/api/tasks?limit=100"),
+        ]);
+        if (pRes.ok) {
+          const json = await pRes.json();
+          setProjectsList(json.data || []);
+        }
+        if (gRes.ok) {
+          const json = await gRes.json();
+          setGoalsList(json.data || []);
+        }
+        if (tRes.ok) {
+          const json = await tRes.json();
+          setTasksList(json.data || []);
+        }
+      } catch {
+        // Non-critical background entity fetch
+      }
+    };
+    loadEntities();
+  }, [session]);
 
   // Load Notes List
   const fetchNotes = React.useCallback(async () => {
@@ -111,6 +149,7 @@ function NotesContent() {
       if (typeFilter !== "all") params.set("noteType", typeFilter);
       if (selectedTag) params.set("tag", selectedTag);
       if (searchQuery.trim()) params.set("search", searchQuery.trim());
+      params.set("isArchived", showArchived ? "true" : "false");
 
       const res = await fetch(`/api/notes?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load notes");
@@ -126,7 +165,7 @@ function NotesContent() {
     } finally {
       setLoading(false);
     }
-  }, [areaFilter, typeFilter, selectedTag, searchQuery, selectedNoteId]);
+  }, [areaFilter, typeFilter, selectedTag, searchQuery, showArchived, selectedNoteId]);
 
   React.useEffect(() => {
     if (session) {
@@ -155,6 +194,9 @@ function NotesContent() {
           setEditorArea(json.data.area);
           setEditorType(json.data.noteType);
           setEditorTags(json.data.tags || []);
+          setEditorProjectId(json.data.projectId || "");
+          setEditorGoalId(json.data.goalId || "");
+          setEditorTaskId(json.data.taskId || "");
           setIsPinned(json.data.isPinned);
         }
       } catch (err) {
@@ -197,7 +239,7 @@ function NotesContent() {
   };
 
   // Save Note
-  const handleSaveNote = async () => {
+  const handleSaveNote = React.useCallback(async () => {
     if (!selectedNoteId) return;
     try {
       setIsSaving(true);
@@ -211,6 +253,9 @@ function NotesContent() {
           noteType: editorType,
           tags: editorTags,
           isPinned,
+          projectId: editorProjectId || null,
+          goalId: editorGoalId || null,
+          taskId: editorTaskId || null,
         }),
       });
 
@@ -233,6 +278,52 @@ function NotesContent() {
       toast.error("Failed to save note");
     } finally {
       setIsSaving(false);
+    }
+  }, [
+    selectedNoteId,
+    editorTitle,
+    editorContent,
+    editorArea,
+    editorType,
+    editorTags,
+    isPinned,
+    editorProjectId,
+    editorGoalId,
+    editorTaskId,
+  ]);
+
+  // Keyboard shortcut: Ctrl+S / Cmd+S to save note
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        handleSaveNote();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSaveNote]);
+
+  // Toggle Archive
+  const handleToggleArchive = async () => {
+    if (!selectedNoteId || !selectedNote) return;
+    const nextArchived = !selectedNote.isArchived;
+    try {
+      const res = await fetch(`/api/notes/${selectedNoteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isArchived: nextArchived }),
+      });
+      if (!res.ok) throw new Error("Failed to update archive status");
+      const json = await res.json();
+      toast.success(nextArchived ? "Note archived" : "Note restored");
+      setSelectedNote((prev) => (prev ? { ...prev, isArchived: nextArchived } : null));
+      setNotes((prev) =>
+        prev.map((n) => (n.id === selectedNoteId ? { ...n, isArchived: nextArchived } : n))
+      );
+      fetchNotes();
+    } catch {
+      toast.error("Failed to update archive status");
     }
   };
 
@@ -400,6 +491,18 @@ function NotesContent() {
                 </select>
               </div>
 
+              {/* Show Archived Toggle */}
+              <label className="flex items-center gap-1.5 px-0.5 text-[11px] text-muted-foreground hover:text-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showArchived}
+                  onChange={(e) => setShowArchived(e.target.checked)}
+                  className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                  data-testid="show-archived-checkbox"
+                />
+                <span>Show archived notes</span>
+              </label>
+
               {/* Tags Filter Pill Strip */}
               {allTags.length > 0 && (
                 <div className="flex items-center gap-1 overflow-x-auto py-1 scrollbar-none">
@@ -550,6 +653,22 @@ function NotesContent() {
                       ) : (
                         <PinOff className="w-4 h-4 text-muted-foreground" />
                       )}
+                    </Button>
+
+                    {/* Archive Toggle */}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleToggleArchive}
+                      className={`h-8 w-8 p-0 ${
+                        selectedNote.isArchived
+                          ? "text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      title={selectedNote.isArchived ? "Restore note from archive" : "Archive note"}
+                      data-testid="archive-note-button"
+                    >
+                      <Archive className="w-4 h-4" />
                     </Button>
 
                     {/* Save Button */}
@@ -731,6 +850,76 @@ function NotesContent() {
                       Add
                     </Button>
                   </div>
+                </div>
+              </div>
+
+              {/* Linked Entities Section (Project, Goal, Task) */}
+              <div className="space-y-3 pt-2 border-t border-border/60" data-testid="note-linked-entities">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Linked Entities
+                </h3>
+
+                {/* Linked Project */}
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
+                    <FolderKanban className="w-3.5 h-3.5 text-indigo-500" />
+                    Project
+                  </label>
+                  <select
+                    value={editorProjectId}
+                    onChange={(e) => setEditorProjectId(e.target.value)}
+                    className="w-full h-8 text-xs bg-background border border-input rounded-md px-2 text-foreground"
+                    data-testid="note-project-select"
+                  >
+                    <option value="">None (Unlinked)</option>
+                    {projectsList.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Linked Goal */}
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
+                    <Target className="w-3.5 h-3.5 text-emerald-500" />
+                    Goal
+                  </label>
+                  <select
+                    value={editorGoalId}
+                    onChange={(e) => setEditorGoalId(e.target.value)}
+                    className="w-full h-8 text-xs bg-background border border-input rounded-md px-2 text-foreground"
+                    data-testid="note-goal-select"
+                  >
+                    <option value="">None (Unlinked)</option>
+                    {goalsList.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Linked Task */}
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
+                    <CheckSquare className="w-3.5 h-3.5 text-blue-500" />
+                    Task
+                  </label>
+                  <select
+                    value={editorTaskId}
+                    onChange={(e) => setEditorTaskId(e.target.value)}
+                    className="w-full h-8 text-xs bg-background border border-input rounded-md px-2 text-foreground"
+                    data-testid="note-task-select"
+                  >
+                    <option value="">None (Unlinked)</option>
+                    {tasksList.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.title}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

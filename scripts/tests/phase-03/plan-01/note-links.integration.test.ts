@@ -156,4 +156,83 @@ describe("Phase 3 Plan 03-01: Note Links & Backlinks Graph (Integration)", () =>
     expect(backlinksBeta).toHaveLength(1);
     expect(backlinksBeta[0].title).toBe("Note Alpha");
   });
+
+  it("6. Reconciles backlinks on title change: old title links become dangling", async () => {
+    if (!probe.isAvailable) return;
+
+    // Note Alpha links to "Note Beta".
+    // Rename Beta to "Note Bravo".
+    await updateNote(testUserId, noteBetaId, {
+      title: "Note Bravo",
+    });
+
+    // Note Bravo should no longer have Note Alpha as backlink (Alpha links to "Note Beta", not "Note Bravo")
+    const backlinksBravo = await getBacklinks(testUserId, noteBetaId);
+    expect(backlinksBravo).toHaveLength(0);
+
+    // Create Note Epsilon referencing [[Note Bravo]]
+    const noteEpsilon = await createNote(testUserId, {
+      title: "Note Epsilon",
+      content: "Epsilon explicitly references [[Note Bravo]].",
+    });
+
+    const backlinksBravoAfter = await getBacklinks(testUserId, noteBetaId);
+    expect(backlinksBravoAfter).toHaveLength(1);
+    expect(backlinksBravoAfter[0].title).toBe("Note Epsilon");
+
+    // Clean up Epsilon
+    await deleteNote(testUserId, noteEpsilon.id, true);
+  });
+
+  it("7. Soft-archived notes are excluded from active backlinks", async () => {
+    if (!probe.isAvailable) return;
+
+    // Create Note Zeta linking to Note Bravo
+    const noteZeta = await createNote(testUserId, {
+      title: "Note Zeta",
+      content: "Zeta references [[Note Bravo]].",
+    });
+
+    let backlinks = await getBacklinks(testUserId, noteBetaId);
+    expect(backlinks.map((b) => b.title)).toContain("Note Zeta");
+
+    // Soft-archive Zeta
+    await deleteNote(testUserId, noteZeta.id, false);
+
+    // Backlinks for Note Bravo should no longer include archived Note Zeta
+    backlinks = await getBacklinks(testUserId, noteBetaId);
+    expect(backlinks.map((b) => b.title)).not.toContain("Note Zeta");
+
+    await deleteNote(testUserId, noteZeta.id, true);
+  });
+
+  it("8. Foreign key ON DELETE SET NULL allows project deletion without corrupting note", async () => {
+    if (!probe.isAvailable) return;
+
+    const { projects } = await import("@/server/db/schema");
+
+    const [proj] = await db
+      .insert(projects)
+      .values({
+        userId: testUserId,
+        name: "Test FK Safety Project",
+      })
+      .returning();
+
+    const noteWithProj = await createNote(testUserId, {
+      title: "Note With Project",
+      projectId: proj.id,
+    });
+
+    expect(noteWithProj.projectId).toBe(proj.id);
+
+    // Delete project directly in DB
+    await db.delete(projects).where(eq(projects.id, proj.id));
+
+    // Note should still exist, with projectId set to null
+    const noteAfter = await getNoteById(testUserId, noteWithProj.id);
+    expect(noteAfter.projectId).toBeNull();
+
+    await deleteNote(testUserId, noteWithProj.id, true);
+  });
 });

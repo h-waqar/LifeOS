@@ -211,4 +211,19 @@ describe("Phase 3 Plan 03-01: Notes API Route Handlers (Integration)", () => {
     });
     expect(checkRes.status).toBe(404);
   });
+
+  it("10. GET /api/notes/[id]/backlinks returns 404 for nonexistent note ID", async () => {
+    if (!probe.isAvailable) return;
+
+    const nonexistentId = "nonexistent-note-id-12345";
+    const req = createAuthRequest(
+      `http://localhost:3000/api/notes/${nonexistentId}/backlinks`
+    );
+    const res = await noteBacklinksGet(req, {
+      params: Promise.resolve({ id: nonexistentId }),
+    });
+    expect(res.status).toBe(404);
+    const json = await res.json();
+    expect(json.code).toBe("NOT_FOUND");
+  });
 });

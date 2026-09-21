@@ -43,8 +43,6 @@ export const createNoteSchema = z.object({
   projectId: z.string().trim().min(1).nullable().optional(),
   goalId: z.string().trim().min(1).nullable().optional(),
   taskId: z.string().trim().min(1).nullable().optional(),
-  personId: z.string().trim().min(1).nullable().optional(),
-  learningId: z.string().trim().min(1).nullable().optional(),
 });
 
 export const updateNoteSchema = z.object({
@@ -71,8 +69,6 @@ export const updateNoteSchema = z.object({
   projectId: z.string().trim().min(1).nullable().optional(),
   goalId: z.string().trim().min(1).nullable().optional(),
   taskId: z.string().trim().min(1).nullable().optional(),
-  personId: z.string().trim().min(1).nullable().optional(),
-  learningId: z.string().trim().min(1).nullable().optional(),
 });
 
 export const listNotesQuerySchema = z.object({
