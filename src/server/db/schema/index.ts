@@ -388,7 +388,6 @@ export const peopleRelations = relations(people, ({ one, many }) => ({
   }),
   interactions: many(interactions),
   tasks: many(tasks),
-  projects: many(projects),
   notes: many(notes),
 }));
 

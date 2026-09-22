@@ -300,7 +300,7 @@ export default function PeoplePage() {
       return;
     }
     try {
-      const res = await fetch(`/api/people/${person.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/people/${person.id}?hard=true`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete contact");
       toast.success("Contact deleted");
       if (selectedPersonId === person.id) {

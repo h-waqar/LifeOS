@@ -366,5 +366,11 @@ describe("Phase 3 Plan 03-02: People CRM API Route Handlers (Integration)", () =
       params: Promise.resolve({ id: createdPersonId }),
     });
     expect(detailRes.status).toBe(404);
+
+    // Verify contact no longer appears in archived list
+    const archivedReq = createAuthRequest("http://localhost:3000/api/people?isArchived=true");
+    const archivedRes = await peopleGet(archivedReq);
+    const archivedJson = await archivedRes.json();
+    expect(archivedJson.data.some((p: any) => p.id === createdPersonId)).toBe(false);
   });
 });
