@@ -755,3 +755,152 @@ export interface SearchResponseDTO {
   total: number;
   byType: Record<SearchEntityType, number>;
 }
+
+// ---------------------------------------------------------------------------
+// Personal Finance Types (Phase 4)
+// ---------------------------------------------------------------------------
+
+export type FinanceAccountType =
+  | "checking"
+  | "savings"
+  | "investment"
+  | "credit_card"
+  | "cash";
+
+export type FinanceCategoryType = "income" | "expense";
+
+export type FinanceTransactionType = "income" | "expense" | "transfer";
+
+export interface FinanceAccount {
+  id: string;
+  userId: string;
+  name: string;
+  accountType: FinanceAccountType;
+  currency: string;
+  initialBalance: string;
+  balance: string;
+  isArchived: boolean;
+  notes?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export type FinanceAccountDTO = FinanceAccount;
+
+export interface FinanceCategory {
+  id: string;
+  userId: string;
+  name: string;
+  categoryType: FinanceCategoryType;
+  icon?: string | null;
+  color?: string | null;
+  isSystem: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export type FinanceCategoryDTO = FinanceCategory;
+
+export interface FinanceTransaction {
+  id: string;
+  userId: string;
+  accountId: string;
+  toAccountId?: string | null;
+  categoryId?: string | null;
+  goalId?: string | null;
+  transactionType: FinanceTransactionType;
+  amount: string;
+  currency: string;
+  date: Date | string;
+  payee?: string | null;
+  description?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export type FinanceTransactionDTO = FinanceTransaction;
+
+export interface EnrichedTransaction extends FinanceTransaction {
+  accountName: string;
+  toAccountName?: string | null;
+  categoryName?: string | null;
+  categoryIcon?: string | null;
+  categoryColor?: string | null;
+  goalTitle?: string | null;
+}
+
+export interface FinanceBudget {
+  id: string;
+  userId: string;
+  categoryId: string;
+  month: string;
+  targetAmount: string;
+  currency: string;
+  notes?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export type FinanceBudgetDTO = FinanceBudget;
+
+export interface CategoryBudgetProgress {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  categoryIcon?: string | null;
+  categoryColor?: string | null;
+  month: string;
+  targetAmount: number;
+  spentAmount: number;
+  remainingAmount: number;
+  utilizationPercentage: number;
+  isOverBudget: boolean;
+  currency: string;
+  notes?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface CategorySpendingItem {
+  categoryId: string;
+  categoryName: string;
+  categoryIcon?: string | null;
+  categoryColor?: string | null;
+  spent: number;
+  percentageOfTotal: number;
+}
+
+export interface FinanceSummaryReport {
+  month: string;
+  netWorth: number;
+  totalAssets: number;
+  totalLiabilities: number;
+  totalIncome: number;
+  totalExpenses: number;
+  cashFlow: number;
+  savingsRate: number;
+  categorySpendingBreakdown: CategorySpendingItem[];
+}
+
+export interface FinancialGoalSummary {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: string;
+  priority: string;
+  metricType: string;
+  targetValue: number | null;
+  currentValue: number;
+  progress: number;
+  unit?: string | null;
+  targetDate?: Date | string | null;
+  recentTransactions: Array<{
+    id: string;
+    amount: string;
+    currency: string;
+    date: Date | string;
+    description?: string | null;
+    payee?: string | null;
+  }>;
+}
+
