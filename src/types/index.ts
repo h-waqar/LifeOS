@@ -445,6 +445,7 @@ export interface NoteDTO {
   projectId: string | null;
   goalId: string | null;
   taskId: string | null;
+  personId?: string | null;
   outgoingLinksCount?: number;
   backlinksCount?: number;
   createdAt: string;
@@ -480,6 +481,7 @@ export interface CreateNoteInput {
   projectId?: string | null;
   goalId?: string | null;
   taskId?: string | null;
+  personId?: string | null;
 }
 
 export interface UpdateNoteInput {
@@ -493,7 +495,131 @@ export interface UpdateNoteInput {
   projectId?: string | null;
   goalId?: string | null;
   taskId?: string | null;
+  personId?: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 3: Relationships / People CRM Types
+// ---------------------------------------------------------------------------
+
+export const RELATIONSHIP_TYPES = [
+  "client",
+  "friend",
+  "family",
+  "colleague",
+  "prospect",
+  "mentor",
+  "professional",
+  "other",
+] as const;
+
+export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
+
+export const INTERACTION_CHANNELS = [
+  "meeting",
+  "call",
+  "email",
+  "message",
+  "in_person",
+  "other",
+] as const;
+
+export type InteractionChannel = (typeof INTERACTION_CHANNELS)[number];
+
+export const FOLLOW_UP_STATUSES = ["overdue", "today", "upcoming", "none"] as const;
+export type FollowUpStatus = (typeof FOLLOW_UP_STATUSES)[number];
+
+export interface PersonDTO {
+  id: string;
+  userId: string;
+  name: string;
+  relationshipType: RelationshipType;
+  company: string | null;
+  role: string | null;
+  email: string | null;
+  phone: string | null;
+  contactInfo: Record<string, any>;
+  tags: string[];
+  notes: string | null;
+  isArchived: boolean;
+  lastInteractionDate: string | null;
+  nextFollowUpDate: string | null;
+  followUpStatus: FollowUpStatus;
+  interactionsCount?: number;
+  linkedTasksCount?: number;
+  linkedProjectsCount?: number;
+  linkedNotesCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InteractionDTO {
+  id: string;
+  userId: string;
+  personId: string;
+  date: string;
+  channel: InteractionChannel;
+  summary: string;
+  nextFollowUpDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PersonDetailDTO extends PersonDTO {
+  interactions: InteractionDTO[];
+  linkedTasks: TaskDTO[];
+  linkedProjects: ProjectDTO[];
+  linkedNotes: NoteDTO[];
+}
+
+export interface CreatePersonInput {
+  name: string;
+  relationshipType?: RelationshipType;
+  company?: string | null;
+  role?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  contactInfo?: Record<string, any>;
+  tags?: string[];
+  notes?: string | null;
+  nextFollowUpDate?: string | null;
+}
+
+export interface UpdatePersonInput {
+  name?: string;
+  relationshipType?: RelationshipType;
+  company?: string | null;
+  role?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  contactInfo?: Record<string, any>;
+  tags?: string[];
+  notes?: string | null;
+  isArchived?: boolean;
+  nextFollowUpDate?: string | null;
+}
+
+export interface LogInteractionInput {
+  date?: string;
+  channel?: InteractionChannel;
+  summary: string;
+  nextFollowUpDate?: string | null;
+}
+
+export interface UpdateInteractionInput {
+  date?: string;
+  channel?: InteractionChannel;
+  summary?: string;
+  nextFollowUpDate?: string | null;
+}
+
+export interface FollowUpRemindersDTO {
+  overdue: PersonDTO[];
+  today: PersonDTO[];
+  upcoming: PersonDTO[];
+  totalReminders: number;
+}
+
 
 
 

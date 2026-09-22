@@ -17,6 +17,8 @@ import {
   Flame,
   Calendar,
   CalendarCheck,
+  FileText,
+  Users,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { signOut } from "@/lib/auth-client";
@@ -171,6 +173,22 @@ export function CommandPalette({
               >
                 <CalendarCheck className="mr-2 h-4 w-4 text-primary" />
                 <span>Go to Daily Plan</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/notes"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-notes"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                <span>Go to Notes</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/people"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-people"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                <span>Go to People</span>
               </Command.Item>
             </Command.Group>
 

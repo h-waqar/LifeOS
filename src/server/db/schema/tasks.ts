@@ -15,6 +15,7 @@ import { projects } from "./projects";
 import { goals } from "./goals";
 import { projectMilestones } from "./milestones";
 import { habits } from "./habits";
+import { people } from "./people";
 
 /**
  * Tasks Table
@@ -107,6 +108,13 @@ export const tasks = pgTable(
       foreignColumns: [habits.userId, habits.id],
     }).onDelete("set null"),
 
+    // Composite FK to people: prevents associating a task with another user's person
+    foreignKey({
+      name: "tasks_user_person_fk",
+      columns: [table.userId, table.personId],
+      foreignColumns: [people.userId, people.id],
+    }).onDelete("set null"),
+
     // Composite FK to tasks: prevents associating a subtask with another user's parent task
     foreignKey({
       name: "tasks_user_parent_task_fk",
@@ -162,6 +170,7 @@ export const tasks = pgTable(
     index("tasks_user_goal_idx").on(table.userId, table.goalId),
     index("tasks_user_milestone_idx").on(table.userId, table.milestoneId),
     index("tasks_user_habit_idx").on(table.userId, table.habitId),
+    index("tasks_user_person_idx").on(table.userId, table.personId),
   ]
 );
 

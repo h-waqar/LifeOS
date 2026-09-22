@@ -6,6 +6,7 @@ import {
   projects,
   goals,
   tasks,
+  people,
   type Note,
 } from "@/server/db/schema";
 import { AuthorizationError } from "@/server/auth/guard";
@@ -72,6 +73,7 @@ function mapNoteToDTO(note: Note, counts?: { outgoing?: number; backlinks?: numb
     projectId: note.projectId,
     goalId: note.goalId,
     taskId: note.taskId,
+    personId: note.personId ?? null,
     outgoingLinksCount: counts?.outgoing ?? 0,
     backlinksCount: counts?.backlinks ?? 0,
     createdAt: note.createdAt.toISOString(),
@@ -116,6 +118,7 @@ async function validateEntityOwnership(
     projectId?: string | null;
     goalId?: string | null;
     taskId?: string | null;
+    personId?: string | null;
   }
 ) {
   if (entities.projectId) {
@@ -148,6 +151,17 @@ async function validateEntityOwnership(
       .limit(1);
     if (!t) {
       throw new InvariantViolationError("Linked task not found or access denied.");
+    }
+  }
+
+  if (entities.personId) {
+    const [p] = await db
+      .select({ id: people.id })
+      .from(people)
+      .where(and(eq(people.userId, userId), eq(people.id, entities.personId)))
+      .limit(1);
+    if (!p) {
+      throw new InvariantViolationError("Linked contact not found or access denied.");
     }
   }
 }
@@ -256,6 +270,7 @@ export async function createNote(
         projectId: validated.projectId ?? null,
         goalId: validated.goalId ?? null,
         taskId: validated.taskId ?? null,
+        personId: validated.personId ?? null,
       })
       .returning();
 
@@ -336,6 +351,8 @@ export async function updateNote(
           validated.projectId !== undefined ? validated.projectId : existing.projectId,
         goalId: validated.goalId !== undefined ? validated.goalId : existing.goalId,
         taskId: validated.taskId !== undefined ? validated.taskId : existing.taskId,
+        personId:
+          validated.personId !== undefined ? validated.personId : existing.personId,
         updatedAt: new Date(),
       })
       .where(and(eq(notes.userId, userId), eq(notes.id, id)))
@@ -574,6 +591,9 @@ export async function listNotes(
   }
   if (query.taskId) {
     conditions.push(eq(notes.taskId, query.taskId));
+  }
+  if (query.personId) {
+    conditions.push(eq(notes.personId, query.personId));
   }
   if (query.tag) {
     // JSONB array contains query.tag

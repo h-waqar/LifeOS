@@ -13,6 +13,7 @@ import { user } from "./auth";
 import { projects } from "./projects";
 import { goals } from "./goals";
 import { tasks } from "./tasks";
+import { people } from "./people";
 
 /**
  * Notes Table
@@ -69,6 +70,7 @@ export const notes = pgTable(
     projectId: text("project_id"),
     goalId: text("goal_id"),
     taskId: text("task_id"),
+    personId: text("person_id"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -94,9 +96,15 @@ export const notes = pgTable(
       columns: [table.userId, table.taskId],
       foreignColumns: [tasks.userId, tasks.id],
     }).onDelete("set null"),
+    foreignKey({
+      name: "notes_user_person_fk",
+      columns: [table.userId, table.personId],
+      foreignColumns: [people.userId, people.id],
+    }).onDelete("set null"),
     index("notes_user_id_idx").on(table.userId),
     index("notes_user_area_idx").on(table.userId, table.area),
     index("notes_user_note_type_idx").on(table.userId, table.noteType),
+    index("notes_user_person_idx").on(table.userId, table.personId),
     index("notes_user_updated_at_idx").on(table.userId, table.updatedAt),
   ]
 );

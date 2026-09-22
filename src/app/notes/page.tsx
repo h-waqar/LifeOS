@@ -37,6 +37,7 @@ import {
   FolderKanban,
   Target,
   CheckSquare,
+  Users,
   Sparkles,
   RefreshCw,
   X,
@@ -95,6 +96,7 @@ function NotesContent() {
   const [editorProjectId, setEditorProjectId] = React.useState<string>("");
   const [editorGoalId, setEditorGoalId] = React.useState<string>("");
   const [editorTaskId, setEditorTaskId] = React.useState<string>("");
+  const [editorPersonId, setEditorPersonId] = React.useState<string>("");
   const [isPinned, setIsPinned] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [newTagInput, setNewTagInput] = React.useState("");
@@ -103,6 +105,7 @@ function NotesContent() {
   const [projectsList, setProjectsList] = React.useState<{ id: string; name: string }[]>([]);
   const [goalsList, setGoalsList] = React.useState<{ id: string; title: string }[]>([]);
   const [tasksList, setTasksList] = React.useState<{ id: string; title: string }[]>([]);
+  const [peopleList, setPeopleList] = React.useState<{ id: string; name: string }[]>([]);
 
   // Auth Protection
   React.useEffect(() => {
@@ -116,10 +119,11 @@ function NotesContent() {
     if (!session) return;
     const loadEntities = async () => {
       try {
-        const [pRes, gRes, tRes] = await Promise.all([
+        const [pRes, gRes, tRes, pplRes] = await Promise.all([
           fetch("/api/projects"),
           fetch("/api/goals"),
           fetch("/api/tasks?limit=100"),
+          fetch("/api/people?isArchived=false"),
         ]);
         if (pRes.ok) {
           const json = await pRes.json();
@@ -132,6 +136,10 @@ function NotesContent() {
         if (tRes.ok) {
           const json = await tRes.json();
           setTasksList(json.data || []);
+        }
+        if (pplRes.ok) {
+          const json = await pplRes.json();
+          setPeopleList(json.data || []);
         }
       } catch {
         // Non-critical background entity fetch
@@ -197,6 +205,7 @@ function NotesContent() {
           setEditorProjectId(json.data.projectId || "");
           setEditorGoalId(json.data.goalId || "");
           setEditorTaskId(json.data.taskId || "");
+          setEditorPersonId(json.data.personId || "");
           setIsPinned(json.data.isPinned);
         }
       } catch (err) {
@@ -256,6 +265,7 @@ function NotesContent() {
           projectId: editorProjectId || null,
           goalId: editorGoalId || null,
           taskId: editorTaskId || null,
+          personId: editorPersonId || null,
         }),
       });
 
@@ -290,6 +300,7 @@ function NotesContent() {
     editorProjectId,
     editorGoalId,
     editorTaskId,
+    editorPersonId,
   ]);
 
   // Keyboard shortcut: Ctrl+S / Cmd+S to save note
@@ -917,6 +928,27 @@ function NotesContent() {
                     {tasksList.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Linked Contact (Person) */}
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
+                    <Users className="w-3.5 h-3.5 text-pink-500" />
+                    Contact
+                  </label>
+                  <select
+                    value={editorPersonId}
+                    onChange={(e) => setEditorPersonId(e.target.value)}
+                    className="w-full h-8 text-xs bg-background border border-input rounded-md px-2 text-foreground"
+                    data-testid="note-person-select"
+                  >
+                    <option value="">None (Unlinked)</option>
+                    {peopleList.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
                       </option>
                     ))}
                   </select>

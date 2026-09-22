@@ -53,6 +53,16 @@ import {
   type NoteLink,
   type NewNoteLink,
 } from "./notes";
+import {
+  people,
+  person,
+  interactions,
+  interaction,
+  type Person,
+  type NewPerson,
+  type Interaction,
+  type NewInteraction,
+} from "./people";
 
 const note = notes;
 const noteLink = noteLinks;
@@ -96,6 +106,10 @@ export {
   note,
   noteLinks,
   noteLink,
+  people,
+  person,
+  interactions,
+  interaction,
 };
 
 // Drizzle Relations Declarations
@@ -115,6 +129,8 @@ export const userRelations = relations(user, ({ many }) => ({
   eveningReviews: many(eveningReviews),
   notes: many(notes),
   noteLinks: many(noteLinks),
+  people: many(people),
+  interactions: many(interactions),
   auditLogs: many(auditLog),
 }));
 
@@ -240,6 +256,10 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
     fields: [tasks.habitId],
     references: [habits.id],
   }),
+  person: one(people, {
+    fields: [tasks.personId],
+    references: [people.id],
+  }),
   parentTask: one(tasks, {
     fields: [tasks.parentTaskId],
     references: [tasks.id],
@@ -336,6 +356,10 @@ export const notesRelations = relations(notes, ({ one, many }) => ({
     fields: [notes.taskId],
     references: [tasks.id],
   }),
+  person: one(people, {
+    fields: [notes.personId],
+    references: [people.id],
+  }),
   outgoingLinks: many(noteLinks, { relationName: "sourceNote" }),
   incomingLinks: many(noteLinks, { relationName: "targetNote" }),
 }));
@@ -354,6 +378,27 @@ export const noteLinksRelations = relations(noteLinks, ({ one }) => ({
     fields: [noteLinks.targetNoteId],
     references: [notes.id],
     relationName: "targetNote",
+  }),
+}));
+
+export const peopleRelations = relations(people, ({ one, many }) => ({
+  user: one(user, {
+    fields: [people.userId],
+    references: [user.id],
+  }),
+  interactions: many(interactions),
+  tasks: many(tasks),
+  notes: many(notes),
+}));
+
+export const interactionsRelations = relations(interactions, ({ one }) => ({
+  user: one(user, {
+    fields: [interactions.userId],
+    references: [user.id],
+  }),
+  person: one(people, {
+    fields: [interactions.personId],
+    references: [people.id],
   }),
 }));
 
@@ -403,6 +448,7 @@ export type NewTimeBlock = typeof timeBlocks.$inferInsert;
 export type { DailyPlan, NewDailyPlan, EveningReview, NewEveningReview };
 export type { TaskDependency, NewTaskDependency, RecurrenceRule };
 export type { Note, NewNote, NoteLink, NewNoteLink };
+export type { Person, NewPerson, Interaction, NewInteraction };
 
 /**
  * Explicit list of foundational table names.
@@ -446,6 +492,9 @@ export const PHASE_2_TABLE_NAMES = [
 export const PHASE_3_TABLE_NAMES = [
   "notes",
   "note_links",
+  "people",
+  "interactions",
 ] as const;
+
 
 

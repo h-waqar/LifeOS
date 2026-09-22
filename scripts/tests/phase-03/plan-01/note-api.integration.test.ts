@@ -30,11 +30,11 @@ describe("Phase 3 Plan 03-01: Notes API Route Handlers (Integration)", () => {
   function createAuthRequest(url: string, init?: RequestInit): NextRequest {
     const headers = new Headers(init?.headers);
     headers.set("cookie", cookieHeader);
-    return new NextRequest(url, { ...init, headers });
+    return new NextRequest(url, { ...init, headers } as any);
   }
 
   function createUnauthRequest(url: string, init?: RequestInit): NextRequest {
-    return new NextRequest(url, init);
+    return new NextRequest(url, init as any);
   }
 
   beforeAll(async () => {
