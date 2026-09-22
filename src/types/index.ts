@@ -620,6 +620,27 @@ export interface FollowUpRemindersDTO {
   totalReminders: number;
 }
 
+// ---------------------------------------------------------------------------
+// Unified Search Types (Phase 3 Plan 03-03)
+// ---------------------------------------------------------------------------
 
+export type SearchEntityType = "note" | "task" | "project" | "goal" | "person";
 
+export interface SearchResultItem {
+  id: string;
+  type: SearchEntityType;
+  title: string;
+  subtitle?: string;
+  snippet?: string;
+  href: string;
+  score: number;
+  metadata?: Record<string, unknown>;
+  updatedAt: string;
+}
 
+export interface SearchResponseDTO {
+  query: string;
+  results: SearchResultItem[];
+  total: number;
+  byType: Record<SearchEntityType, number>;
+}

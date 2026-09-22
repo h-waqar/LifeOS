@@ -70,15 +70,15 @@ Requirements for initial release across the 9 planned phases. Each maps directly
 - [x] **NOTE-02**: User can link notes using bidirectional wikilinks ([[Note Title]]) and view backlinks in note inspector.
 - [x] **NOTE-03**: User can tag notes and organize knowledge by tags, note types, and life areas.
 - [ ] **NOTE-04**: User can link notes directly to Projects, Goals, Tasks, Learning Items, and People. *(Partial in Plan 03-01: Projects, Goals, and Tasks implemented; Learning Items and People deferred to Plans 03-02 and 03-04 per vertical-slice rule)*
-- [ ] **NOTE-05**: User can perform instant full-text search across all notes, tasks, projects, goals, and people using PostgreSQL full-text indexing.
+- [x] **NOTE-05**: User can perform instant full-text search across all notes, tasks, projects, goals, and people using PostgreSQL full-text indexing.
 - [ ] **NOTE-06**: User can track Learning Items (books, courses, articles) with status, ratings, key takeaways, and linked notes.
 
 ### Relationships / People CRM
-- [ ] **CRM-01**: User can create, view, edit, and archive Person records with name, relationship type (Client, Friend, Family, Colleague, Prospect, Mentor, Professional), company, role, contact information, and tags.
-- [ ] **CRM-02**: User can log Interactions with a Person (date, channel/type, summary notes, next follow-up date).
-- [ ] **CRM-03**: System automatically tracks and displays `lastInteraction` date and surfaces upcoming or overdue `nextFollowUp` reminders.
-- [ ] **CRM-04**: User can link a Person to Tasks, Projects, and Notes without data duplication.
-- [ ] **CRM-05**: User can filter, search, and group people by relationship type, company, tags, and follow-up status.
+- [x] **CRM-01**: User can create, view, edit, and archive Person records with name, relationship type (Client, Friend, Family, Colleague, Prospect, Mentor, Professional), company, role, contact information, and tags.
+- [x] **CRM-02**: User can log Interactions with a Person (date, channel/type, summary notes, next follow-up date).
+- [x] **CRM-03**: System automatically tracks and displays `lastInteraction` date and surfaces upcoming or overdue `nextFollowUp` reminders.
+- [x] **CRM-04**: User can link a Person to Tasks, Projects, and Notes without data duplication.
+- [x] **CRM-05**: User can filter, search, and group people by relationship type, company, tags, and follow-up status.
 
 ### Personal Finance
 - [ ] **FIN-01**: User can manage financial accounts (Checking, Savings, Investments, Credit Cards) and balances.
@@ -197,13 +197,13 @@ Deferred to future releases after v1 roadmap execution:
 | NOTE-02 | Phase 3 | Complete |
 | NOTE-03 | Phase 3 | Complete |
 | NOTE-04 | Phase 3 | Partial (Projects, Goals, Tasks implemented; People & Learning deferred to 03-02/03-04) |
-| NOTE-05 | Phase 3 | Pending |
+| NOTE-05 | Phase 3 | Satisfied |
 | NOTE-06 | Phase 3 | Pending |
-| CRM-01 | Phase 3 | Pending |
-| CRM-02 | Phase 3 | Pending |
-| CRM-03 | Phase 3 | Pending |
-| CRM-04 | Phase 3 | Pending |
-| CRM-05 | Phase 3 | Pending |
+| CRM-01 | Phase 3 | Satisfied |
+| CRM-02 | Phase 3 | Satisfied |
+| CRM-03 | Phase 3 | Satisfied |
+| CRM-04 | Phase 3 | Satisfied |
+| CRM-05 | Phase 3 | Satisfied |
 | FIN-01 | Phase 4 | Pending |
 | FIN-02 | Phase 4 | Pending |
 | FIN-03 | Phase 4 | Pending |

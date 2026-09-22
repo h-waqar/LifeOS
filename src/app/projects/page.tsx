@@ -150,6 +150,16 @@ function ProjectsContent() {
     }
   }, [searchParams]);
 
+  // Open project edit modal if ?id= in URL
+  React.useEffect(() => {
+    const targetProjectId = searchParams.get("id");
+    if (!targetProjectId || !projects.length) return;
+    const found = projects.find((p) => p.id === targetProjectId);
+    if (found) {
+      openEdit(found);
+    }
+  }, [searchParams, projects]);
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isCreatingRef.current) return;

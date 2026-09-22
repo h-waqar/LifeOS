@@ -19,15 +19,34 @@ import {
   CalendarCheck,
   FileText,
   Users,
+  Loader2,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { signOut } from "@/lib/auth-client";
 import { toast } from "sonner";
+import type { SearchResultItem, SearchEntityType } from "@/types";
 
 interface CommandPaletteProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onOpenQuickCapture?: () => void;
+}
+
+function getEntityIcon(type: SearchEntityType) {
+  switch (type) {
+    case "note":
+      return <FileText className="mr-2 h-4 w-4 text-blue-500 shrink-0" />;
+    case "task":
+      return <CheckSquare className="mr-2 h-4 w-4 text-emerald-500 shrink-0" />;
+    case "project":
+      return <FolderKanban className="mr-2 h-4 w-4 text-purple-500 shrink-0" />;
+    case "goal":
+      return <Target className="mr-2 h-4 w-4 text-amber-500 shrink-0" />;
+    case "person":
+      return <Users className="mr-2 h-4 w-4 text-cyan-500 shrink-0" />;
+    default:
+      return <Search className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />;
+  }
 }
 
 export function CommandPalette({
@@ -36,6 +55,11 @@ export function CommandPalette({
   onOpenQuickCapture,
 }: CommandPaletteProps = {}) {
   const [internalOpen, setInternalOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchResults, setSearchResults] = React.useState<SearchResultItem[]>([]);
+  const [isSearching, setIsSearching] = React.useState(false);
+  const [searchError, setSearchError] = React.useState<string | null>(null);
+
   const router = useRouter();
   const { resolvedTheme, toggleTheme } = useTheme();
 
@@ -44,6 +68,12 @@ export function CommandPalette({
 
   const setOpen = React.useCallback(
     (nextOpen: boolean) => {
+      if (!nextOpen) {
+        setSearchQuery("");
+        setSearchResults([]);
+        setIsSearching(false);
+        setSearchError(null);
+      }
       if (isControlled && onOpenChange) {
         onOpenChange(nextOpen);
       } else {
@@ -70,6 +100,50 @@ export function CommandPalette({
     return () => document.removeEventListener("keydown", down);
   }, [isOpen, setOpen]);
 
+  // Debounced cross-domain search fetch
+  React.useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setSearchResults([]);
+      setIsSearching(false);
+      setSearchError(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsSearching(true);
+    setSearchError(null);
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/search?q=${encodeURIComponent(trimmed)}&limit=25`
+        );
+        if (!res.ok) {
+          throw new Error("Search request failed");
+        }
+        const json = await res.json();
+        if (isMounted) {
+          setSearchResults(json.data?.results || []);
+        }
+      } catch {
+        if (isMounted) {
+          setSearchError("Failed to fetch search results");
+          setSearchResults([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsSearching(false);
+        }
+      }
+    }, 200);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [searchQuery]);
+
   const runCommand = React.useCallback(
     (command: () => void) => {
       setOpen(false);
@@ -78,7 +152,48 @@ export function CommandPalette({
     [setOpen]
   );
 
+  const groupedResults = React.useMemo(() => {
+    const groups: Record<SearchEntityType, SearchResultItem[]> = {
+      note: [],
+      task: [],
+      project: [],
+      goal: [],
+      person: [],
+    };
+    for (const item of searchResults) {
+      if (groups[item.type]) {
+        groups[item.type].push(item);
+      }
+    }
+    return groups;
+  }, [searchResults]);
+
   if (!isOpen) return null;
+
+  const renderSearchResultItem = (item: SearchResultItem) => (
+    <Command.Item
+      key={`${item.type}-${item.id}`}
+      value={`${searchQuery} ${item.title} ${item.subtitle || ""} ${item.snippet || ""} ${item.type}`}
+      onSelect={() => runCommand(() => router.push(item.href))}
+      className="relative flex cursor-pointer select-none items-center justify-between rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+      data-testid={`search-result-${item.type}-${item.id}`}
+    >
+      <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+        {getEntityIcon(item.type)}
+        <div className="flex flex-col min-w-0">
+          <span className="font-medium text-foreground truncate">{item.title}</span>
+          {(item.snippet || item.subtitle) && (
+            <span className="text-xs text-muted-foreground truncate">
+              {item.snippet || item.subtitle}
+            </span>
+          )}
+        </div>
+      </div>
+      <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+        {item.type}
+      </span>
+    </Command.Item>
+  );
 
   return (
     <div
@@ -101,9 +216,15 @@ export function CommandPalette({
           label="Command Menu"
         >
           <div className="flex items-center border-b px-3">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            {isSearching ? (
+              <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin text-primary" />
+            ) : (
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            )}
             <Command.Input
               autoFocus
+              value={searchQuery}
+              onValueChange={setSearchQuery}
               placeholder="Type a command or search..."
               className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
               data-testid="command-palette-input"
@@ -111,9 +232,77 @@ export function CommandPalette({
           </div>
           <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden p-2">
             <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
-              No results found.
+              {searchQuery.trim()
+                ? `No results found for "${searchQuery.trim()}".`
+                : "No results found."}
             </Command.Empty>
 
+            {isSearching && (
+              <div
+                className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground"
+                data-testid="command-palette-loading"
+              >
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                <span>Searching across notes, tasks, projects, goals & people...</span>
+              </div>
+            )}
+
+            {searchError && (
+              <div
+                className="px-3 py-2 text-xs text-destructive"
+                data-testid="command-palette-error"
+              >
+                {searchError}
+              </div>
+            )}
+
+            {/* Dynamic Search Results Section */}
+            {groupedResults.note.length > 0 && (
+              <Command.Group
+                heading={`Notes (${groupedResults.note.length})`}
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
+              >
+                {groupedResults.note.map(renderSearchResultItem)}
+              </Command.Group>
+            )}
+
+            {groupedResults.task.length > 0 && (
+              <Command.Group
+                heading={`Tasks (${groupedResults.task.length})`}
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
+              >
+                {groupedResults.task.map(renderSearchResultItem)}
+              </Command.Group>
+            )}
+
+            {groupedResults.project.length > 0 && (
+              <Command.Group
+                heading={`Projects (${groupedResults.project.length})`}
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
+              >
+                {groupedResults.project.map(renderSearchResultItem)}
+              </Command.Group>
+            )}
+
+            {groupedResults.goal.length > 0 && (
+              <Command.Group
+                heading={`Goals (${groupedResults.goal.length})`}
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
+              >
+                {groupedResults.goal.map(renderSearchResultItem)}
+              </Command.Group>
+            )}
+
+            {groupedResults.person.length > 0 && (
+              <Command.Group
+                heading={`People (${groupedResults.person.length})`}
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
+              >
+                {groupedResults.person.map(renderSearchResultItem)}
+              </Command.Group>
+            )}
+
+            {/* Existing Static Command Groups */}
             <Command.Group
               heading="Navigation"
               className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"

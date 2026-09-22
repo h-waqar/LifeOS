@@ -164,8 +164,11 @@ function NotesContent() {
       const json = await res.json();
       setNotes(json.data || []);
 
-      // If no note selected, select first
-      if (json.data && json.data.length > 0 && !selectedNoteId) {
+      // If ?id= in URL, select it, otherwise default to first note
+      const paramId = searchParams.get("id");
+      if (paramId) {
+        setSelectedNoteId(paramId);
+      } else if (json.data && json.data.length > 0 && !selectedNoteId) {
         setSelectedNoteId(json.data[0].id);
       }
     } catch (err) {
@@ -173,13 +176,21 @@ function NotesContent() {
     } finally {
       setLoading(false);
     }
-  }, [areaFilter, typeFilter, selectedTag, searchQuery, showArchived, selectedNoteId]);
+  }, [areaFilter, typeFilter, selectedTag, searchQuery, showArchived, selectedNoteId, searchParams]);
 
   React.useEffect(() => {
     if (session) {
       fetchNotes();
     }
   }, [session, fetchNotes]);
+
+  // Support direct URL selection changes
+  React.useEffect(() => {
+    const paramId = searchParams.get("id");
+    if (paramId) {
+      setSelectedNoteId(paramId);
+    }
+  }, [searchParams]);
 
   // Load Selected Note Details
   React.useEffect(() => {

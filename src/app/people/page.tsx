@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,8 +72,9 @@ const CHANNELS: { label: string; value: InteractionChannel; icon: React.Componen
   { label: "Other", value: "other", icon: Clock },
 ];
 
-export default function PeoplePage() {
+function PeopleContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: sessionData, isPending } = useSession();
 
   // Data state
@@ -90,6 +91,14 @@ export default function PeoplePage() {
 
   // Selected Person for details modal/drawer
   const [selectedPersonId, setSelectedPersonId] = React.useState<string | null>(null);
+
+  // Deep linking via ?id=
+  React.useEffect(() => {
+    const targetPersonId = searchParams.get("id");
+    if (targetPersonId) {
+      setSelectedPersonId(targetPersonId);
+    }
+  }, [searchParams]);
   const [selectedPersonDetail, setSelectedPersonDetail] = React.useState<PersonDetailDTO | null>(null);
   const [loadingDetail, setLoadingDetail] = React.useState(false);
 
@@ -1361,3 +1370,20 @@ export default function PeoplePage() {
     </AppShell>
   );
 }
+
+export default function PeoplePage() {
+  return (
+    <React.Suspense
+      fallback={
+        <AppShell>
+          <div className="flex h-64 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        </AppShell>
+      }
+    >
+      <PeopleContent />
+    </React.Suspense>
+  );
+}
+

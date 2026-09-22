@@ -164,6 +164,16 @@ function TasksContent() {
     }
   }, [searchParams]);
 
+  // Open task edit modal if ?id= in URL
+  React.useEffect(() => {
+    const targetTaskId = searchParams.get("id");
+    if (!targetTaskId || !tasks.length) return;
+    const found = tasks.find((t) => t.id === targetTaskId);
+    if (found) {
+      openEdit(found);
+    }
+  }, [searchParams, tasks]);
+
   const toggleTaskCompletion = async (task: TaskDTO) => {
     if (togglingTasksRef.current.has(task.id)) return;
     togglingTasksRef.current.add(task.id);

@@ -149,6 +149,16 @@ function GoalsContent() {
     }
   }, [searchParams]);
 
+  // Open goal edit modal if ?id= in URL
+  React.useEffect(() => {
+    const targetGoalId = searchParams.get("id");
+    if (!targetGoalId || !goals.length) return;
+    const found = goals.find((g) => g.id === targetGoalId);
+    if (found) {
+      openEdit(found);
+    }
+  }, [searchParams, goals]);
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isCreatingRef.current) return;
