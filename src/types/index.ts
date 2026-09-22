@@ -1115,3 +1115,32 @@ export interface ContentAnalyticsDTO {
   leaderboard: LeaderboardItemDTO[];
 }
 
+export interface SchedulePublicationInput {
+  contentItemId: string;
+  variantId?: string | null;
+  platform: ContentPlatform;
+  scheduledFor: string;
+}
+
+export interface ReschedulePublicationInput {
+  scheduledFor: string;
+}
+
+export interface MarkPublishedInput {
+  publishedAt?: string | null;
+  postUrl?: string | null;
+  externalPostId?: string | null;
+  notes?: string | null;
+}
+
+export interface LogMetricsInput {
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  saves: number;
+  clicks: number;
+  notes?: string | null;
+}
+
+

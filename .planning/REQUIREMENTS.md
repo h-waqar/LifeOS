@@ -88,11 +88,11 @@ Requirements for initial release across the 9 planned phases. Each maps directly
 - [x] **FIN-05**: System computes net worth, monthly cash flow, and savings rate with 100% verified test calculations.
 
 ### Content & Social Media Management
-- [ ] **CONT-01**: User can capture content ideas with tags, target audience, and prospective distribution channels.
-- [ ] **CONT-02**: User can author content drafts with platform-specific variants (Twitter/X thread, LinkedIn post, Blog article).
-- [ ] **CONT-03**: User can schedule content on a visual Content Calendar.
-- [ ] **CONT-04**: Content can transition through workflow statuses: Idea → Draft → In Review → Scheduled → Published → Archived.
-- [ ] **CONT-05**: User can manually log or ingest performance metrics (impressions, likes, shares) for published content pieces.
+- [x] **CONT-01**: User can capture content ideas with tags, target audience, and prospective distribution channels.
+- [x] **CONT-02**: User can author content drafts with platform-specific variants (Twitter/X thread, LinkedIn post, Blog article).
+- [x] **CONT-03**: User can schedule content on a visual Content Calendar.
+- [x] **CONT-04**: Content can transition through workflow statuses: Idea → Draft → In Review → Scheduled → Published → Archived.
+- [x] **CONT-05**: User can manually log or ingest performance metrics (impressions, likes, shares) for published content pieces.
 
 ### AI Layer & Assistant
 - [ ] **AI-01**: Multi-provider AI abstraction layer supports Gemini, Claude, OpenAI, and local Ollama models with seamless switching.
@@ -209,11 +209,11 @@ Deferred to future releases after v1 roadmap execution:
 | FIN-03 | Phase 4 | Satisfied |
 | FIN-04 | Phase 4 | Satisfied |
 | FIN-05 | Phase 4 | Satisfied |
-| CONT-01 | Phase 5 | Pending |
-| CONT-02 | Phase 5 | Pending |
-| CONT-03 | Phase 5 | Pending |
-| CONT-04 | Phase 5 | Pending |
-| CONT-05 | Phase 5 | Pending |
+| CONT-01 | Phase 5 | Satisfied |
+| CONT-02 | Phase 5 | Satisfied |
+| CONT-03 | Phase 5 | Satisfied |
+| CONT-04 | Phase 5 | Satisfied |
+| CONT-05 | Phase 5 | Satisfied |
 | AI-01 | Phase 6 | Pending |
 | AI-02 | Phase 6 | Pending |
 | AI-03 | Phase 6 | Pending |

@@ -141,6 +141,13 @@
       "when": 1790300000000,
       "tag": "0019_content_items_and_variants",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790400000000,
+      "tag": "0020_content_publications_and_metrics",
+      "breakpoints": true
     }
   ]
 }

@@ -22,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { ContentCard } from "@/components/content/content-card";
 import { IdeaCaptureModal } from "@/components/content/idea-capture-modal";
 import { MultiPlatformEditor } from "@/components/content/multi-platform-editor";
+import { ContentCalendarView } from "@/components/content/content-calendar-view";
+import { ContentAnalyticsView } from "@/components/content/content-analytics-view";
 import { Modal } from "@/components/ui/modal";
 import { toast } from "sonner";
 import type {
@@ -38,6 +40,7 @@ export default function ContentPage() {
   const [items, setItems] = React.useState<ContentItemDTO[]>([]);
   const [totalCount, setTotalCount] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [activeTab, setActiveTab] = React.useState<"library" | "calendar" | "analytics">("library");
 
   // Filters
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -173,123 +176,191 @@ export default function ContentPage() {
         </Button>
       </div>
 
-      {/* Filter and View Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-card rounded-xl border border-border">
-        {/* Search input */}
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search content by title, topic, or hook..."
-            className="pl-9 h-9 text-xs"
-            data-testid="content-search-input"
-          />
-        </div>
+      {/* Top View Mode Switcher */}
+      <div className="flex border-b border-border gap-2" data-testid="content-tabs-nav">
+        <button
+          type="button"
+          onClick={() => setActiveTab("library")}
+          className={`flex items-center gap-2 pb-3 px-3 text-sm font-semibold border-b-2 transition-all ${
+            activeTab === "library"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+          data-testid="tab-content-library"
+        >
+          <LayoutGrid className="h-4 w-4" />
+          <span>Content Library</span>
+        </button>
 
-        {/* Status Pills */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
-          {[
-            { id: "all", label: "All" },
-            { id: "idea", label: "Ideas" },
-            { id: "draft", label: "Drafts" },
-            { id: "in_review", label: "In Review" },
-            { id: "scheduled", label: "Scheduled" },
-            { id: "published", label: "Published" },
-          ].map((pill) => (
-            <button
-              key={pill.id}
-              onClick={() => setStatusFilter(pill.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-                statusFilter === pill.id
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-              data-testid={`filter-status-${pill.id}`}
-            >
-              {pill.label}
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={() => setActiveTab("calendar")}
+          className={`flex items-center gap-2 pb-3 px-3 text-sm font-semibold border-b-2 transition-all ${
+            activeTab === "calendar"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+          data-testid="tab-editorial-calendar"
+        >
+          <CalendarIcon className="h-4 w-4" />
+          <span>Editorial Calendar</span>
+        </button>
 
-        {/* Platform Dropdown */}
-        <div className="shrink-0">
-          <select
-            value={platformFilter}
-            onChange={(e) => setPlatformFilter(e.target.value)}
-            className="h-9 rounded-md border border-input bg-transparent px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            data-testid="platform-filter-select"
-          >
-            <option value="all">All Channels</option>
-            <option value="twitter">Twitter / X</option>
-            <option value="linkedin">LinkedIn</option>
-            <option value="blog">Blog</option>
-            <option value="newsletter">Newsletter</option>
-            <option value="youtube">YouTube</option>
-            <option value="instagram">Instagram</option>
-          </select>
-        </div>
+        <button
+          type="button"
+          onClick={() => setActiveTab("analytics")}
+          className={`flex items-center gap-2 pb-3 px-3 text-sm font-semibold border-b-2 transition-all ${
+            activeTab === "analytics"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+          data-testid="tab-performance-analytics"
+        >
+          <BarChart3 className="h-4 w-4" />
+          <span>Performance Analytics</span>
+        </button>
       </div>
 
-      {/* Main Content Grid */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="text-sm">Loading your content library...</span>
-        </div>
-      ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border border-dashed border-border bg-card/40">
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-3">
-            <Sparkles className="h-6 w-6" />
-          </div>
-          <h3 className="text-base font-semibold text-foreground">
-            {searchQuery || statusFilter !== "all" || platformFilter !== "all"
-              ? "No matching content items"
-              : "No content ideas yet"}
-          </h3>
-          <p className="text-xs text-muted-foreground max-w-sm mt-1 mb-4">
-            {searchQuery || statusFilter !== "all" || platformFilter !== "all"
-              ? "Try adjusting your search query or filter criteria."
-              : "Capture your first content idea, choose distribution channels, and start authoring multi-platform drafts."}
-          </p>
-          <Button
-            size="sm"
-            onClick={() => setIsIdeaModalOpen(true)}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Capture Content Idea</span>
-          </Button>
-        </div>
+      {/* View Content */}
+      {activeTab === "calendar" ? (
+        <ContentCalendarView
+          onOpenEditor={async (clickedItem) => {
+            try {
+              const res = await fetch(`/api/content/${clickedItem.id}`);
+              if (res.ok) {
+                const json = await res.json();
+                setSelectedItem(json.data);
+              } else {
+                setSelectedItem(clickedItem);
+              }
+            } catch {
+              setSelectedItem(clickedItem);
+            }
+          }}
+        />
+      ) : activeTab === "analytics" ? (
+        <ContentAnalyticsView />
       ) : (
-        <div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-          data-testid="content-items-grid"
-        >
-          {items.map((item) => (
-            <ContentCard
-              key={item.id}
-              item={item}
-              onOpenEditor={async (clickedItem) => {
-                // Fetch full item with all variants
-                try {
-                  const res = await fetch(`/api/content/${clickedItem.id}`);
-                  if (res.ok) {
-                    const json = await res.json();
-                    setSelectedItem(json.data);
-                  } else {
-                    setSelectedItem(clickedItem);
-                  }
-                } catch {
-                  setSelectedItem(clickedItem);
-                }
-              }}
-              onStatusChange={handleStatusChange}
-              onArchive={handleArchive}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <>
+          {/* Filter and View Bar */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-card rounded-xl border border-border">
+            {/* Search input */}
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search content by title, topic, or hook..."
+                className="pl-9 h-9 text-xs"
+                data-testid="content-search-input"
+              />
+            </div>
+
+            {/* Status Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
+              {[
+                { id: "all", label: "All" },
+                { id: "idea", label: "Ideas" },
+                { id: "draft", label: "Drafts" },
+                { id: "in_review", label: "In Review" },
+                { id: "scheduled", label: "Scheduled" },
+                { id: "published", label: "Published" },
+              ].map((pill) => (
+                <button
+                  key={pill.id}
+                  onClick={() => setStatusFilter(pill.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                    statusFilter === pill.id
+                      ? "bg-primary text-primary-foreground font-semibold"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                  data-testid={`filter-status-${pill.id}`}
+                >
+                  {pill.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Platform Dropdown */}
+            <div className="shrink-0">
+              <select
+                value={platformFilter}
+                onChange={(e) => setPlatformFilter(e.target.value)}
+                className="h-9 rounded-md border border-input bg-transparent px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                data-testid="platform-filter-select"
+              >
+                <option value="all">All Channels</option>
+                <option value="twitter">Twitter / X</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="blog">Blog</option>
+                <option value="newsletter">Newsletter</option>
+                <option value="youtube">YouTube</option>
+                <option value="instagram">Instagram</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Main Content Grid */}
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="text-sm">Loading your content library...</span>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border border-dashed border-border bg-card/40">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-3">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground">
+                {searchQuery || statusFilter !== "all" || platformFilter !== "all"
+                  ? "No matching content items"
+                  : "No content ideas yet"}
+              </h3>
+              <p className="text-xs text-muted-foreground max-w-sm mt-1 mb-4">
+                {searchQuery || statusFilter !== "all" || platformFilter !== "all"
+                  ? "Try adjusting your search query or filter criteria."
+                  : "Capture your first content idea, choose distribution channels, and start authoring multi-platform drafts."}
+              </p>
+              <Button
+                size="sm"
+                onClick={() => setIsIdeaModalOpen(true)}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Capture Content Idea</span>
+              </Button>
+            </div>
+          ) : (
+            <div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+              data-testid="content-items-grid"
+            >
+              {items.map((item) => (
+                <ContentCard
+                  key={item.id}
+                  item={item}
+                  onOpenEditor={async (clickedItem) => {
+                    // Fetch full item with all variants
+                    try {
+                      const res = await fetch(`/api/content/${clickedItem.id}`);
+                      if (res.ok) {
+                        const json = await res.json();
+                        setSelectedItem(json.data);
+                      } else {
+                        setSelectedItem(clickedItem);
+                      }
+                    } catch {
+                      setSelectedItem(clickedItem);
+                    }
+                  }}
+                  onStatusChange={handleStatusChange}
+                  onArchive={handleArchive}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Idea Capture Modal */}

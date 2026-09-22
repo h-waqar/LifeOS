@@ -108,7 +108,7 @@ export const scheduleContentSchema = z.object({
 
 export const markPublishedSchema = z.object({
   publishedAt: z.string().datetime().optional(),
-  postUrl: z.string().url("Invalid post URL").optional().nullable().or(z.literal("")),
+  postUrl: z.union([z.string().url("Invalid post URL"), z.literal("")]).optional().nullable(),
   externalPostId: z.string().trim().optional().nullable(),
   notes: z.string().trim().optional().nullable(),
 });
@@ -124,11 +124,38 @@ export const logMetricsSchema = z.object({
   recordedAt: z.string().datetime().optional(),
 });
 
-export const calendarQuerySchema = z.object({
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be YYYY-MM-DD"),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date must be YYYY-MM-DD"),
-  platform: contentPlatformSchema.optional(),
+export const reschedulePublicationSchema = z.object({
+  scheduledFor: z.string().datetime({ message: "Invalid scheduled datetime" }),
 });
+
+export const calendarQuerySchema = z
+  .object({
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be YYYY-MM-DD"),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date must be YYYY-MM-DD"),
+    platform: contentPlatformSchema.optional(),
+  })
+  .refine((data) => data.startDate <= data.endDate, {
+    message: "Start date must be on or before end date",
+    path: ["endDate"],
+  });
+
+export const analyticsQuerySchema = z
+  .object({
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be YYYY-MM-DD").optional(),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date must be YYYY-MM-DD").optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.startDate && data.endDate) {
+        return data.startDate <= data.endDate;
+      }
+      return true;
+    },
+    {
+      message: "Start date must be on or before end date",
+      path: ["endDate"],
+    }
+  );
 
 export type CreateContentItemSchemaInput = z.infer<typeof createContentItemSchema>;
 export type UpdateContentItemSchemaInput = z.infer<typeof updateContentItemSchema>;
@@ -136,6 +163,9 @@ export type ContentStatusTransitionSchemaInput = z.infer<typeof contentStatusTra
 export type UpsertContentVariantSchemaInput = z.infer<typeof upsertContentVariantSchema>;
 export type ContentFilterSchemaInput = z.infer<typeof contentFilterSchema>;
 export type ScheduleContentSchemaInput = z.infer<typeof scheduleContentSchema>;
+export type ReschedulePublicationSchemaInput = z.infer<typeof reschedulePublicationSchema>;
 export type MarkPublishedSchemaInput = z.infer<typeof markPublishedSchema>;
 export type LogMetricsSchemaInput = z.infer<typeof logMetricsSchema>;
 export type CalendarQuerySchemaInput = z.infer<typeof calendarQuerySchema>;
+export type AnalyticsQuerySchemaInput = z.infer<typeof analyticsQuerySchema>;
+

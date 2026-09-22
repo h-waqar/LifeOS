@@ -92,10 +92,18 @@ import {
   contentItem,
   contentVariants,
   contentVariant,
+  contentPublications,
+  contentPublication,
+  contentMetrics,
+  contentMetric,
   type ContentItem,
   type NewContentItem,
   type ContentVariant,
   type NewContentVariant,
+  type ContentPublication,
+  type NewContentPublication,
+  type ContentMetric,
+  type NewContentMetric,
 } from "./content";
 
 const note = notes;
@@ -158,6 +166,10 @@ export {
   contentItem,
   contentVariants,
   contentVariant,
+  contentPublications,
+  contentPublication,
+  contentMetrics,
+  contentMetric,
 };
 
 // Drizzle Relations Declarations
@@ -186,6 +198,8 @@ export const userRelations = relations(user, ({ many }) => ({
   financeBudgets: many(financeBudgets),
   contentItems: many(contentItems),
   contentVariants: many(contentVariants),
+  contentPublications: many(contentPublications),
+  contentMetrics: many(contentMetrics),
   auditLogs: many(auditLog),
 }));
 
@@ -571,15 +585,52 @@ export const contentItemsRelations = relations(contentItems, ({ one, many }) => 
     references: [notes.id],
   }),
   variants: many(contentVariants),
+  publications: many(contentPublications),
+  metrics: many(contentMetrics),
 }));
 
-export const contentVariantsRelations = relations(contentVariants, ({ one }) => ({
+export const contentVariantsRelations = relations(contentVariants, ({ one, many }) => ({
   user: one(user, {
     fields: [contentVariants.userId],
     references: [user.id],
   }),
   contentItem: one(contentItems, {
     fields: [contentVariants.contentItemId],
+    references: [contentItems.id],
+  }),
+  publications: many(contentPublications),
+}));
+
+export const contentPublicationsRelations = relations(
+  contentPublications,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [contentPublications.userId],
+      references: [user.id],
+    }),
+    contentItem: one(contentItems, {
+      fields: [contentPublications.contentItemId],
+      references: [contentItems.id],
+    }),
+    variant: one(contentVariants, {
+      fields: [contentPublications.variantId],
+      references: [contentVariants.id],
+    }),
+    metrics: many(contentMetrics),
+  })
+);
+
+export const contentMetricsRelations = relations(contentMetrics, ({ one }) => ({
+  user: one(user, {
+    fields: [contentMetrics.userId],
+    references: [user.id],
+  }),
+  publication: one(contentPublications, {
+    fields: [contentMetrics.publicationId],
+    references: [contentPublications.id],
+  }),
+  contentItem: one(contentItems, {
+    fields: [contentMetrics.contentItemId],
     references: [contentItems.id],
   }),
 }));
@@ -647,6 +698,10 @@ export type {
   NewContentItem,
   ContentVariant,
   NewContentVariant,
+  ContentPublication,
+  NewContentPublication,
+  ContentMetric,
+  NewContentMetric,
 };
 
 /**
@@ -707,17 +762,25 @@ export const PHASE_4_TABLE_NAMES = [
 ] as const;
 
 /**
- * Approved Phase 5 table names (Plan 05-01).
+ * Approved Phase 5 table names (Plan 05-01 & Plan 05-02).
  */
 export const PHASE_5_PLAN_1_TABLE_NAMES = [
   "content_items",
   "content_variants",
 ] as const;
 
+export const PHASE_5_PLAN_2_TABLE_NAMES = [
+  "content_publications",
+  "content_metrics",
+] as const;
+
 export const PHASE_5_TABLE_NAMES = [
   "content_items",
   "content_variants",
+  "content_publications",
+  "content_metrics",
 ] as const;
+
 
 
 

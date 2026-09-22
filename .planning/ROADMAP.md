@@ -117,8 +117,8 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 05-01: Content idea capture, multi-platform draft editor, and workflow status transitions
-- [ ] 05-02: Visual content calendar and manual performance metrics tracking
+- [x] 05-01: Content idea capture, multi-platform draft editor, and workflow status transitions
+- [x] 05-02: Visual content calendar and manual performance metrics tracking
 
 ### Phase 6: AI Layer & Assistant
 **Goal**: Integrate a contextual AI assistant with multi-provider support, personal graph RAG, structured tool calling, and human-in-the-loop confirmation.
