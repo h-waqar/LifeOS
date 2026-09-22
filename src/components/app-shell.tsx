@@ -23,6 +23,7 @@ import {
   FileText,
   Users,
   GraduationCap,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -143,6 +144,11 @@ export function AppShell({ children }: AppShellProps) {
       name: "People",
       href: "/people",
       icon: Users,
+    },
+    {
+      name: "Finance",
+      href: "/finance",
+      icon: Wallet,
     },
   ];
 

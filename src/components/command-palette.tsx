@@ -20,6 +20,8 @@ import {
   FileText,
   Users,
   GraduationCap,
+  Wallet,
+  Receipt,
   Loader2,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
@@ -400,12 +402,36 @@ export function CommandPalette({
                 <Users className="mr-2 h-4 w-4" />
                 <span>Go to People</span>
               </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/finance"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-finance"
+              >
+                <Wallet className="mr-2 h-4 w-4" />
+                <span>Go to Finance</span>
+              </Command.Item>
             </Command.Group>
 
             <Command.Group
               heading="Quick Actions"
               className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
             >
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/finance?action=record"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-record-transaction"
+              >
+                <Receipt className="mr-2 h-4 w-4 text-emerald-500" />
+                <span>Record Transaction</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/finance?action=add-account"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-add-account"
+              >
+                <Wallet className="mr-2 h-4 w-4 text-blue-500" />
+                <span>Add Account</span>
+              </Command.Item>
               <Command.Item
                 onSelect={() => runCommand(() => router.push("/daily-plan?mode=morning"))}
                 className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
