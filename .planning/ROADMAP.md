@@ -101,8 +101,8 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 04-01: Financial accounts, categories, and transaction ledger with transfer handling
-- [ ] 04-02: Monthly budgets, net worth computation, and financial goal progress reports
+- [x] 04-01: Financial accounts, categories, and transaction ledger with transfer handling
+- [x] 04-02: Monthly budgets, net worth computation, and financial goal progress reports
 
 ### Phase 5: Content & Social Media
 **Goal**: Enable content creation, multi-platform drafts, and editorial scheduling prior to external publishing integrations.
@@ -212,8 +212,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 11/11 | Conditionally Accepted | 2026-09-14 |
 | 2. Core Productivity | 6/6 | Completed | 2026-09-17 |
-| 3. Knowledge, Learning & Relationships | 3/4 | In Progress | - |
-| 4. Personal Finance | 0/2 | Not started | - |
+| 3. Knowledge, Learning & Relationships | 4/4 | Completed | 2026-09-22 |
+| 4. Personal Finance | 2/2 | Completed | 2026-09-22 |
 | 5. Content & Social Media | 0/2 | Not started | - |
 | 6. AI Layer & Assistant | 0/3 | Not started | - |
 | 7. Automations & Event Engine | 0/2 | Not started | - |

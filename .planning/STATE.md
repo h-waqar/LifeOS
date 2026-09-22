@@ -1,44 +1,45 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 3
-current_phase_name: Knowledge, Learning & Relationships
+current_phase: 4
+current_phase_name: Personal Finance
 status: complete
-stopped_at: Completed Phase 3 Plan 03-04 (Learning System & Note Entity Linkage)
-last_updated: "2026-09-22T11:47:00.000Z"
+stopped_at: Completed Phase 4 Personal Finance with Zero-Trust Audit Remediation (04-REMEDIATION-PLAN.md)
+last_updated: "2026-09-22T14:30:00.000Z"
 last_activity: 2026-09-22
-last_activity_desc: Plan 03-04 completed. Track books, courses, articles, podcasts, skills; dynamic progress calculation and auto-completion; note linkage via composite foreign key notes.learning_id (ON DELETE SET NULL); search and command palette integration; 1,100/1,100 tests passing; 0 TypeScript errors
+last_activity_desc: Phase 4 Personal Finance complete and verified. 10/10 zero-trust audit defects resolved (P0 signed credit card debt, P0 concurrency locking, P1 canonical balance DTO, P1 finance goal boundary, P1 clean atomic git state, P2 category type match, P2 archived account immutability, P2 production test logic, P3 ON DELETE RESTRICT, P3 DTO schema cleanup). 1,194/1,194 tests passing (688 unit + 506 integration); 0 TypeScript errors; production build verified.
 state_head: HEAD
 progress:
   total_phases: 9
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 34
-  completed_plans: 21
-  percent: 62
+  completed_plans: 23
+  percent: 68
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-10)
+See: .planning/PROJECT.md (updated 2026-09-22)
 
 **Core value:** A single source of truth connecting goals, projects, tasks, time, knowledge, money, learning, relationships, and content—powered by an AI layer that understands context and helps plan and execute without fragmented tools, duplicate entry, or siloed data.
-**Current focus:** Phase 3: Knowledge, Learning & Relationships COMPLETE (4/4 Plans Complete) | Next: Phase 4 Personal Finance
+**Current focus:** Phase 4: Personal Finance COMPLETE & VERIFIED (2/2 Plans + Remediation Complete) | Next: Phase 5 Content & Social Media
 
 ## Current Position
 
-Phase: 3 of 9 (Knowledge, Learning & Relationships)
-Plan: 4 of 4 in Phase 3 completed (Plan 03-04 COMPLETE)
-Status: PHASE 1 CONDITIONALLY ACCEPTED | PHASE 2 COMPLETE & VERIFIED | PHASE 3 COMPLETE & VERIFIED (4/4 Plans Complete)
-Last activity: 2026-09-22 — Plan 03-04 Learning System & Note Entity Linkage (1,100/1,100 tests passing; 0 TypeScript errors)
+Phase: 4 of 9 (Personal Finance) COMPLETE
+Plan: 2 of 2 in Phase 4 completed + 04-REMEDIATION complete
+Status: PHASE 1 CONDITIONALLY ACCEPTED | PHASES 2, 3, 4 COMPLETE & VERIFIED
+Last activity: 2026-09-22 — Phase 4 Personal Finance Remediation (1,194/1,194 tests passing; 0 TypeScript errors; build verified)
+Next actionable work: Phase 5 — Content & Social Media (05-01-PLAN.md, 05-02-PLAN.md)
 
-Progress: [██████░░░░] 62% (Phase 1: 11/11 | Phase 2: 6/6 | Phase 3: 4/4)
+Progress: [███████░░░] 68% (Phase 1: 11/11 | Phase 2: 6/6 | Phase 3: 4/4 | Phase 4: 2/2)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 21
+- Total plans completed: 23
 - Average duration: - min
 - Total execution time: 0.0 hours
 
@@ -49,7 +50,7 @@ Progress: [██████░░░░] 62% (Phase 1: 11/11 | Phase 2: 6/6 | 
 | 1. Foundation | 11/11 (Conditionally Accepted) | - | - |
 | 2. Core Productivity | 6/6 (Complete & Verified) | - | - |
 | 3. Knowledge, Learning & Relationships | 4/4 (Complete & Verified) | - | - |
-| 4. Personal Finance | 0/2 | - | - |
+| 4. Personal Finance | 2/2 (Complete & Verified) | - | - |
 | 5. Content & Social Media | 0/2 | - | - |
 | 6. AI Layer & Assistant | 0/3 | - | - |
 | 7. Automations & Event Engine | 0/2 | - | - |
@@ -58,7 +59,7 @@ Progress: [██████░░░░] 62% (Phase 1: 11/11 | Phase 2: 6/6 | 
 
 **Recent Trend:**
 
-- Last 5 plans: 02-04, 02-05, 02-06, 03-01, 03-02
+- Last 5 plans: 02-06, 03-01, 03-02, 03-03, 03-04
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -85,14 +86,18 @@ Recent decisions affecting current work:
 - [Plan 03-03 Decision]: Command Palette Direct Deep-Linking: Entity selections from the Command Palette navigate to /<entity>?id=<id>, automatically selecting or opening modals across notes, tasks, projects, goals, and people.
 - [Plan 03-04 Decision]: Dynamic Learning Progress & Auto-Completion: Progress is computed automatically from currentUnits / totalUnits when totalUnits > 0; reaching 100% progress auto-transitions status to "completed" and records completedAt timestamp.
 - [Plan 03-04 Decision]: Note-to-Learning Composite Invariant: notes.learning_id references learning_items(user_id, id) with ON DELETE SET NULL ("learning_id"), ensuring notes are preserved as atomic knowledge assets when learning items are deleted.
+- [Phase 4 Decision]: Signed Liability Convention: Credit card balances represent debt liabilities. Positive balance is liability, negative balance is surplus asset. Charging a credit card increases liability debt, payments reduce debt while leaving net worth constant.
+- [Phase 4 Decision]: Concurrency Mutex Protocol: In transaction mutation and deletion routines, rows are locked via SELECT ... FOR UPDATE on the transaction and deterministic sorted ORDER BY id ASC FOR UPDATE on all affected accounts, preventing race-condition double-reversals and deadlocks.
+- [Phase 4 Decision]: Domain Invariant Boundaries: Financial transactions can only be linked to goals where goal.area === "finance". Categories must match transaction type. Archived accounts are immutable for ledger mutations.
+- [Phase 4 Decision]: Database Referential Restrict: Account-to-transaction foreign keys use ON DELETE RESTRICT (migration 0018) to preserve immutable financial audit trails.
 
 ### Pending Todos
 
-None for Phase 3. Phase 3 complete (4/4 Plans Complete). Ready to begin Phase 4 Personal Finance.
+None for Phase 4. Phase 4 complete and verified (2/2 Plans + Remediation Plan Complete). Ready to begin Phase 5 Content & Social Media.
 
 ### Blockers/Concerns
 
-None. Zero release-blocking defects.
+None. Zero release-blocking defects. All 10 zero-trust audit defects resolved.
 
 ### Quick Tasks Completed
 
@@ -119,7 +124,8 @@ Items acknowledged and deferred at milestone close, most recent first (see [Defe
 
 ## Session Continuity
  
-Last session: 2026-09-22T08:55:00.000Z
-Stopped at: Completed Phase 3 Plan 03-03 (PostgreSQL Full-Text Search Across All Entities & Command Palette Integration)
-Resume file: .planning/phases/03-knowledge-learning-relationships/03-04-PLAN.md
+Last session: 2026-09-22T19:30:00.000Z
+Stopped at: Completed Phase 4 Personal Finance with Zero-Trust Audit Remediation (04-REMEDIATION-PLAN.md)
+Next actionable work: Phase 5 — Content & Social Media planning (05-01-PLAN.md, 05-02-PLAN.md)
+Resume file: .planning/phases/05-content-social-media/05-01-PLAN.md
 
