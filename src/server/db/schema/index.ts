@@ -87,6 +87,16 @@ import {
   type FinanceBudget,
   type NewFinanceBudget,
 } from "./finance";
+import {
+  contentItems,
+  contentItem,
+  contentVariants,
+  contentVariant,
+  type ContentItem,
+  type NewContentItem,
+  type ContentVariant,
+  type NewContentVariant,
+} from "./content";
 
 const note = notes;
 const noteLink = noteLinks;
@@ -144,6 +154,10 @@ export {
   financeTransaction,
   financeBudgets,
   financeBudget,
+  contentItems,
+  contentItem,
+  contentVariants,
+  contentVariant,
 };
 
 // Drizzle Relations Declarations
@@ -170,6 +184,8 @@ export const userRelations = relations(user, ({ many }) => ({
   financeCategories: many(financeCategories),
   financeTransactions: many(financeTransactions),
   financeBudgets: many(financeBudgets),
+  contentItems: many(contentItems),
+  contentVariants: many(contentVariants),
   auditLogs: many(auditLog),
 }));
 
@@ -220,6 +236,7 @@ export const goalsRelations = relations(goals, ({ one, many }) => ({
   timeBlocks: many(timeBlocks),
   learningItems: many(learningItems),
   financeTransactions: many(financeTransactions),
+  contentItems: many(contentItems),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -235,6 +252,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   milestones: many(projectMilestones),
   timeBlocks: many(timeBlocks),
   learningItems: many(learningItems),
+  contentItems: many(contentItems),
 }));
 
 export const projectMilestonesRelations = relations(
@@ -408,6 +426,7 @@ export const notesRelations = relations(notes, ({ one, many }) => ({
   }),
   outgoingLinks: many(noteLinks, { relationName: "sourceNote" }),
   incomingLinks: many(noteLinks, { relationName: "targetNote" }),
+  contentItems: many(contentItems),
 }));
 
 export const learningItemsRelations = relations(learningItems, ({ one, many }) => ({
@@ -534,6 +553,37 @@ export const financeTransactionsRelations = relations(
   })
 );
 
+export const contentItemsRelations = relations(contentItems, ({ one, many }) => ({
+  user: one(user, {
+    fields: [contentItems.userId],
+    references: [user.id],
+  }),
+  project: one(projects, {
+    fields: [contentItems.projectId],
+    references: [projects.id],
+  }),
+  goal: one(goals, {
+    fields: [contentItems.goalId],
+    references: [goals.id],
+  }),
+  note: one(notes, {
+    fields: [contentItems.noteId],
+    references: [notes.id],
+  }),
+  variants: many(contentVariants),
+}));
+
+export const contentVariantsRelations = relations(contentVariants, ({ one }) => ({
+  user: one(user, {
+    fields: [contentVariants.userId],
+    references: [user.id],
+  }),
+  contentItem: one(contentItems, {
+    fields: [contentVariants.contentItemId],
+    references: [contentItems.id],
+  }),
+}));
+
 // Inferred TypeScript Model Types
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
@@ -592,6 +642,12 @@ export type {
   FinanceBudget,
   NewFinanceBudget,
 };
+export type {
+  ContentItem,
+  NewContentItem,
+  ContentVariant,
+  NewContentVariant,
+};
 
 /**
  * Explicit list of foundational table names.
@@ -648,6 +704,19 @@ export const PHASE_4_TABLE_NAMES = [
   "finance_categories",
   "finance_transactions",
   "finance_budgets",
+] as const;
+
+/**
+ * Approved Phase 5 table names (Plan 05-01).
+ */
+export const PHASE_5_PLAN_1_TABLE_NAMES = [
+  "content_items",
+  "content_variants",
+] as const;
+
+export const PHASE_5_TABLE_NAMES = [
+  "content_items",
+  "content_variants",
 ] as const;
 
 

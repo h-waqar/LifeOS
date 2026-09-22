@@ -735,7 +735,8 @@ export type SearchEntityType =
   | "project"
   | "goal"
   | "person"
-  | "learning";
+  | "learning"
+  | "content";
 
 export interface SearchResultItem {
   id: string;
@@ -753,7 +754,7 @@ export interface SearchResponseDTO {
   query: string;
   results: SearchResultItem[];
   total: number;
-  byType: Record<SearchEntityType, number>;
+  byType: Partial<Record<SearchEntityType, number>>;
 }
 
 // ---------------------------------------------------------------------------
@@ -902,5 +903,215 @@ export interface FinancialGoalSummary {
     description?: string | null;
     payee?: string | null;
   }>;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5: Content & Social Media Types
+// ---------------------------------------------------------------------------
+
+export const CONTENT_TYPES = [
+  "post",
+  "thread",
+  "article",
+  "short_video",
+  "carousel",
+  "newsletter",
+  "other",
+] as const;
+export type ContentType = (typeof CONTENT_TYPES)[number];
+
+export const CONTENT_STATUSES = [
+  "idea",
+  "draft",
+  "in_review",
+  "scheduled",
+  "published",
+  "archived",
+] as const;
+export type ContentStatus = (typeof CONTENT_STATUSES)[number];
+
+export const CONTENT_PLATFORMS = [
+  "twitter",
+  "linkedin",
+  "blog",
+  "instagram",
+  "youtube",
+  "newsletter",
+  "other",
+] as const;
+export type ContentPlatform = (typeof CONTENT_PLATFORMS)[number];
+
+export const VARIANT_STATUSES = ["draft", "ready", "published"] as const;
+export type VariantStatus = (typeof VARIANT_STATUSES)[number];
+
+export const PUBLICATION_STATUSES = [
+  "scheduled",
+  "published",
+  "failed",
+  "cancelled",
+] as const;
+export type PublicationStatus = (typeof PUBLICATION_STATUSES)[number];
+
+export interface VariantCustomSettings {
+  slug?: string;
+  canonicalUrl?: string;
+  metaDescription?: string;
+  hashtags?: string[];
+  threadNumbering?: boolean;
+}
+
+export interface ContentVariantDTO {
+  id: string;
+  userId: string;
+  contentItemId: string;
+  platform: ContentPlatform;
+  title: string | null;
+  body: string;
+  threadItems: string[];
+  charCount: number;
+  status: VariantStatus;
+  customSettings: VariantCustomSettings;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContentItemDTO {
+  id: string;
+  userId: string;
+  title: string;
+  contentType: ContentType;
+  status: ContentStatus;
+  topic: string | null;
+  targetAudience: string | null;
+  primaryPlatform: ContentPlatform | null;
+  targetChannels: ContentPlatform[];
+  tags: string[];
+  summary: string | null;
+  mediaUrls: string[];
+  scheduledAt: string | null;
+  publishedAt: string | null;
+  projectId: string | null;
+  goalId: string | null;
+  noteId: string | null;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+  variantsCount?: number;
+  variants?: ContentVariantDTO[];
+  projectName?: string | null;
+  goalTitle?: string | null;
+  noteTitle?: string | null;
+}
+
+export interface CreateContentItemInput {
+  title: string;
+  contentType?: ContentType;
+  status?: ContentStatus;
+  topic?: string | null;
+  targetAudience?: string | null;
+  primaryPlatform?: ContentPlatform | null;
+  targetChannels?: ContentPlatform[];
+  tags?: string[];
+  summary?: string | null;
+  mediaUrls?: string[];
+  scheduledAt?: string | null;
+  projectId?: string | null;
+  goalId?: string | null;
+  noteId?: string | null;
+}
+
+export interface UpdateContentItemInput {
+  title?: string;
+  contentType?: ContentType;
+  status?: ContentStatus;
+  topic?: string | null;
+  targetAudience?: string | null;
+  primaryPlatform?: ContentPlatform | null;
+  targetChannels?: ContentPlatform[];
+  tags?: string[];
+  summary?: string | null;
+  mediaUrls?: string[];
+  scheduledAt?: string | null;
+  publishedAt?: string | null;
+  projectId?: string | null;
+  goalId?: string | null;
+  noteId?: string | null;
+  isArchived?: boolean;
+}
+
+export interface UpsertContentVariantInput {
+  platform: ContentPlatform;
+  title?: string | null;
+  body: string;
+  threadItems?: string[];
+  status?: VariantStatus;
+  customSettings?: VariantCustomSettings;
+}
+
+export interface ContentPublicationDTO {
+  id: string;
+  userId: string;
+  contentItemId: string;
+  variantId: string | null;
+  platform: ContentPlatform;
+  status: PublicationStatus;
+  scheduledFor: string;
+  publishedAt: string | null;
+  postUrl: string | null;
+  externalPostId: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  contentTitle?: string;
+  contentType?: ContentType;
+}
+
+export interface ContentMetricDTO {
+  id: string;
+  userId: string;
+  publicationId: string;
+  contentItemId: string;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  saves: number;
+  clicks: number;
+  engagementRate: number;
+  notes: string | null;
+  recordedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChannelMetricsSummary {
+  platform: ContentPlatform;
+  totalPosts: number;
+  totalViews: number;
+  totalEngagements: number;
+  averageEngagementRate: number;
+}
+
+export interface LeaderboardItemDTO {
+  contentItemId: string;
+  publicationId: string;
+  title: string;
+  platform: ContentPlatform;
+  publishedAt: string | null;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  totalEngagements: number;
+  engagementRate: number;
+}
+
+export interface ContentAnalyticsDTO {
+  totalViews: number;
+  totalEngagements: number;
+  averageEngagementRate: number;
+  publishedCount: number;
+  channelBreakdown: ChannelMetricsSummary[];
+  leaderboard: LeaderboardItemDTO[];
 }
 

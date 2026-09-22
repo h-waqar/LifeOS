@@ -24,6 +24,7 @@ import {
   Users,
   GraduationCap,
   Wallet,
+  Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -149,6 +150,11 @@ export function AppShell({ children }: AppShellProps) {
       name: "Finance",
       href: "/finance",
       icon: Wallet,
+    },
+    {
+      name: "Content",
+      href: "/content",
+      icon: Share2,
     },
   ];
 

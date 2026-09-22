@@ -530,7 +530,86 @@ async function searchLearningItems(
 }
 
 /**
- * Unified cross-domain search across Notes, Tasks, Projects, Goals, People, and Learning Items.
+ * Native PostgreSQL search for Content Items.
+ */
+async function searchContent(
+  userId: string,
+  query: string,
+  limit: number
+): Promise<SearchResultItem[]> {
+  const result = await db.execute<{
+    id: string;
+    title: string;
+    content_type: string;
+    status: string;
+    topic: string | null;
+    summary: string | null;
+    tags: string[];
+    updated_at: Date;
+    score: number;
+  }>(sql`
+    SELECT 
+      id, 
+      title, 
+      content_type, 
+      status, 
+      topic, 
+      summary, 
+      tags, 
+      updated_at,
+      (
+        CASE WHEN LOWER(title) = LOWER(${query}) THEN 10.0 ELSE 0.0 END +
+        CASE WHEN title ILIKE ${query + "%"} THEN 5.0 ELSE 0.0 END +
+        CASE WHEN title ILIKE ${"%" + query + "%"} THEN 2.0 ELSE 0.0 END +
+        GREATEST(similarity(title, ${query}), word_similarity(${query}, title), similarity(coalesce(topic, ''), ${query}), word_similarity(${query}, coalesce(topic, ''))) * 3.0 +
+        ts_rank_cd(to_tsvector('english', coalesce(title, '') || ' ' || coalesce(topic, '') || ' ' || coalesce(summary, '')), websearch_to_tsquery('english', ${query})) * 4.0
+      )::float as score
+    FROM content_items
+    WHERE user_id = ${userId}
+      AND is_archived = false
+      AND (
+        to_tsvector('english', coalesce(title, '') || ' ' || coalesce(topic, '') || ' ' || coalesce(summary, '')) @@ websearch_to_tsquery('english', ${query})
+        OR title % ${query}
+        OR ${query} <% title
+        OR coalesce(topic, '') % ${query}
+        OR ${query} <% coalesce(topic, '')
+        OR word_similarity(${query}, title) > 0.4
+        OR title ILIKE ${"%" + query + "%"}
+        OR coalesce(topic, '') ILIKE ${"%" + query + "%"}
+        OR coalesce(summary, '') ILIKE ${"%" + query + "%"}
+      )
+    ORDER BY score DESC, updated_at DESC
+    LIMIT ${limit}
+  `);
+
+  return (result.rows || []).map((row) => {
+    const typeLabel = row.content_type.replace("_", " ");
+    const statusLabel = row.status.replace("_", " ");
+    const topicSnippet = row.topic ? ` • ${row.topic}` : "";
+    const subtitle = `${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)}${topicSnippet} (${statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)})`;
+    const snippet = extractSnippet(row.summary, query);
+
+    return {
+      id: row.id,
+      type: "content",
+      title: row.title,
+      subtitle,
+      snippet,
+      href: `/content?id=${row.id}`,
+      score: Number(row.score) || 0,
+      metadata: {
+        contentType: row.content_type,
+        status: row.status,
+        topic: row.topic,
+        tags: row.tags || [],
+      },
+      updatedAt: new Date(row.updated_at).toISOString(),
+    };
+  });
+}
+
+/**
+ * Unified cross-domain search across Notes, Tasks, Projects, Goals, People, Learning, and Content Items.
  */
 export async function search(
   userId: string,
@@ -550,6 +629,7 @@ export async function search(
     goal: 0,
     person: 0,
     learning: 0,
+    content: 0,
   };
 
   const shouldSearch = (targetType: SearchEntityType) =>
@@ -573,15 +653,20 @@ export async function search(
   const learningPromise = shouldSearch("learning")
     ? searchLearningItems(userId, q, limit)
     : Promise.resolve([]);
+  const contentPromise = shouldSearch("content")
+    ? searchContent(userId, q, limit)
+    : Promise.resolve([]);
 
-  const [notes, tasks, projects, goals, people, learning] = await Promise.all([
-    notesPromise,
-    tasksPromise,
-    projectsPromise,
-    goalsPromise,
-    peoplePromise,
-    learningPromise,
-  ]);
+  const [notes, tasks, projects, goals, people, learning, content] =
+    await Promise.all([
+      notesPromise,
+      tasksPromise,
+      projectsPromise,
+      goalsPromise,
+      peoplePromise,
+      learningPromise,
+      contentPromise,
+    ]);
 
   typeMap.note = notes.length;
   typeMap.task = tasks.length;
@@ -589,6 +674,7 @@ export async function search(
   typeMap.goal = goals.length;
   typeMap.person = people.length;
   typeMap.learning = learning.length;
+  typeMap.content = content.length;
 
   const combined = [
     ...notes,
@@ -597,6 +683,7 @@ export async function search(
     ...goals,
     ...people,
     ...learning,
+    ...content,
   ];
 
   // Rank combined results: highest composite score first, then newest updated

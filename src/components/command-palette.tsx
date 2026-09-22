@@ -23,6 +23,7 @@ import {
   Wallet,
   Receipt,
   Loader2,
+  Share2,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { signOut } from "@/lib/auth-client";
@@ -49,6 +50,8 @@ function getEntityIcon(type: SearchEntityType) {
       return <Users className="mr-2 h-4 w-4 text-cyan-500 shrink-0" />;
     case "learning":
       return <GraduationCap className="mr-2 h-4 w-4 text-amber-500 shrink-0" />;
+    case "content":
+      return <Share2 className="mr-2 h-4 w-4 text-purple-500 shrink-0" />;
     default:
       return <Search className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />;
   }
@@ -165,6 +168,7 @@ export function CommandPalette({
       goal: [],
       person: [],
       learning: [],
+      content: [],
     };
     for (const item of searchResults) {
       if (groups[item.type]) {
@@ -317,6 +321,15 @@ export function CommandPalette({
               </Command.Group>
             )}
 
+            {groupedResults.content.length > 0 && (
+              <Command.Group
+                heading={`Content (${groupedResults.content.length})`}
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
+              >
+                {groupedResults.content.map(renderSearchResultItem)}
+              </Command.Group>
+            )}
+
             {/* Existing Static Command Groups */}
             <Command.Group
               heading="Navigation"
@@ -410,12 +423,28 @@ export function CommandPalette({
                 <Wallet className="mr-2 h-4 w-4" />
                 <span>Go to Finance</span>
               </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/content"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-content"
+              >
+                <Share2 className="mr-2 h-4 w-4 text-purple-500" />
+                <span>Go to Content</span>
+              </Command.Item>
             </Command.Group>
 
             <Command.Group
               heading="Quick Actions"
               className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
             >
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/content?action=new"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-new-content"
+              >
+                <PlusCircle className="mr-2 h-4 w-4 text-purple-500" />
+                <span>Create Content Idea</span>
+              </Command.Item>
               <Command.Item
                 onSelect={() => runCommand(() => router.push("/finance?action=record"))}
                 className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
