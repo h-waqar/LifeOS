@@ -38,6 +38,7 @@ import {
   Target,
   CheckSquare,
   Users,
+  GraduationCap,
   Sparkles,
   RefreshCw,
   X,
@@ -97,6 +98,7 @@ function NotesContent() {
   const [editorGoalId, setEditorGoalId] = React.useState<string>("");
   const [editorTaskId, setEditorTaskId] = React.useState<string>("");
   const [editorPersonId, setEditorPersonId] = React.useState<string>("");
+  const [editorLearningId, setEditorLearningId] = React.useState<string>("");
   const [isPinned, setIsPinned] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [newTagInput, setNewTagInput] = React.useState("");
@@ -106,6 +108,7 @@ function NotesContent() {
   const [goalsList, setGoalsList] = React.useState<{ id: string; title: string }[]>([]);
   const [tasksList, setTasksList] = React.useState<{ id: string; title: string }[]>([]);
   const [peopleList, setPeopleList] = React.useState<{ id: string; name: string }[]>([]);
+  const [learningList, setLearningList] = React.useState<{ id: string; title: string }[]>([]);
 
   // Auth Protection
   React.useEffect(() => {
@@ -119,11 +122,12 @@ function NotesContent() {
     if (!session) return;
     const loadEntities = async () => {
       try {
-        const [pRes, gRes, tRes, pplRes] = await Promise.all([
+        const [pRes, gRes, tRes, pplRes, lRes] = await Promise.all([
           fetch("/api/projects"),
           fetch("/api/goals"),
           fetch("/api/tasks?limit=100"),
           fetch("/api/people?isArchived=false"),
+          fetch("/api/learning?isArchived=false"),
         ]);
         if (pRes.ok) {
           const json = await pRes.json();
@@ -140,6 +144,10 @@ function NotesContent() {
         if (pplRes.ok) {
           const json = await pplRes.json();
           setPeopleList(json.data || []);
+        }
+        if (lRes.ok) {
+          const json = await lRes.json();
+          setLearningList(json.data || json.learningItems || []);
         }
       } catch {
         // Non-critical background entity fetch
@@ -217,6 +225,7 @@ function NotesContent() {
           setEditorGoalId(json.data.goalId || "");
           setEditorTaskId(json.data.taskId || "");
           setEditorPersonId(json.data.personId || "");
+          setEditorLearningId(json.data.learningId || "");
           setIsPinned(json.data.isPinned);
         }
       } catch (err) {
@@ -277,6 +286,7 @@ function NotesContent() {
           goalId: editorGoalId || null,
           taskId: editorTaskId || null,
           personId: editorPersonId || null,
+          learningId: editorLearningId || null,
         }),
       });
 
@@ -312,6 +322,7 @@ function NotesContent() {
     editorGoalId,
     editorTaskId,
     editorPersonId,
+    editorLearningId,
   ]);
 
   // Keyboard shortcut: Ctrl+S / Cmd+S to save note
@@ -960,6 +971,27 @@ function NotesContent() {
                     {peopleList.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Linked Learning Item */}
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
+                    <GraduationCap className="w-3.5 h-3.5 text-amber-500" />
+                    Learning Item
+                  </label>
+                  <select
+                    value={editorLearningId}
+                    onChange={(e) => setEditorLearningId(e.target.value)}
+                    className="w-full h-8 text-xs bg-background border border-input rounded-md px-2 text-foreground"
+                    data-testid="note-learning-select"
+                  >
+                    <option value="">None (Unlinked)</option>
+                    {learningList.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.title}
                       </option>
                     ))}
                   </select>

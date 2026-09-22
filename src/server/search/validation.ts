@@ -6,6 +6,7 @@ export const searchEntityTypeSchema = z.enum([
   "project",
   "goal",
   "person",
+  "learning",
   "all",
 ]);
 

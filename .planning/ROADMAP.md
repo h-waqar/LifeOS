@@ -12,7 +12,7 @@ LifeOS is an integrated personal operating system built from scratch to unify ta
 
 - [x] **Phase 1: Foundation** - TypeScript architecture, Next.js shell, PostgreSQL database with Drizzle ORM (foundational schema only: users, sessions / Better Auth tables, preferences, audit_log), Better Auth authentication, resource ownership authorization via user_id, design system, settings, and audit logging. *(INTERNAL QA COMPLETE / CONDITIONALLY ACCEPTED / CLOSED FOR DEVELOPMENT — Independent QA deferred to final project QA)*
 - [x] **Phase 2: Core Productivity** - Unified dashboard, tasks, projects, goals, calendar, time blocking, daily planning, and habits.
-- [ ] **Phase 3: Knowledge, Learning & Relationships** - Rich Markdown notes, bidirectional linking, tags, global search, learning tracker, and Relationships / People CRM (Person, Interaction).
+- [x] **Phase 3: Knowledge, Learning & Relationships** - Rich Markdown notes, bidirectional linking, tags, global search, learning tracker, and Relationships / People CRM (Person, Interaction).
 - [ ] **Phase 4: Personal Finance** - Accounts, transactions, categories, budgets, financial goals, and net worth reports.
 - [ ] **Phase 5: Content & Social Media** - Content ideas, multi-platform drafts, content calendar, and analytics data model.
 - [ ] **Phase 6: AI Layer & Assistant** - Multi-provider AI abstraction, personal graph RAG, structured tool calling with confirmation gates, and conversational assistant.
@@ -86,7 +86,7 @@ Plans:
 - [x] 03-01: Markdown note editor with wikilinks, tags, and backlink graph inspection
 - [x] 03-02: Relationships / People CRM module (Person and Interaction schemas, contact management, follow-up tracking)
 - [x] 03-03: PostgreSQL full-text search across all entities (notes, tasks, projects, goals, people) and global command palette integration
-- [ ] 03-04: Learning system for tracking books, courses, articles, and skill notes
+- [x] 03-04: Learning system for tracking books, courses, articles, and skill notes
 
 ### Phase 4: Personal Finance
 **Goal**: Provide a private financial ledger connecting accounts, transactions, category budgets, and financial goals.

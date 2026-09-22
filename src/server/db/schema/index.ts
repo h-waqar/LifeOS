@@ -63,6 +63,12 @@ import {
   type Interaction,
   type NewInteraction,
 } from "./people";
+import {
+  learningItems,
+  learningItem,
+  type LearningItem,
+  type NewLearningItem,
+} from "./learning";
 
 const note = notes;
 const noteLink = noteLinks;
@@ -110,6 +116,8 @@ export {
   person,
   interactions,
   interaction,
+  learningItems,
+  learningItem,
 };
 
 // Drizzle Relations Declarations
@@ -131,6 +139,7 @@ export const userRelations = relations(user, ({ many }) => ({
   noteLinks: many(noteLinks),
   people: many(people),
   interactions: many(interactions),
+  learningItems: many(learningItems),
   auditLogs: many(auditLog),
 }));
 
@@ -179,6 +188,7 @@ export const goalsRelations = relations(goals, ({ one, many }) => ({
   habits: many(habits),
   tasks: many(tasks),
   timeBlocks: many(timeBlocks),
+  learningItems: many(learningItems),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -193,6 +203,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   tasks: many(tasks),
   milestones: many(projectMilestones),
   timeBlocks: many(timeBlocks),
+  learningItems: many(learningItems),
 }));
 
 export const projectMilestonesRelations = relations(
@@ -360,8 +371,28 @@ export const notesRelations = relations(notes, ({ one, many }) => ({
     fields: [notes.personId],
     references: [people.id],
   }),
+  learningItem: one(learningItems, {
+    fields: [notes.learningId],
+    references: [learningItems.id],
+  }),
   outgoingLinks: many(noteLinks, { relationName: "sourceNote" }),
   incomingLinks: many(noteLinks, { relationName: "targetNote" }),
+}));
+
+export const learningItemsRelations = relations(learningItems, ({ one, many }) => ({
+  user: one(user, {
+    fields: [learningItems.userId],
+    references: [user.id],
+  }),
+  goal: one(goals, {
+    fields: [learningItems.goalId],
+    references: [goals.id],
+  }),
+  project: one(projects, {
+    fields: [learningItems.projectId],
+    references: [projects.id],
+  }),
+  notes: many(notes),
 }));
 
 export const noteLinksRelations = relations(noteLinks, ({ one }) => ({
@@ -449,6 +480,7 @@ export type { DailyPlan, NewDailyPlan, EveningReview, NewEveningReview };
 export type { TaskDependency, NewTaskDependency, RecurrenceRule };
 export type { Note, NewNote, NoteLink, NewNoteLink };
 export type { Person, NewPerson, Interaction, NewInteraction };
+export type { LearningItem, NewLearningItem };
 
 /**
  * Explicit list of foundational table names.
@@ -494,6 +526,7 @@ export const PHASE_3_TABLE_NAMES = [
   "note_links",
   "people",
   "interactions",
+  "learning_items",
 ] as const;
 
 

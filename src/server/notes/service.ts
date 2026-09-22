@@ -7,6 +7,7 @@ import {
   goals,
   tasks,
   people,
+  learningItems,
   type Note,
 } from "@/server/db/schema";
 import { AuthorizationError } from "@/server/auth/guard";
@@ -74,6 +75,7 @@ function mapNoteToDTO(note: Note, counts?: { outgoing?: number; backlinks?: numb
     goalId: note.goalId,
     taskId: note.taskId,
     personId: note.personId ?? null,
+    learningId: note.learningId ?? null,
     outgoingLinksCount: counts?.outgoing ?? 0,
     backlinksCount: counts?.backlinks ?? 0,
     createdAt: note.createdAt.toISOString(),
@@ -110,7 +112,7 @@ async function generateUniqueSlug(
 }
 
 /**
- * Validate that linked entities (project, goal, task) exist and are owned by the user.
+ * Validate that linked entities (project, goal, task, person, learning item) exist and are owned by the user.
  */
 async function validateEntityOwnership(
   userId: string,
@@ -119,6 +121,7 @@ async function validateEntityOwnership(
     goalId?: string | null;
     taskId?: string | null;
     personId?: string | null;
+    learningId?: string | null;
   }
 ) {
   if (entities.projectId) {
@@ -162,6 +165,17 @@ async function validateEntityOwnership(
       .limit(1);
     if (!p) {
       throw new InvariantViolationError("Linked contact not found or access denied.");
+    }
+  }
+
+  if (entities.learningId) {
+    const [l] = await db
+      .select({ id: learningItems.id })
+      .from(learningItems)
+      .where(and(eq(learningItems.userId, userId), eq(learningItems.id, entities.learningId)))
+      .limit(1);
+    if (!l) {
+      throw new InvariantViolationError("Linked learning item not found or access denied.");
     }
   }
 }
@@ -271,6 +285,7 @@ export async function createNote(
         goalId: validated.goalId ?? null,
         taskId: validated.taskId ?? null,
         personId: validated.personId ?? null,
+        learningId: validated.learningId ?? null,
       })
       .returning();
 
@@ -353,6 +368,8 @@ export async function updateNote(
         taskId: validated.taskId !== undefined ? validated.taskId : existing.taskId,
         personId:
           validated.personId !== undefined ? validated.personId : existing.personId,
+        learningId:
+          validated.learningId !== undefined ? validated.learningId : existing.learningId,
         updatedAt: new Date(),
       })
       .where(and(eq(notes.userId, userId), eq(notes.id, id)))
@@ -594,6 +611,9 @@ export async function listNotes(
   }
   if (query.personId) {
     conditions.push(eq(notes.personId, query.personId));
+  }
+  if (query.learningId) {
+    conditions.push(eq(notes.learningId, query.learningId));
   }
   if (query.tag) {
     // JSONB array contains query.tag

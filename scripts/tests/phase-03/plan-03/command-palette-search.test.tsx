@@ -64,6 +64,7 @@ describe("Phase 3 Plan 03-03: Command Palette Unified Search Integration (UI)", 
         project: 1,
         goal: 0,
         person: 0,
+        learning: 0,
       },
       results: [
         {
@@ -131,7 +132,7 @@ describe("Phase 3 Plan 03-03: Command Palette Unified Search Integration (UI)", 
     const mockSearchResults: SearchResponseDTO = {
       query: "alice",
       total: 1,
-      byType: { note: 0, task: 0, project: 0, goal: 0, person: 1 },
+      byType: { note: 0, task: 0, project: 0, goal: 0, person: 1, learning: 0 },
       results: [
         {
           id: "person-42",

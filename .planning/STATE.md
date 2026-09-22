@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 3
 current_phase_name: Knowledge, Learning & Relationships
-status: in-progress
-stopped_at: Completed Phase 3 Plan 03-03 (PostgreSQL Full-Text Search & Global Command Palette Integration)
-last_updated: "2026-09-22T08:55:00.000Z"
+status: complete
+stopped_at: Completed Phase 3 Plan 03-04 (Learning System & Note Entity Linkage)
+last_updated: "2026-09-22T11:47:00.000Z"
 last_activity: 2026-09-22
-last_activity_desc: Plan 03-03 completed. Native PostgreSQL FTS + pg_trgm fuzzy search across notes, tasks, projects, goals, people; global Command Palette debounced search integration with deep linking; 1,044/1,044 tests passing; clean Next.js build
+last_activity_desc: Plan 03-04 completed. Track books, courses, articles, podcasts, skills; dynamic progress calculation and auto-completion; note linkage via composite foreign key notes.learning_id (ON DELETE SET NULL); search and command palette integration; 1,100/1,100 tests passing; 0 TypeScript errors
 state_head: HEAD
 progress:
   total_phases: 9
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 34
-  completed_plans: 20
-  percent: 59
+  completed_plans: 21
+  percent: 62
 ---
 
 # Project State
@@ -23,22 +23,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-10)
 
 **Core value:** A single source of truth connecting goals, projects, tasks, time, knowledge, money, learning, relationships, and content—powered by an AI layer that understands context and helps plan and execute without fragmented tools, duplicate entry, or siloed data.
-**Current focus:** Phase 3: Knowledge, Learning & Relationships (Plan 03-03 complete | Next: Plan 03-04 Learning System)
+**Current focus:** Phase 3: Knowledge, Learning & Relationships COMPLETE (4/4 Plans Complete) | Next: Phase 4 Personal Finance
 
 ## Current Position
 
 Phase: 3 of 9 (Knowledge, Learning & Relationships)
-Plan: 3 of 4 in Phase 3 completed (Plan 03-03 COMPLETE)
-Status: PHASE 1 CONDITIONALLY ACCEPTED | PHASE 2 COMPLETE & VERIFIED | PHASE 3 IN PROGRESS (3/4 Plans Complete)
-Last activity: 2026-09-22 — Plan 03-03 PostgreSQL Full-Text Search & Command Palette Integration (1,044/1,044 tests passing; clean Next.js build)
+Plan: 4 of 4 in Phase 3 completed (Plan 03-04 COMPLETE)
+Status: PHASE 1 CONDITIONALLY ACCEPTED | PHASE 2 COMPLETE & VERIFIED | PHASE 3 COMPLETE & VERIFIED (4/4 Plans Complete)
+Last activity: 2026-09-22 — Plan 03-04 Learning System & Note Entity Linkage (1,100/1,100 tests passing; 0 TypeScript errors)
 
-Progress: [██████░░░░] 59% (Phase 1: 11/11 | Phase 2: 6/6 | Phase 3: 3/4)
+Progress: [██████░░░░] 62% (Phase 1: 11/11 | Phase 2: 6/6 | Phase 3: 4/4)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 20
+- Total plans completed: 21
 - Average duration: - min
 - Total execution time: 0.0 hours
 
@@ -48,7 +48,7 @@ Progress: [██████░░░░] 59% (Phase 1: 11/11 | Phase 2: 6/6 | 
 |-------|-------|-------|----------|
 | 1. Foundation | 11/11 (Conditionally Accepted) | - | - |
 | 2. Core Productivity | 6/6 (Complete & Verified) | - | - |
-| 3. Knowledge, Learning & Relationships | 3/4 | - | - |
+| 3. Knowledge, Learning & Relationships | 4/4 (Complete & Verified) | - | - |
 | 4. Personal Finance | 0/2 | - | - |
 | 5. Content & Social Media | 0/2 | - | - |
 | 6. AI Layer & Assistant | 0/3 | - | - |
@@ -83,10 +83,12 @@ Recent decisions affecting current work:
 - [Plan 03-02 Decision]: Hard Deletion Protocol: Person deletion defaults to soft-archive; permanent hard deletion with cascade interaction removal and task/note link nullification explicitly requires `?hard=true` parameter.
 - [Plan 03-03 Decision]: PostgreSQL-Native Hybrid FTS & Trigram Scoring: Combined websearch_to_tsquery with pg_trgm word_similarity and prefix ILIKE into a single composite rank expression; avoids costly full table scans and prevents JavaScript-level filtering.
 - [Plan 03-03 Decision]: Command Palette Direct Deep-Linking: Entity selections from the Command Palette navigate to /<entity>?id=<id>, automatically selecting or opening modals across notes, tasks, projects, goals, and people.
+- [Plan 03-04 Decision]: Dynamic Learning Progress & Auto-Completion: Progress is computed automatically from currentUnits / totalUnits when totalUnits > 0; reaching 100% progress auto-transitions status to "completed" and records completedAt timestamp.
+- [Plan 03-04 Decision]: Note-to-Learning Composite Invariant: notes.learning_id references learning_items(user_id, id) with ON DELETE SET NULL ("learning_id"), ensuring notes are preserved as atomic knowledge assets when learning items are deleted.
 
 ### Pending Todos
 
-None for Plan 03-03. Ready to initiate Plan 03-04: Learning system for tracking books, courses, articles, and skill notes.
+None for Phase 3. Phase 3 complete (4/4 Plans Complete). Ready to begin Phase 4 Personal Finance.
 
 ### Blockers/Concerns
 

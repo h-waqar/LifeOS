@@ -44,6 +44,7 @@ export const createNoteSchema = z.object({
   goalId: z.string().trim().min(1).nullable().optional(),
   taskId: z.string().trim().min(1).nullable().optional(),
   personId: z.string().trim().min(1).nullable().optional(),
+  learningId: z.string().trim().min(1).nullable().optional(),
 });
 
 export const updateNoteSchema = z.object({
@@ -71,6 +72,7 @@ export const updateNoteSchema = z.object({
   goalId: z.string().trim().min(1).nullable().optional(),
   taskId: z.string().trim().min(1).nullable().optional(),
   personId: z.string().trim().min(1).nullable().optional(),
+  learningId: z.string().trim().min(1).nullable().optional(),
 });
 
 export const listNotesQuerySchema = z.object({
@@ -90,6 +92,7 @@ export const listNotesQuerySchema = z.object({
   goalId: z.string().trim().min(1).optional(),
   taskId: z.string().trim().min(1).optional(),
   personId: z.string().trim().min(1).optional(),
+  learningId: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
 });

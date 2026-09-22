@@ -19,6 +19,7 @@ import {
   CalendarCheck,
   FileText,
   Users,
+  GraduationCap,
   Loader2,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
@@ -44,6 +45,8 @@ function getEntityIcon(type: SearchEntityType) {
       return <Target className="mr-2 h-4 w-4 text-amber-500 shrink-0" />;
     case "person":
       return <Users className="mr-2 h-4 w-4 text-cyan-500 shrink-0" />;
+    case "learning":
+      return <GraduationCap className="mr-2 h-4 w-4 text-amber-500 shrink-0" />;
     default:
       return <Search className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />;
   }
@@ -159,6 +162,7 @@ export function CommandPalette({
       project: [],
       goal: [],
       person: [],
+      learning: [],
     };
     for (const item of searchResults) {
       if (groups[item.type]) {
@@ -302,6 +306,15 @@ export function CommandPalette({
               </Command.Group>
             )}
 
+            {groupedResults.learning.length > 0 && (
+              <Command.Group
+                heading={`Learning (${groupedResults.learning.length})`}
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
+              >
+                {groupedResults.learning.map(renderSearchResultItem)}
+              </Command.Group>
+            )}
+
             {/* Existing Static Command Groups */}
             <Command.Group
               heading="Navigation"
@@ -370,6 +383,14 @@ export function CommandPalette({
               >
                 <FileText className="mr-2 h-4 w-4" />
                 <span>Go to Notes</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/learning"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-learning"
+              >
+                <GraduationCap className="mr-2 h-4 w-4 text-amber-500" />
+                <span>Go to Learning</span>
               </Command.Item>
               <Command.Item
                 onSelect={() => runCommand(() => router.push("/people"))}
@@ -455,6 +476,14 @@ export function CommandPalette({
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 <span>Create New Project</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/learning?action=new"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-new-learning"
+              >
+                <PlusCircle className="mr-2 h-4 w-4 text-amber-500" />
+                <span>Create Learning Item</span>
               </Command.Item>
               <Command.Item
                 onSelect={() =>

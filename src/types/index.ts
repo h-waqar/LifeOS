@@ -446,6 +446,7 @@ export interface NoteDTO {
   goalId: string | null;
   taskId: string | null;
   personId?: string | null;
+  learningId?: string | null;
   outgoingLinksCount?: number;
   backlinksCount?: number;
   createdAt: string;
@@ -482,6 +483,7 @@ export interface CreateNoteInput {
   goalId?: string | null;
   taskId?: string | null;
   personId?: string | null;
+  learningId?: string | null;
 }
 
 export interface UpdateNoteInput {
@@ -496,6 +498,7 @@ export interface UpdateNoteInput {
   goalId?: string | null;
   taskId?: string | null;
   personId?: string | null;
+  learningId?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -621,10 +624,118 @@ export interface FollowUpRemindersDTO {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 3: Learning System Types (Phase 3 Plan 03-04)
+// ---------------------------------------------------------------------------
+
+export const LEARNING_TYPES = [
+  "book",
+  "course",
+  "article",
+  "podcast",
+  "skill",
+  "documentation",
+  "other",
+] as const;
+
+export type LearningType = (typeof LEARNING_TYPES)[number];
+
+export const LEARNING_STATUSES = [
+  "not_started",
+  "in_progress",
+  "completed",
+  "archived",
+] as const;
+
+export type LearningStatus = (typeof LEARNING_STATUSES)[number];
+
+export interface LearningItemDTO {
+  id: string;
+  userId: string;
+  title: string;
+  type: LearningType;
+  status: LearningStatus;
+  author: string | null;
+  url: string | null;
+  rating: number | null;
+  progress: number;
+  currentUnits: number | null;
+  totalUnits: number | null;
+  unitType: string | null;
+  summary: string | null;
+  keyTakeaways: string[];
+  tags: string[];
+  goalId: string | null;
+  projectId: string | null;
+  goalTitle?: string | null;
+  projectName?: string | null;
+  isArchived: boolean;
+  completedAt: string | null;
+  linkedNotesCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LearningItemDetailDTO extends LearningItemDTO {
+  linkedNotes: NoteDTO[];
+}
+
+export interface CreateLearningItemInput {
+  title: string;
+  type?: LearningType;
+  status?: LearningStatus;
+  author?: string | null;
+  url?: string | null;
+  rating?: number | null;
+  progress?: number;
+  currentUnits?: number | null;
+  totalUnits?: number | null;
+  unitType?: string | null;
+  summary?: string | null;
+  keyTakeaways?: string[];
+  tags?: string[];
+  goalId?: string | null;
+  projectId?: string | null;
+}
+
+export interface UpdateLearningItemInput {
+  title?: string;
+  type?: LearningType;
+  status?: LearningStatus;
+  author?: string | null;
+  url?: string | null;
+  rating?: number | null;
+  progress?: number;
+  currentUnits?: number | null;
+  totalUnits?: number | null;
+  unitType?: string | null;
+  summary?: string | null;
+  keyTakeaways?: string[];
+  tags?: string[];
+  goalId?: string | null;
+  projectId?: string | null;
+  isArchived?: boolean;
+  completedAt?: string | null;
+}
+
+export interface LearningStatsDTO {
+  totalItems: number;
+  activeCount: number;
+  completedCount: number;
+  averageProgress: number;
+  byType: Record<LearningType, number>;
+}
+
+// ---------------------------------------------------------------------------
 // Unified Search Types (Phase 3 Plan 03-03)
 // ---------------------------------------------------------------------------
 
-export type SearchEntityType = "note" | "task" | "project" | "goal" | "person";
+export type SearchEntityType =
+  | "note"
+  | "task"
+  | "project"
+  | "goal"
+  | "person"
+  | "learning";
 
 export interface SearchResultItem {
   id: string;

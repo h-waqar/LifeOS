@@ -22,6 +22,7 @@ import {
   CalendarCheck,
   FileText,
   Users,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -132,6 +133,11 @@ export function AppShell({ children }: AppShellProps) {
       name: "Notes",
       href: "/notes",
       icon: FileText,
+    },
+    {
+      name: "Learning",
+      href: "/learning",
+      icon: GraduationCap,
     },
     {
       name: "People",
