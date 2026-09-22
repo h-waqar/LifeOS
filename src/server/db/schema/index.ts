@@ -69,6 +69,24 @@ import {
   type LearningItem,
   type NewLearningItem,
 } from "./learning";
+import {
+  financeAccounts,
+  financeAccount,
+  financeCategories,
+  financeCategory,
+  financeTransactions,
+  financeTransaction,
+  financeBudgets,
+  financeBudget,
+  type FinanceAccount,
+  type NewFinanceAccount,
+  type FinanceCategory,
+  type NewFinanceCategory,
+  type FinanceTransaction,
+  type NewFinanceTransaction,
+  type FinanceBudget,
+  type NewFinanceBudget,
+} from "./finance";
 
 const note = notes;
 const noteLink = noteLinks;
@@ -118,6 +136,14 @@ export {
   interaction,
   learningItems,
   learningItem,
+  financeAccounts,
+  financeAccount,
+  financeCategories,
+  financeCategory,
+  financeTransactions,
+  financeTransaction,
+  financeBudgets,
+  financeBudget,
 };
 
 // Drizzle Relations Declarations
@@ -140,6 +166,10 @@ export const userRelations = relations(user, ({ many }) => ({
   people: many(people),
   interactions: many(interactions),
   learningItems: many(learningItems),
+  financeAccounts: many(financeAccounts),
+  financeCategories: many(financeCategories),
+  financeTransactions: many(financeTransactions),
+  financeBudgets: many(financeBudgets),
   auditLogs: many(auditLog),
 }));
 
@@ -189,6 +219,7 @@ export const goalsRelations = relations(goals, ({ one, many }) => ({
   tasks: many(tasks),
   timeBlocks: many(timeBlocks),
   learningItems: many(learningItems),
+  financeTransactions: many(financeTransactions),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -433,6 +464,76 @@ export const interactionsRelations = relations(interactions, ({ one }) => ({
   }),
 }));
 
+export const financeAccountsRelations = relations(
+  financeAccounts,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [financeAccounts.userId],
+      references: [user.id],
+    }),
+    transactions: many(financeTransactions, {
+      relationName: "accountTransactions",
+    }),
+    incomingTransfers: many(financeTransactions, {
+      relationName: "transferDestinationTransactions",
+    }),
+  })
+);
+
+export const financeCategoriesRelations = relations(
+  financeCategories,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [financeCategories.userId],
+      references: [user.id],
+    }),
+    transactions: many(financeTransactions),
+    budgets: many(financeBudgets),
+  })
+);
+
+export const financeBudgetsRelations = relations(
+  financeBudgets,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [financeBudgets.userId],
+      references: [user.id],
+    }),
+    category: one(financeCategories, {
+      fields: [financeBudgets.categoryId],
+      references: [financeCategories.id],
+    }),
+  })
+);
+
+export const financeTransactionsRelations = relations(
+  financeTransactions,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [financeTransactions.userId],
+      references: [user.id],
+    }),
+    account: one(financeAccounts, {
+      fields: [financeTransactions.accountId],
+      references: [financeAccounts.id],
+      relationName: "accountTransactions",
+    }),
+    toAccount: one(financeAccounts, {
+      fields: [financeTransactions.toAccountId],
+      references: [financeAccounts.id],
+      relationName: "transferDestinationTransactions",
+    }),
+    category: one(financeCategories, {
+      fields: [financeTransactions.categoryId],
+      references: [financeCategories.id],
+    }),
+    goal: one(goals, {
+      fields: [financeTransactions.goalId],
+      references: [goals.id],
+    }),
+  })
+);
+
 // Inferred TypeScript Model Types
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
@@ -481,6 +582,16 @@ export type { TaskDependency, NewTaskDependency, RecurrenceRule };
 export type { Note, NewNote, NoteLink, NewNoteLink };
 export type { Person, NewPerson, Interaction, NewInteraction };
 export type { LearningItem, NewLearningItem };
+export type {
+  FinanceAccount,
+  NewFinanceAccount,
+  FinanceCategory,
+  NewFinanceCategory,
+  FinanceTransaction,
+  NewFinanceTransaction,
+  FinanceBudget,
+  NewFinanceBudget,
+};
 
 /**
  * Explicit list of foundational table names.
@@ -528,6 +639,17 @@ export const PHASE_3_TABLE_NAMES = [
   "interactions",
   "learning_items",
 ] as const;
+
+/**
+ * Approved Phase 4 table names.
+ */
+export const PHASE_4_TABLE_NAMES = [
+  "finance_accounts",
+  "finance_categories",
+  "finance_transactions",
+  "finance_budgets",
+] as const;
+
 
 
 

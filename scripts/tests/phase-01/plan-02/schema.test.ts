@@ -179,11 +179,6 @@ describe("Foundational Database Schema (Drizzle ORM)", () => {
       const deferredDomainEntities = [
         "calendar",
         "calendars",
-        "transaction",
-        "transactions",
-        "financeAccount",
-        "budget",
-        "budgets",
         "content",
         "contents",
         "aiMessage",
@@ -211,6 +206,10 @@ describe("Foundational Database Schema (Drizzle ORM)", () => {
       expect((schema as Record<string, unknown>).noteLinks).toBeDefined();
       expect((schema as Record<string, unknown>).people).toBeDefined();
       expect((schema as Record<string, unknown>).interactions).toBeDefined();
+      expect((schema as Record<string, unknown>).financeAccounts).toBeDefined();
+      expect((schema as Record<string, unknown>).financeCategories).toBeDefined();
+      expect((schema as Record<string, unknown>).financeTransactions).toBeDefined();
+      expect((schema as Record<string, unknown>).financeBudgets).toBeDefined();
     });
   });
 });
