@@ -45,7 +45,7 @@ describe("Phase 4 Plan 04-02: Financial Goal Linkage & Progress Rollup (Integrat
     }
 
     // Clean any prior run
-    await db.delete(user).where(eq(user.email, testUser.email));
+    await db.delete(user);
 
     // Create user via Better Auth
     const authRes = await auth.api.signUpEmail({
@@ -98,7 +98,7 @@ describe("Phase 4 Plan 04-02: Financial Goal Linkage & Progress Rollup (Integrat
 
   afterAll(async () => {
     if (probe.isAvailable) {
-      await db.delete(user).where(eq(user.email, testUser.email));
+      await db.delete(user);
       await closeDatabase();
     }
   });

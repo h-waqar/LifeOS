@@ -11,6 +11,11 @@ import {
 import { createAuditLog } from "@/server/audit";
 import { recalculateGoalProgress } from "@/server/goals/service";
 import {
+  eventBus,
+  createDomainEvent,
+  type AnyDomainEvent,
+} from "@/server/events";
+import {
   createTransactionSchema,
   updateTransactionSchema,
   listTransactionsQuerySchema,
@@ -263,7 +268,10 @@ export async function createTransaction(
 ): Promise<FinanceTransaction> {
   const validated = createTransactionSchema.parse(input);
 
-  return await db.transaction(async (tx) => {
+  const pendingEvents: AnyDomainEvent[] = [];
+
+  const createdTransaction = await db.transaction(async (tx) => {
+    (tx as any).__pendingEvents = pendingEvents;
     // 1. Lock accounts deterministically in id ASC order
     const allAccountIds = Array.from(
       new Set(
@@ -417,8 +425,20 @@ export async function createTransaction(
       tx
     );
 
+    pendingEvents.push(
+      createDomainEvent("finance.transaction_created", userId, {
+        transaction: created,
+      })
+    );
+
     return created;
   });
+
+  for (const event of pendingEvents) {
+    void eventBus.publish(event);
+  }
+
+  return createdTransaction;
 }
 
 /**

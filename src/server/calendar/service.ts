@@ -34,6 +34,7 @@ import type {
   CommitmentLevel,
   TimeBlockStatus,
 } from "@/types";
+import { eventBus, createDomainEvent } from "@/server/events";
 
 // Server-only runtime protection
 if (typeof window !== "undefined" && !process.env.VITEST) {
@@ -245,7 +246,17 @@ export async function createTimeBlock(
     },
   });
 
-  return toTimeBlockDTO(inserted);
+  const dto = toTimeBlockDTO(inserted);
+  void eventBus.publish(
+    createDomainEvent(
+      "timeblock.created",
+      userId,
+      { timeBlock: dto },
+      { actor: actor?.actor || "user" }
+    )
+  );
+
+  return dto;
 }
 
 /**
@@ -434,7 +445,7 @@ export async function updateTimeBlock(
   }
 
   // Handle task actualDuration adjustments in a transaction
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     // If the block is completed and actualMinutes is changing, adjust task analytics
     if (
       existing.status === "completed" &&
@@ -500,6 +511,20 @@ export async function updateTimeBlock(
 
     return toTimeBlockDTO(updated);
   });
+
+  void eventBus.publish(
+    createDomainEvent(
+      "timeblock.updated",
+      userId,
+      {
+        timeBlock: result,
+        updatedFields: Object.keys(validated),
+      },
+      { actor: actor?.actor || "user" }
+    )
+  );
+
+  return result;
 }
 
 /**
@@ -528,7 +553,7 @@ export async function completeTimeBlock(
   const actualMinutes = validated.actualMinutes ?? existing.durationMinutes;
   const now = new Date();
 
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     // If not previously completed and linked to a task, increment task actualDuration
     if (existing.status !== "completed" && existing.taskId) {
       await tx
@@ -587,6 +612,20 @@ export async function completeTimeBlock(
 
     return toTimeBlockDTO(updated);
   });
+
+  void eventBus.publish(
+    createDomainEvent(
+      "timeblock.updated",
+      userId,
+      {
+        timeBlock: result,
+        updatedFields: ["status", "actualMinutes", "completedAt"],
+      },
+      { actor: actor?.actor || "user" }
+    )
+  );
+
+  return result;
 }
 
 /**
@@ -642,6 +681,15 @@ export async function deleteTimeBlock(
       },
     });
   });
+
+  void eventBus.publish(
+    createDomainEvent(
+      "timeblock.deleted",
+      userId,
+      { timeBlockId: blockId },
+      { actor: actor?.actor || "user" }
+    )
+  );
 }
 
 /**

@@ -105,6 +105,82 @@ import {
   type ContentMetric,
   type NewContentMetric,
 } from "./content";
+import {
+  userAISettings,
+  userAISetting,
+  aiConversations,
+  aiConversation,
+  aiMessages,
+  aiMessage,
+  aiActions,
+  aiAction,
+  type UserAISettings,
+  type NewUserAISettings,
+  type AIConversation,
+  type NewAIConversation,
+  type AIMessage,
+  type NewAIMessage,
+  type AIAction,
+  type NewAIAction,
+} from "./ai";
+import {
+  notifications,
+  notification,
+  type Notification,
+  type NewNotification,
+} from "./notifications";
+import {
+  automations,
+  automation,
+  automationRuns,
+  automationRun,
+  schedulerLocks,
+  schedulerLock,
+  type Automation,
+  type NewAutomation,
+  type AutomationRun,
+  type NewAutomationRun,
+  type SchedulerLock,
+  type NewSchedulerLock,
+} from "./automations";
+import {
+  integrationConnections,
+  integrationConnection,
+  calendarEventMappings,
+  calendarEventMapping,
+  syncLogs,
+  syncLog,
+  githubActivities,
+  githubActivity,
+  backupRecords,
+  backupRecord,
+  webhookDeliveries,
+  webhookDelivery,
+  type IntegrationConnection,
+  type NewIntegrationConnection,
+  type CalendarEventMapping,
+  type NewCalendarEventMapping,
+  type SyncLog,
+  type NewSyncLog,
+  type GitHubActivity,
+  type NewGitHubActivity,
+  type BackupRecord,
+  type NewBackupRecord,
+  type WebhookDelivery,
+  type NewWebhookDelivery,
+} from "./integrations";
+import {
+  analyticsSnapshots,
+  analyticsSnapshot,
+  type AnalyticsSnapshot,
+  type NewAnalyticsSnapshot,
+} from "./analytics";
+import {
+  knowledgeEmbeddings,
+  knowledgeEmbedding,
+  type KnowledgeEmbedding,
+  type NewKnowledgeEmbedding,
+} from "./embeddings";
 
 const note = notes;
 const noteLink = noteLinks;
@@ -170,10 +246,61 @@ export {
   contentPublication,
   contentMetrics,
   contentMetric,
+  userAISettings,
+  userAISetting,
+  aiConversations,
+  aiConversation,
+  aiMessages,
+  aiMessage,
+  aiActions,
+  aiAction,
+  notifications,
+  notification,
+  automations,
+  automation,
+  automationRuns,
+  automationRun,
+  schedulerLocks,
+  schedulerLock,
+  integrationConnections,
+  integrationConnection,
+  calendarEventMappings,
+  calendarEventMapping,
+  syncLogs,
+  syncLog,
+  githubActivities,
+  githubActivity,
+  backupRecords,
+  backupRecord,
+  webhookDeliveries,
+  webhookDelivery,
+  analyticsSnapshots,
+  analyticsSnapshot,
+  knowledgeEmbeddings,
+  knowledgeEmbedding,
+};
+
+export type {
+  IntegrationConnection,
+  NewIntegrationConnection,
+  CalendarEventMapping,
+  NewCalendarEventMapping,
+  SyncLog,
+  NewSyncLog,
+  GitHubActivity,
+  NewGitHubActivity,
+  BackupRecord,
+  NewBackupRecord,
+  WebhookDelivery,
+  NewWebhookDelivery,
+  AnalyticsSnapshot,
+  NewAnalyticsSnapshot,
+  KnowledgeEmbedding,
+  NewKnowledgeEmbedding,
 };
 
 // Drizzle Relations Declarations
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ one, many }) => ({
   sessions: many(session),
   accounts: many(account),
   passkeys: many(passkey),
@@ -200,7 +327,23 @@ export const userRelations = relations(user, ({ many }) => ({
   contentVariants: many(contentVariants),
   contentPublications: many(contentPublications),
   contentMetrics: many(contentMetrics),
+  aiSettings: one(userAISettings),
+  aiConversations: many(aiConversations),
+  aiMessages: many(aiMessages),
+  aiActions: many(aiActions),
+  notifications: many(notifications),
+  automations: many(automations),
+  automationRuns: many(automationRuns),
+  schedulerLocks: many(schedulerLocks),
   auditLogs: many(auditLog),
+  integrationConnections: many(integrationConnections),
+  calendarEventMappings: many(calendarEventMappings),
+  syncLogs: many(syncLogs),
+  githubActivities: many(githubActivities),
+  backupRecords: many(backupRecords),
+  webhookDeliveries: many(webhookDeliveries),
+  analyticsSnapshots: many(analyticsSnapshots),
+  knowledgeEmbeddings: many(knowledgeEmbeddings),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -392,6 +535,7 @@ export const timeBlocksRelations = relations(timeBlocks, ({ one }) => ({
     fields: [timeBlocks.habitId],
     references: [habits.id],
   }),
+  calendarMapping: one(calendarEventMappings),
 }));
 
 export const dailyPlansRelations = relations(dailyPlans, ({ one, many }) => ({
@@ -635,6 +779,150 @@ export const contentMetricsRelations = relations(contentMetrics, ({ one }) => ({
   }),
 }));
 
+export const userAISettingsRelations = relations(userAISettings, ({ one }) => ({
+  user: one(user, {
+    fields: [userAISettings.userId],
+    references: [user.id],
+  }),
+}));
+
+export const aiConversationsRelations = relations(
+  aiConversations,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [aiConversations.userId],
+      references: [user.id],
+    }),
+    messages: many(aiMessages),
+    actions: many(aiActions),
+  })
+);
+
+export const aiMessagesRelations = relations(aiMessages, ({ one, many }) => ({
+  user: one(user, {
+    fields: [aiMessages.userId],
+    references: [user.id],
+  }),
+  conversation: one(aiConversations, {
+    fields: [aiMessages.conversationId],
+    references: [aiConversations.id],
+  }),
+  actions: many(aiActions),
+}));
+
+export const aiActionsRelations = relations(aiActions, ({ one }) => ({
+  user: one(user, {
+    fields: [aiActions.userId],
+    references: [user.id],
+  }),
+  conversation: one(aiConversations, {
+    fields: [aiActions.conversationId],
+    references: [aiConversations.id],
+  }),
+  message: one(aiMessages, {
+    fields: [aiActions.messageId],
+    references: [aiMessages.id],
+  }),
+  auditLog: one(auditLog, {
+    fields: [aiActions.auditLogId],
+    references: [auditLog.id],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(user, {
+    fields: [notifications.userId],
+    references: [user.id],
+  }),
+}));
+
+export const automationsRelations = relations(automations, ({ one, many }) => ({
+  user: one(user, {
+    fields: [automations.userId],
+    references: [user.id],
+  }),
+  runs: many(automationRuns),
+}));
+
+export const automationRunsRelations = relations(automationRuns, ({ one }) => ({
+  user: one(user, {
+    fields: [automationRuns.userId],
+    references: [user.id],
+  }),
+  automation: one(automations, {
+    fields: [automationRuns.automationId],
+    references: [automations.id],
+  }),
+}));
+
+export const schedulerLocksRelations = relations(schedulerLocks, ({ one }) => ({
+  user: one(user, {
+    fields: [schedulerLocks.userId],
+    references: [user.id],
+  }),
+}));
+
+export const integrationConnectionsRelations = relations(
+  integrationConnections,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [integrationConnections.userId],
+      references: [user.id],
+    }),
+    calendarMappings: many(calendarEventMappings),
+    syncLogs: many(syncLogs),
+  })
+);
+
+export const calendarEventMappingsRelations = relations(
+  calendarEventMappings,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [calendarEventMappings.userId],
+      references: [user.id],
+    }),
+    connection: one(integrationConnections, {
+      fields: [calendarEventMappings.connectionId],
+      references: [integrationConnections.id],
+    }),
+    timeBlock: one(timeBlocks, {
+      fields: [calendarEventMappings.timeBlockId],
+      references: [timeBlocks.id],
+    }),
+  })
+);
+
+export const syncLogsRelations = relations(syncLogs, ({ one }) => ({
+  user: one(user, {
+    fields: [syncLogs.userId],
+    references: [user.id],
+  }),
+  connection: one(integrationConnections, {
+    fields: [syncLogs.connectionId],
+    references: [integrationConnections.id],
+  }),
+}));
+
+export const analyticsSnapshotsRelations = relations(
+  analyticsSnapshots,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [analyticsSnapshots.userId],
+      references: [user.id],
+    }),
+  })
+);
+
+export const knowledgeEmbeddingsRelations = relations(
+  knowledgeEmbeddings,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [knowledgeEmbeddings.userId],
+      references: [user.id],
+    }),
+  })
+);
+
 // Inferred TypeScript Model Types
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
@@ -702,6 +990,26 @@ export type {
   NewContentPublication,
   ContentMetric,
   NewContentMetric,
+};
+export type {
+  UserAISettings,
+  NewUserAISettings,
+  AIConversation,
+  NewAIConversation,
+  AIMessage,
+  NewAIMessage,
+  AIAction,
+  NewAIAction,
+};
+export type {
+  Notification,
+  NewNotification,
+  Automation,
+  NewAutomation,
+  AutomationRun,
+  NewAutomationRun,
+  SchedulerLock,
+  NewSchedulerLock,
 };
 
 /**
@@ -780,6 +1088,47 @@ export const PHASE_5_TABLE_NAMES = [
   "content_publications",
   "content_metrics",
 ] as const;
+
+/**
+ * Approved Phase 6 table names.
+ */
+export const PHASE_6_TABLE_NAMES = [
+  "user_ai_settings",
+  "ai_conversations",
+  "ai_messages",
+  "ai_actions",
+] as const;
+
+/**
+ * Approved Phase 7 table names (Plan 07-02).
+ */
+export const PHASE_7_TABLE_NAMES = [
+  "notifications",
+  "automations",
+  "automation_runs",
+  "scheduler_locks",
+] as const;
+
+/**
+ * Approved Phase 8 table names (Plan 08-01 & 08-02).
+ */
+export const PHASE_8_TABLE_NAMES = [
+  "integration_connections",
+  "calendar_event_mappings",
+  "sync_logs",
+  "github_activities",
+  "backup_records",
+  "webhook_deliveries",
+] as const;
+
+/**
+ * Approved Phase 9 table names (Plan 09-01 & 09-02).
+ */
+export const PHASE_9_TABLE_NAMES = [
+  "analytics_snapshots",
+  "knowledge_embeddings",
+] as const;
+
 
 
 

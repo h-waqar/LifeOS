@@ -24,6 +24,11 @@ import type {
   GoalStatus,
   Priority,
 } from "@/types";
+import {
+  eventBus,
+  createDomainEvent,
+  type AnyDomainEvent,
+} from "@/server/events";
 
 // Server-only runtime protection
 if (typeof window !== "undefined" && !process.env.VITEST) {
@@ -354,6 +359,26 @@ export async function recalculateGoalProgress(
     .set(updates)
     .where(and(eq(goals.userId, safeUserId), eq(goals.id, goalId)));
 
+  const progressEvent = createDomainEvent("goal.progress_updated", safeUserId, {
+    goal: toGoalDTO(
+      { ...goalRow, ...updates },
+      calculatedProgress,
+      {
+        childGoalsCount: childGoalRows.length,
+        linkedProjectsCount: calculatedProjects.length,
+        directTasksCount: directTaskRows.length,
+      }
+    ),
+    previousProgress: goalRow.progress,
+    currentProgress: calculatedProgress,
+  });
+
+  if (txContext && Array.isArray((txContext as any).__pendingEvents)) {
+    (txContext as any).__pendingEvents.push(progressEvent);
+  } else if (!txContext) {
+    void eventBus.publish(progressEvent);
+  }
+
   // 5. Cascade upward to parent goal if present
   if (goalRow.parentGoalId) {
     await recalculateGoalProgress(safeUserId, goalRow.parentGoalId, runner);
@@ -373,7 +398,10 @@ export async function createGoal(
   const safeUserId = validateUserId(authenticatedUserId);
   const validated = createGoalSchema.parse(input);
 
-  return await db.transaction(async (tx) => {
+  const pendingEvents: AnyDomainEvent[] = [];
+
+  const createdGoal = await db.transaction(async (tx) => {
+    (tx as any).__pendingEvents = pendingEvents;
     // Verify parent goal ownership if provided
     if (validated.parentGoalId) {
       const parentRows = await tx
@@ -456,12 +484,24 @@ export async function createGoal(
       tx
     );
 
-    return toGoalDTO(inserted, initialProgress, {
+    const goalDTO = toGoalDTO(inserted, initialProgress, {
       childGoalsCount: 0,
       linkedProjectsCount: 0,
       directTasksCount: 0,
     });
+
+    pendingEvents.push(
+      createDomainEvent("goal.created", safeUserId, { goal: goalDTO })
+    );
+
+    return goalDTO;
   });
+
+  for (const event of pendingEvents) {
+    void eventBus.publish(event);
+  }
+
+  return createdGoal;
 }
 
 /**
@@ -631,7 +671,10 @@ export async function updateGoal(
   const safeGoalId = validateEntityId(goalId, "Goal");
   const validated = updateGoalSchema.parse(input);
 
-  return await db.transaction(async (tx) => {
+  const pendingEvents: AnyDomainEvent[] = [];
+
+  const updatedGoal = await db.transaction(async (tx) => {
+    (tx as any).__pendingEvents = pendingEvents;
     const [existing] = await tx
       .select()
       .from(goals)
@@ -750,8 +793,25 @@ export async function updateGoal(
       tx
     );
 
-    return toGoalDTO(updated, newProgress);
+    const goalDTO = toGoalDTO(updated, newProgress);
+
+    if (validated.status === "completed" && existing.status !== "completed") {
+      pendingEvents.push(
+        createDomainEvent("goal.completed", safeUserId, {
+          goal: goalDTO,
+          completedAt: (nextCompletedAt ?? new Date()).toISOString(),
+        })
+      );
+    }
+
+    return goalDTO;
   });
+
+  for (const event of pendingEvents) {
+    void eventBus.publish(event);
+  }
+
+  return updatedGoal;
 }
 
 /**

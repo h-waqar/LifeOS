@@ -20,7 +20,7 @@ describe("Plan 01-07: Database Invariants & Integrity (Live PostgreSQL)", () => 
     if (!probe.isAvailable) return;
 
     // Clean any prior state for this test user
-    await db.delete(user).where(eq(user.email, testUser.email));
+    await db.delete(user);
 
     // Insert user row
     await db.insert(user).values({
@@ -32,7 +32,7 @@ describe("Plan 01-07: Database Invariants & Integrity (Live PostgreSQL)", () => 
 
   afterAll(async () => {
     if (probe?.isAvailable) {
-      await db.delete(user).where(eq(user.email, testUser.email));
+      await db.delete(user);
       await closeDatabase();
     }
   });

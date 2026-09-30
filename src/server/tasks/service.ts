@@ -18,6 +18,11 @@ import {
 import { calculateNextOccurrence } from "./recurrence";
 import { parseQuickCaptureInput } from "./quick-capture";
 import { recalculateGoalProgress } from "@/server/goals/service";
+import {
+  eventBus,
+  createDomainEvent,
+  type AnyDomainEvent,
+} from "@/server/events";
 
 // Server-only runtime protection
 if (typeof window !== "undefined" && !process.env.VITEST) {
@@ -368,9 +373,13 @@ export async function createTask(
   const safeUserId = validateUserId(authenticatedUserId);
   const validated = createTaskSchema.parse(input);
 
-  return await withDeadlockRetry(async () => {
+  const pendingEvents: AnyDomainEvent[] = [];
+
+  const createdTask = await withDeadlockRetry(async () => {
+    pendingEvents.length = 0;
     try {
       return await db.transaction(async (tx) => {
+        (tx as any).__pendingEvents = pendingEvents;
         let finalProjectId = validated.projectId ?? null;
 
         // 1. Verify project ownership if explicit projectId is provided (with row-level share lock)
@@ -497,7 +506,12 @@ export async function createTask(
           }
         }
 
-        return toTaskDTO(inserted);
+        const dto = toTaskDTO(inserted);
+        pendingEvents.push(
+          createDomainEvent("task.created", safeUserId, { task: dto })
+        );
+
+        return dto;
       });
     } catch (err: any) {
       if (err?.code === "23503") {
@@ -511,6 +525,12 @@ export async function createTask(
       throw err;
     }
   });
+
+  for (const event of pendingEvents) {
+    void eventBus.publish(event);
+  }
+
+  return createdTask;
 }
 
 export interface ListTasksFilters {
@@ -712,8 +732,12 @@ export async function updateTask(
   const safeTaskId = validateEntityId(taskId, "Task");
   const validated = updateTaskSchema.parse(input);
 
-  try {
-    return await db.transaction(async (tx) => {
+  const pendingEvents: AnyDomainEvent[] = [];
+
+  const updatedTask = await (async () => {
+    try {
+      return await db.transaction(async (tx) => {
+        (tx as any).__pendingEvents = pendingEvents;
       // 1. Fetch and lock existing task scoped to user (FOR UPDATE)
       const [existing] = await tx
         .select()
@@ -1032,7 +1056,75 @@ export async function updateTask(
         }
       }
 
-      return toTaskDTO(updated);
+      const updatedDTO = toTaskDTO(updated);
+
+      pendingEvents.push(
+        createDomainEvent("task.updated", safeUserId, {
+          task: updatedDTO,
+          updatedFields: Object.keys(validated),
+          previousStatus: existing.status as any,
+        })
+      );
+
+      if (nextStatus === "completed" && existing.status !== "completed") {
+        pendingEvents.push(
+          createDomainEvent("task.completed", safeUserId, {
+            task: updatedDTO,
+            completedAt: (nextCompletedAt ?? new Date()).toISOString(),
+          })
+        );
+
+        if (updated.projectId) {
+          const remainingIncomplete = await tx
+            .select({ id: tasks.id })
+            .from(tasks)
+            .where(
+              and(
+                eq(tasks.userId, safeUserId),
+                eq(tasks.projectId, updated.projectId),
+                sql`${tasks.status} != 'completed'`
+              )
+            )
+            .limit(1);
+
+          if (remainingIncomplete.length === 0) {
+            const [projRow] = await tx
+              .select()
+              .from(projects)
+              .where(
+                and(
+                  eq(projects.userId, safeUserId),
+                  eq(projects.id, updated.projectId)
+                )
+              )
+              .limit(1);
+
+            if (projRow) {
+              pendingEvents.push(
+                createDomainEvent("project.all_tasks_completed", safeUserId, {
+                  project: {
+                    id: projRow.id,
+                    userId: projRow.userId,
+                    name: projRow.name,
+                    description: projRow.description,
+                    area: projRow.area as any,
+                    status: projRow.status as any,
+                    priority: projRow.priority as any,
+                    startDate: projRow.startDate ? projRow.startDate.toISOString() : null,
+                    deadline: projRow.deadline ? projRow.deadline.toISOString() : null,
+                    goalId: projRow.goalId,
+                    progress: 100,
+                    createdAt: projRow.createdAt.toISOString(),
+                    updatedAt: projRow.updatedAt.toISOString(),
+                  },
+                })
+              );
+            }
+          }
+        }
+      }
+
+      return updatedDTO;
     });
   } catch (err: any) {
     if (err?.code === "23503") {
@@ -1045,6 +1137,13 @@ export async function updateTask(
     }
     throw err;
   }
+})();
+
+for (const event of pendingEvents) {
+  void eventBus.publish(event);
+}
+
+return updatedTask;
 }
 
 /**
@@ -1060,8 +1159,12 @@ export async function deleteTask(
   const safeUserId = validateUserId(authenticatedUserId);
   const safeTaskId = validateEntityId(taskId, "Task");
 
-  return await withDeadlockRetry(async () =>
+  const pendingEvents: AnyDomainEvent[] = [];
+
+  const deleteResult = await withDeadlockRetry(async () =>
     db.transaction(async (tx) => {
+      pendingEvents.length = 0;
+      (tx as any).__pendingEvents = pendingEvents;
       // Acquire row-level lock before deletion
       const [existing] = await tx
         .select({ id: tasks.id, projectId: tasks.projectId, goalId: tasks.goalId })
@@ -1111,9 +1214,23 @@ export async function deleteTask(
         tx
       );
 
-      return { success: true };
+      pendingEvents.push(
+        createDomainEvent("task.deleted", safeUserId, {
+          taskId: safeTaskId,
+          projectId: existing.projectId ?? undefined,
+          goalId: existing.goalId ?? undefined,
+        })
+      );
+
+      return { success: true as const };
     })
   );
+
+  for (const event of pendingEvents) {
+    void eventBus.publish(event);
+  }
+
+  return deleteResult;
 }
 
 /**

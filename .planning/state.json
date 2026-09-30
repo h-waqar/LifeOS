@@ -1,0 +1,58 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": null,
+  "phases": [
+    {
+      "number": "1",
+      "name": "Foundation",
+      "status": "pending"
+    },
+    {
+      "number": "2",
+      "name": "Core Productivity",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "Knowledge, Learning & Relationships",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Personal Finance",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "Content & Social Media",
+      "status": "pending"
+    },
+    {
+      "number": "6",
+      "name": "AI Layer & Assistant",
+      "status": "pending"
+    },
+    {
+      "number": "7",
+      "name": "Automations & Event Engine",
+      "status": "pending"
+    },
+    {
+      "number": "8",
+      "name": "External Integrations",
+      "status": "pending"
+    },
+    {
+      "number": "9",
+      "name": "Intelligence & Predictive Analytics",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd-progress",
+    "label": "Show progress",
+    "reason": "Unsure of state — showing progress"
+  },
+  "updated_at": "2026-09-30T11:19:34.204Z"
+}

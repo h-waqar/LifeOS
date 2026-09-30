@@ -29,6 +29,11 @@ import type {
   TimeOfDayCue,
   HabitStatus,
 } from "@/types";
+import {
+  eventBus,
+  createDomainEvent,
+  type AnyDomainEvent,
+} from "@/server/events";
 
 // Server-only runtime protection
 if (typeof window !== "undefined" && !process.env.VITEST) {
@@ -534,7 +539,10 @@ export async function logHabitEntry(
   const safeHabitId = validateEntityId(habitId, "Habit");
   const validated = logHabitEntrySchema.parse(input);
 
-  return await db.transaction(async (tx) => {
+  const pendingEvents: AnyDomainEvent[] = [];
+
+  const result = await db.transaction(async (tx) => {
+    (tx as any).__pendingEvents = pendingEvents;
     const [habitRow] = await tx
       .select()
       .from(habits)
@@ -658,8 +666,46 @@ export async function logHabitEntry(
       tx
     );
 
-    return { entry: toHabitEntryDTO(entryRow), stats };
+    const habitDTO = toHabitDTO(
+      {
+        ...habitRow,
+        currentStreak: stats.currentStreak,
+        longestStreak: stats.longestStreak,
+      },
+      stats
+    );
+    const entryDTO = toHabitEntryDTO(entryRow);
+
+    pendingEvents.push(
+      createDomainEvent("habit.logged", safeUserId, {
+        habit: habitDTO,
+        entry: entryDTO,
+        streak: stats.currentStreak,
+      })
+    );
+
+    const STREAK_MILESTONES = [3, 7, 14, 21, 30, 50, 66, 100, 180, 365];
+    if (
+      stats.currentStreak > (habitRow.currentStreak ?? 0) &&
+      (STREAK_MILESTONES.includes(stats.currentStreak) ||
+        (stats.currentStreak > 0 && stats.currentStreak % 7 === 0))
+    ) {
+      pendingEvents.push(
+        createDomainEvent("habit.streak_milestone", safeUserId, {
+          habit: habitDTO,
+          streak: stats.currentStreak,
+        })
+      );
+    }
+
+    return { entry: entryDTO, stats };
   });
+
+  for (const event of pendingEvents) {
+    void eventBus.publish(event);
+  }
+
+  return result;
 }
 
 /**
@@ -684,7 +730,10 @@ export async function toggleHabitEntry(
     ? normalizeDate(date)
     : normalizeDate(referenceDate ?? new Date());
 
-  return await db.transaction(async (tx) => {
+  const pendingEvents: AnyDomainEvent[] = [];
+
+  const result = await db.transaction(async (tx) => {
+    (tx as any).__pendingEvents = pendingEvents;
     const [habitRow] = await tx
       .select()
       .from(habits)
@@ -790,6 +839,40 @@ export async function toggleHabitEntry(
       tx
     );
 
+    if (completed && entryRow) {
+      const habitDTO = toHabitDTO(
+        {
+          ...habitRow,
+          currentStreak: stats.currentStreak,
+          longestStreak: stats.longestStreak,
+        },
+        stats
+      );
+      const entryDTO = toHabitEntryDTO(entryRow);
+
+      pendingEvents.push(
+        createDomainEvent("habit.logged", safeUserId, {
+          habit: habitDTO,
+          entry: entryDTO,
+          streak: stats.currentStreak,
+        })
+      );
+
+      const STREAK_MILESTONES = [3, 7, 14, 21, 30, 50, 66, 100, 180, 365];
+      if (
+        stats.currentStreak > (habitRow.currentStreak ?? 0) &&
+        (STREAK_MILESTONES.includes(stats.currentStreak) ||
+          (stats.currentStreak > 0 && stats.currentStreak % 7 === 0))
+      ) {
+        pendingEvents.push(
+          createDomainEvent("habit.streak_milestone", safeUserId, {
+            habit: habitDTO,
+            streak: stats.currentStreak,
+          })
+        );
+      }
+    }
+
     return {
       toggled: true,
       completed,
@@ -797,6 +880,12 @@ export async function toggleHabitEntry(
       stats,
     };
   });
+
+  for (const event of pendingEvents) {
+    void eventBus.publish(event);
+  }
+
+  return result;
 }
 
 /**

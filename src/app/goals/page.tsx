@@ -43,8 +43,10 @@ import {
   TrendingUp,
   Calendar,
   GitBranch,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { GoalForecastDialog } from "@/components/goals/goal-forecast-dialog";
 
 function GoalsContent() {
   const router = useRouter();
@@ -55,6 +57,7 @@ function GoalsContent() {
   const [loading, setLoading] = React.useState(true);
   const [horizonFilter, setHorizonFilter] = React.useState<string>("all");
   const [areaFilter, setAreaFilter] = React.useState<string>("all");
+  const [forecastGoal, setForecastGoal] = React.useState<GoalDTO | null>(null);
 
   // Create Goal Modal
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
@@ -570,6 +573,17 @@ function GoalsContent() {
                   <CardFooter className="flex items-center justify-between border-t pt-3 pb-3 text-xs text-muted-foreground">
                     <span>Updated {new Date(goal.updatedAt).toLocaleDateString()}</span>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                        onClick={() => setForecastGoal(goal)}
+                        title="View Goal Risk & Trajectory Forecast"
+                        data-testid={`forecast-goal-btn-${goal.id}`}
+                      >
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        <span className="hidden sm:inline">Forecast</span>
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -1249,6 +1263,15 @@ function GoalsContent() {
             </div>
           </div>
         </Modal>
+
+        {forecastGoal && (
+          <GoalForecastDialog
+            goalId={forecastGoal.id}
+            goalTitle={forecastGoal.title}
+            isOpen={Boolean(forecastGoal)}
+            onClose={() => setForecastGoal(null)}
+          />
+        )}
       </div>
     </AppShell>
   );

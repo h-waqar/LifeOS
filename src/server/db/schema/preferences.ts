@@ -1,9 +1,9 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
 /**
  * User Preferences Table
- * Stores owner settings, UI appearance, formatting, and working hours.
+ * Stores owner settings, UI appearance, formatting, working hours, and quiet hours.
  */
 export const userPreferences = pgTable("user_preferences", {
   id: text("id")
@@ -22,6 +22,10 @@ export const userPreferences = pgTable("user_preferences", {
     .default("24h"),
   workingHoursStart: text("working_hours_start").notNull().default("09:00"),
   workingHoursEnd: text("working_hours_end").notNull().default("18:00"),
+  quietHoursEnabled: boolean("quiet_hours_enabled").notNull().default(false),
+  quietHoursStart: text("quiet_hours_start").notNull().default("22:00"),
+  quietHoursEnd: text("quiet_hours_end").notNull().default("08:00"),
+  timezone: text("timezone").notNull().default("UTC"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

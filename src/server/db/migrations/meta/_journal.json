@@ -148,6 +148,48 @@
       "when": 1790400000000,
       "tag": "0020_content_publications_and_metrics",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790500000000,
+      "tag": "0021_ai_layer_and_assistant",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790600000000,
+      "tag": "0022_automations_and_event_engine",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790700000000,
+      "tag": "0023_external_integrations",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790800000000,
+      "tag": "0024_github_backup_webhooks",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790900000000,
+      "tag": "0025_analytics_snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791000000000,
+      "tag": "0026_pgvector_knowledge_embeddings",
+      "breakpoints": true
     }
   ]
 }

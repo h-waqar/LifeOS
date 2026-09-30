@@ -13,6 +13,11 @@ import { AuthorizationError } from "@/server/auth/guard";
 import { createAuditLog } from "@/server/audit";
 import { calculateProjectProgress } from "@/server/goals/rollup";
 import { recalculateGoalProgress } from "@/server/goals/service";
+import {
+  eventBus,
+  createDomainEvent,
+  type AnyDomainEvent,
+} from "@/server/events";
 import type {
   ProjectDTO,
   ProjectMilestoneDTO,
@@ -276,7 +281,10 @@ export async function createProject(
   const safeUserId = validateUserId(authenticatedUserId);
   const validated = createProjectSchema.parse(input);
 
-  return await db.transaction(async (tx) => {
+  const pendingEvents: AnyDomainEvent[] = [];
+
+  const createdProject = await db.transaction(async (tx) => {
+    (tx as any).__pendingEvents = pendingEvents;
     // If goalId provided, verify goal exists and belongs to user
     if (validated.goalId) {
       const goalRows = await tx
@@ -330,12 +338,24 @@ export async function createProject(
       tx
     );
 
-    return toProjectDTO(inserted, 0, {
+    const projectDTO = toProjectDTO(inserted, 0, {
       milestonesCount: 0,
       tasksCount: 0,
       completedTasksCount: 0,
     });
+
+    pendingEvents.push(
+      createDomainEvent("project.created", safeUserId, { project: projectDTO })
+    );
+
+    return projectDTO;
   });
+
+  for (const event of pendingEvents) {
+    void eventBus.publish(event);
+  }
+
+  return createdProject;
 }
 
 /**
@@ -486,7 +506,11 @@ export async function updateProject(
   const safeProjectId = validateEntityId(projectId, "Project");
   const validated = updateProjectSchema.parse(input);
 
-  return await db.transaction(async (tx) => {
+  const pendingEvents: AnyDomainEvent[] = [];
+
+  const updatedProject = await db.transaction(async (tx) => {
+    (tx as any).__pendingEvents = pendingEvents;
+
     const [existing] = await tx
       .select()
       .from(projects)
@@ -591,12 +615,75 @@ export async function updateProject(
       status: updated.status,
     });
 
-    return toProjectDTO(updated, progress, {
+    const projectDTO = toProjectDTO(updated, progress, {
       milestonesCount: pMilestones.length,
       tasksCount: pTasks.length,
       completedTasksCount: pTasks.filter((t) => t.status === "completed").length,
     });
+
+    pendingEvents.push(
+      createDomainEvent("project.updated", safeUserId, {
+        project: projectDTO,
+        updatedFields: Object.keys(validated),
+      })
+    );
+
+    if (validated.status === "completed" && existing.status !== "completed") {
+      pendingEvents.push(
+        createDomainEvent("project.completed", safeUserId, {
+          project: projectDTO,
+          completedAt: new Date().toISOString(),
+        })
+      );
+    }
+
+    if (pTasks.length > 0 && pTasks.every((t) => t.status === "completed")) {
+      pendingEvents.push(
+        createDomainEvent("project.all_tasks_completed", safeUserId, {
+          project: projectDTO,
+        })
+      );
+    }
+
+    return projectDTO;
   });
+
+  for (const event of pendingEvents) {
+    void eventBus.publish(event);
+  }
+
+  return updatedProject;
+}
+
+/**
+ * Checks whether all tasks for a project are completed, and if so, emits project.all_tasks_completed.
+ */
+export async function checkAndPublishProjectAllTasksCompleted(
+  userId: string,
+  projectId: string,
+  tx?: any
+): Promise<boolean> {
+  const runner = tx || db;
+  const pTasks = await runner
+    .select({ status: tasks.status })
+    .from(tasks)
+    .where(and(eq(tasks.userId, userId), eq(tasks.projectId, projectId)));
+
+  if (pTasks.length > 0 && pTasks.every((t: any) => t.status === "completed")) {
+    const proj = await getProject(userId, projectId);
+    if (proj) {
+      const event = createDomainEvent("project.all_tasks_completed", userId, {
+        project: proj,
+      });
+      if (tx && Array.isArray((tx as any).__pendingEvents)) {
+        (tx as any).__pendingEvents.push(event);
+      } else {
+        void eventBus.publish(event);
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 /**

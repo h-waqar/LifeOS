@@ -38,6 +38,21 @@ export const updatePreferencesSchema = z
       .string()
       .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format must be HH:mm")
       .optional(),
+    quietHoursEnabled: z.boolean().optional(),
+    quietHoursStart: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format must be HH:mm")
+      .optional(),
+    quietHoursEnd: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format must be HH:mm")
+      .optional(),
+    timezone: z
+      .string()
+      .trim()
+      .min(1, "Timezone cannot be empty")
+      .max(64, "Timezone identifier cannot exceed 64 characters")
+      .optional(),
     // Explicitly disallow client-controlled userId to prevent spoofing
     userId: z.never({ message: "Client cannot specify userId in payload" }).optional(),
   })
@@ -99,6 +114,10 @@ export async function updateUserPreferences(
   if (validated.timeFormat !== undefined) safeUpdates.timeFormat = validated.timeFormat;
   if (validated.workingHoursStart !== undefined) safeUpdates.workingHoursStart = validated.workingHoursStart;
   if (validated.workingHoursEnd !== undefined) safeUpdates.workingHoursEnd = validated.workingHoursEnd;
+  if (validated.quietHoursEnabled !== undefined) safeUpdates.quietHoursEnabled = validated.quietHoursEnabled;
+  if (validated.quietHoursStart !== undefined) safeUpdates.quietHoursStart = validated.quietHoursStart;
+  if (validated.quietHoursEnd !== undefined) safeUpdates.quietHoursEnd = validated.quietHoursEnd;
+  if (validated.timezone !== undefined) safeUpdates.timezone = validated.timezone;
 
   const now = new Date();
 
@@ -112,6 +131,10 @@ export async function updateUserPreferences(
       timeFormat: safeUpdates.timeFormat ?? "24h",
       workingHoursStart: safeUpdates.workingHoursStart ?? "09:00",
       workingHoursEnd: safeUpdates.workingHoursEnd ?? "18:00",
+      quietHoursEnabled: safeUpdates.quietHoursEnabled ?? false,
+      quietHoursStart: safeUpdates.quietHoursStart ?? "22:00",
+      quietHoursEnd: safeUpdates.quietHoursEnd ?? "08:00",
+      timezone: safeUpdates.timezone ?? "UTC",
       updatedAt: now,
     })
     .onConflictDoUpdate({

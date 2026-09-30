@@ -16,3 +16,6 @@ minimumReleaseAgeExclude:
   - react-dom@19.3.0
   - react@19.3.0
   - scheduler@0.28.0
+overrides:
+  zod-to-json-schema: 3.24.6
+

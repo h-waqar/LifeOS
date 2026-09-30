@@ -34,6 +34,11 @@ import type {
   ContentStatus,
   ContentPlatform,
 } from "@/types";
+import {
+  eventBus,
+  createDomainEvent,
+  type AnyDomainEvent,
+} from "@/server/events";
 
 // Server-only runtime protection
 if (typeof window !== "undefined" && !process.env.VITEST) {
@@ -527,7 +532,28 @@ export async function updateContentItem(
     details: { contentItemId, fields: Object.keys(updatePayload) },
   });
 
-  return getContentItemById(userId, contentItemId);
+  const updatedItem = await getContentItemById(userId, contentItemId);
+
+  if (statusUpdate.status && statusUpdate.status !== existing.status) {
+    void eventBus.publish(
+      createDomainEvent("content.status_changed", userId, {
+        content: updatedItem,
+        previousStatus: existing.status,
+        newStatus: statusUpdate.status,
+      })
+    );
+
+    if (statusUpdate.status === "published") {
+      void eventBus.publish(
+        createDomainEvent("content.published", userId, {
+          content: updatedItem,
+          publishedAt: updatedItem.publishedAt || new Date().toISOString(),
+        })
+      );
+    }
+  }
+
+  return updatedItem;
 }
 
 /**
@@ -591,7 +617,28 @@ export async function transitionContentStatus(
     },
   });
 
-  return getContentItemById(userId, contentItemId);
+  const updatedItem = await getContentItemById(userId, contentItemId);
+
+  if (targetStatus !== item.status) {
+    void eventBus.publish(
+      createDomainEvent("content.status_changed", userId, {
+        content: updatedItem,
+        previousStatus: item.status,
+        newStatus: targetStatus,
+      })
+    );
+
+    if (targetStatus === "published") {
+      void eventBus.publish(
+        createDomainEvent("content.published", userId, {
+          content: updatedItem,
+          publishedAt: updatedItem.publishedAt || new Date().toISOString(),
+        })
+      );
+    }
+  }
+
+  return updatedItem;
 }
 
 /**

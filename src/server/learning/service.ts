@@ -242,6 +242,10 @@ export async function getLearningItemById(
     throw new AuthorizationError("Authentication required.");
   }
 
+  if (!id || typeof id !== "string" || !id.trim()) {
+    throw new NotFoundError("Learning item not found");
+  }
+
   const [item] = await db
     .select()
     .from(learningItems)
@@ -441,6 +445,10 @@ export async function updateLearningItem(
     throw new AuthorizationError("Authentication required.");
   }
 
+  if (!id || typeof id !== "string" || !id.trim()) {
+    throw new NotFoundError("Learning item not found");
+  }
+
   const [existing] = await db
     .select()
     .from(learningItems)
@@ -592,6 +600,10 @@ export async function deleteLearningItem(
     throw new AuthorizationError("Authentication required.");
   }
 
+  if (!id || typeof id !== "string" || !id.trim()) {
+    throw new NotFoundError("Learning item not found");
+  }
+
   const [existing] = await db
     .select()
     .from(learningItems)
@@ -647,6 +659,10 @@ export async function getLearningItemNotes(
 ): Promise<NoteDTO[]> {
   if (!userId || typeof userId !== "string" || !userId.trim()) {
     throw new AuthorizationError("Authentication required.");
+  }
+
+  if (!learningItemId || typeof learningItemId !== "string" || !learningItemId.trim()) {
+    throw new NotFoundError("Learning item not found");
   }
 
   // Verify learning item exists and is owned by user

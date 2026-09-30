@@ -32,7 +32,7 @@ import type {
   ContentPlatform,
 } from "@/types";
 
-export default function ContentPage() {
+function ContentPageContent() {
   const searchParams = useSearchParams();
   const initialAction = searchParams.get("action");
   const initialId = searchParams.get("id");
@@ -399,5 +399,19 @@ export default function ContentPage() {
         </Modal>
       )}
     </div>
+  );
+}
+
+export default function ContentPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex min-h-[400px] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <ContentPageContent />
+    </React.Suspense>
   );
 }

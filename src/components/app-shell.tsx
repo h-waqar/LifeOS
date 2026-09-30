@@ -25,6 +25,10 @@ import {
   GraduationCap,
   Wallet,
   Share2,
+  PlusCircle,
+  Zap,
+  BarChart3,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +36,8 @@ import { useTheme } from "@/components/theme-provider";
 import { useSession, signOut } from "@/lib/auth-client";
 import { CommandPalette } from "@/components/command-palette";
 import { QuickCaptureModal } from "@/components/quick-capture-modal";
+import { AssistantDrawer } from "@/components/assistant/assistant-drawer";
+import { NotificationCenter } from "@/components/notifications/notification-center";
 import { toast } from "sonner";
 
 interface AppShellProps {
@@ -48,6 +54,20 @@ export function AppShell({ children }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
   const [quickCaptureOpen, setQuickCaptureOpen] = React.useState(false);
+  const [assistantDrawerOpen, setAssistantDrawerOpen] = React.useState(false);
+
+  // Global keydown shortcut for AI Assistant (Cmd+J / Ctrl+J)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === "j" || e.key === "J")) {
+        e.preventDefault();
+        setAssistantDrawerOpen((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Global keydown shortcut for Quick Capture ('Q' or 'C' when not in text input)
   React.useEffect(() => {
@@ -100,6 +120,11 @@ export function AppShell({ children }: AppShellProps) {
       name: "Dashboard",
       href: "/dashboard",
       icon: LayoutDashboard,
+    },
+    {
+      name: "Assistant",
+      href: "/assistant",
+      icon: Sparkles,
     },
     {
       name: "Daily Plan",
@@ -156,6 +181,21 @@ export function AppShell({ children }: AppShellProps) {
       href: "/content",
       icon: Share2,
     },
+    {
+      name: "Analytics",
+      href: "/analytics",
+      icon: BarChart3,
+    },
+    {
+      name: "Automations",
+      href: "/automations",
+      icon: Zap,
+    },
+    {
+      name: "Settings",
+      href: "/settings",
+      icon: Settings,
+    },
   ];
 
   const handleSignOut = async () => {
@@ -178,6 +218,7 @@ export function AppShell({ children }: AppShellProps) {
         open={commandPaletteOpen}
         onOpenChange={setCommandPaletteOpen}
         onOpenQuickCapture={() => setQuickCaptureOpen(true)}
+        onOpenAssistant={() => setAssistantDrawerOpen(true)}
       />
 
       {/* Universal Quick Capture Modal */}
@@ -187,6 +228,12 @@ export function AppShell({ children }: AppShellProps) {
         onTaskCreated={() => {
           router.refresh();
         }}
+      />
+
+      {/* Global AI Assistant Slide-Over Drawer */}
+      <AssistantDrawer
+        open={assistantDrawerOpen}
+        onClose={() => setAssistantDrawerOpen(false)}
       />
 
       {/* Desktop Sidebar */}
@@ -274,6 +321,26 @@ export function AppShell({ children }: AppShellProps) {
               </>
             )}
           </button>
+
+          <button
+            onClick={() => setAssistantDrawerOpen(true)}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-lg border border-input bg-background/50 px-3 py-2 text-xs text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-all",
+              sidebarCollapsed && "justify-center px-0"
+            )}
+            title="Open AI Assistant (Cmd+J)"
+            data-testid="assistant-drawer-button"
+          >
+            <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+            {!sidebarCollapsed && (
+              <>
+                <span className="flex-1 text-left">Ask Assistant...</span>
+                <kbd className="pointer-events-none rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                  ⌘J
+                </kbd>
+              </>
+            )}
+          </button>
         </div>
 
         {/* Navigation Links */}
@@ -319,22 +386,27 @@ export function AppShell({ children }: AppShellProps) {
               sidebarCollapsed ? "flex-col" : "justify-between"
             )}
           >
-            {/* Theme Toggle Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              title={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`}
-              aria-label="Toggle theme"
-              data-testid="theme-toggle"
-              className="h-8 w-8"
-            >
-              {resolvedTheme === "dark" ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-            </Button>
+            <div className={cn("flex items-center gap-1", sidebarCollapsed && "flex-col")}>
+              {/* Notifications Bell */}
+              <NotificationCenter />
+
+              {/* Theme Toggle Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                title={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`}
+                aria-label="Toggle theme"
+                data-testid="theme-toggle"
+                className="h-8 w-8"
+              >
+                {resolvedTheme === "dark" ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
 
             {/* Logout Button */}
             <Button
@@ -474,15 +546,26 @@ export function AppShell({ children }: AppShellProps) {
             <span className="font-bold tracking-tight">LifeOS</span>
           </div>
           <div className="flex items-center gap-1.5">
+            <NotificationCenter />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setAssistantDrawerOpen(true)}
+              aria-label="Open AI Assistant"
+              title="Open AI Assistant (Cmd+J)"
+              className="text-primary hover:text-primary hover:bg-primary/10"
+            >
+              <Sparkles className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setQuickCaptureOpen(true)}
               aria-label="Quick capture task"
               title="Universal Quick Capture"
-              className="text-primary hover:text-primary hover:bg-primary/10"
+              className="text-muted-foreground hover:text-foreground"
             >
-              <Sparkles className="h-4 w-4" />
+              <PlusCircle className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"

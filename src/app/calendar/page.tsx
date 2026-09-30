@@ -10,6 +10,7 @@ import { CalendarDayView } from "@/components/calendar/calendar-day-view";
 import { CalendarWeekView } from "@/components/calendar/calendar-week-view";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
 import { UnscheduledTasksDrawer } from "@/components/calendar/unscheduled-tasks-drawer";
+import { GoogleCalendarSyncModal } from "@/components/calendar/google-calendar-sync-modal";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -21,6 +22,7 @@ import {
   CheckSquare,
   Loader2,
   ListTodo,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import type {
@@ -83,6 +85,23 @@ function CalendarContent() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [activeBlock, setActiveBlock] = React.useState<Partial<TimeBlockDTO> | null>(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [googleCalendarModalOpen, setGoogleCalendarModalOpen] = React.useState(false);
+
+  // Check URL query params for Google Calendar connection results
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("integration") === "google_calendar") {
+        if (params.get("status") === "connected") {
+          toast.success("Google Calendar connected successfully! Initial sync underway.");
+        } else if (params.get("error")) {
+          toast.error(`Google Calendar error: ${params.get("error")}`);
+        }
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+      }
+    }
+  }, []);
 
   // Compute start and end dates based on viewMode and currentDate
   const dateRange = React.useMemo(() => {
@@ -363,6 +382,18 @@ function CalendarContent() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Google Calendar Sync Modal Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setGoogleCalendarModalOpen(true)}
+              className="gap-1.5"
+              data-testid="google-calendar-sync-btn"
+            >
+              <RefreshCw className="h-4 w-4 text-blue-500" />
+              <span>Google Calendar</span>
+            </Button>
+
             {/* Unscheduled Tasks Backlog Drawer Toggle */}
             <Button
               variant="outline"
@@ -588,6 +619,13 @@ function CalendarContent() {
           onClose={() => setDrawerOpen(false)}
           tasks={tasks}
           onScheduleTask={handleScheduleTask}
+        />
+
+        {/* Modal: Google Calendar Two-Way Synchronization */}
+        <GoogleCalendarSyncModal
+          open={googleCalendarModalOpen}
+          onOpenChange={setGoogleCalendarModalOpen}
+          onSyncComplete={fetchCalendarData}
         />
       </div>
     </AppShell>

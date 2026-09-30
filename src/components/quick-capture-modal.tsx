@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Badge, EnergyBadge, PriorityBadge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface QuickCaptureModalProps {
   isOpen: boolean;
@@ -101,6 +102,7 @@ export function QuickCaptureModal({
 }: QuickCaptureModalProps) {
   const [input, setInput] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [aiMode, setAiMode] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -138,6 +140,48 @@ export function QuickCaptureModal({
     setError(null);
 
     try {
+      if (aiMode) {
+        // AI Natural Language Parsing Mode
+        const parseRes = await fetch("/api/ai/parse-capture", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ input: input.trim() }),
+        });
+        const parseData = await parseRes.json();
+
+        if (parseRes.ok && parseData.data) {
+          const parsed = parseData.data;
+          const createRes = await fetch("/api/tasks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: parsed.title,
+              description: parsed.description,
+              priority: parsed.priority ?? "medium",
+              scheduledDate: parsed.scheduledDate,
+              dueDate: parsed.dueDate,
+              energyLevel: parsed.energyLevel,
+              tags: parsed.tags ?? [],
+            }),
+          });
+          const createData = await createRes.json();
+
+          if (!createRes.ok) {
+            throw new Error(createData.error || "Failed to create task");
+          }
+
+          toast.success("AI Task captured!", {
+            description: createData.data?.title || parsed.title,
+          });
+
+          setInput("");
+          if (onTaskCreated) onTaskCreated(createData.data);
+          onClose();
+          return;
+        }
+      }
+
+      // Standard Token-based Quick Capture
       const res = await fetch("/api/tasks/quick-capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -193,13 +237,28 @@ export function QuickCaptureModal({
               Universal Quick Capture
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setAiMode(!aiMode)}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                aiMode
+                  ? "bg-primary/10 border-primary text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Sparkles className="h-3 w-3" />
+              <span>AI Mode {aiMode ? "ON" : "OFF"}</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">

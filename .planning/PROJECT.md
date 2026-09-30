@@ -19,19 +19,19 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ **Phase 1 (Foundation)**: TypeScript project architecture, Next.js / modular structure, PostgreSQL database with Drizzle ORM (foundational/auth tables only: users, sessions / Better Auth tables, preferences, audit_log), Better Auth authentication & secure sessions, server-side resource ownership authorization via authenticated user_id, design system & navigation shell, audit logging, and user settings — v1.0
+- ✓ **Phase 2 (Core Productivity)**: Tasks, Projects, Goals, Calendar & Time Blocking, Daily Planning & Evening Review, Habits & Streaks, and Unified Dashboard ("What matters right now?") — v1.0
+- ✓ **Phase 3 (Knowledge, Learning & Relationships)**: Markdown Notes with bi-directional linking ([[note]]), Tags, Knowledge Graph relations, Global Search, Learning System (items, courses, progress), and Relationships / People CRM (Person, Interaction entities, contact metadata, follow-ups, and relationship types) — v1.0
+- ✓ **Phase 4 (Personal Finance)**: Accounts, Transactions (income/expense/transfers), Categories, Budgets, Financial Goals link, and Net Worth reports — v1.0
+- ✓ **Phase 5 (Content & Social Media)**: Content ideas, rich editor, platform-specific variations, Content Calendar, media attachments, and content analytics data models — v1.0
+- ✓ **Phase 6 (AI Layer & Assistant)**: Multi-provider abstraction (Gemini, Claude, OpenAI, Ollama), Context Retrieval (RAG over personal graph), Tool calling, Side-effect confirmation gates, and Chat / Command Palette universal capture — v1.0
+- ✓ **Phase 7 (Automation & Event Bus)**: Event bus, Trigger-condition-action workflow engine, Background jobs / scheduler, and System notifications — v1.0
+- ✓ **Phase 8 (External Integrations)**: Google Calendar two-way sync, GitHub activity tracking, Email/Social API adapters, and Cloud storage backup — v1.0
+- ✓ **Phase 9 (Intelligence & Predictive Analytics)**: Personal analytics dashboard, Predictive trend detection, Goal risk scoring, Schedule/Time optimization, and Semantic embeddings — v1.0
 
 ### Active
 
-- [x] **Phase 1 (Foundation)**: TypeScript project architecture, Next.js / modular structure, PostgreSQL database with Drizzle ORM (foundational/auth tables only: users, sessions / Better Auth tables, preferences, audit_log), Better Auth authentication & secure sessions, server-side resource ownership authorization via authenticated user_id, design system & navigation shell, audit logging, and user settings.
-- [x] **Phase 2 (Core Productivity)**: Tasks, Projects, Goals, Calendar & Time Blocking, Daily Planning & Evening Review, Habits & Streaks, and Unified Dashboard ("What matters right now?").
-- [x] **Phase 3 (Knowledge, Learning & Relationships)**: Markdown Notes with bi-directional linking ([[note]]), Tags, Knowledge Graph relations, Global Search, Learning System (items, courses, progress), and Relationships / People CRM (Person, Interaction entities, contact metadata, follow-ups, and relationship types).
-- [x] **Phase 4 (Personal Finance)**: Accounts, Transactions (income/expense/transfers), Categories, Budgets, Financial Goals link, and Net Worth reports.
-- [ ] **Phase 5 (Content & Social Media)**: Content ideas, rich editor, platform-specific variations, Content Calendar, media attachments, and content analytics data models.
-- [ ] **Phase 6 (AI Layer & Assistant)**: Multi-provider abstraction (Gemini, Claude, OpenAI, Ollama), Context Retrieval (RAG over personal graph), Tool calling, Side-effect confirmation gates, and Chat / Command Palette universal capture.
-- [ ] **Phase 7 (Automation & Event Bus)**: Event bus, Trigger-condition-action workflow engine, Background jobs / scheduler, and System notifications.
-- [ ] **Phase 8 (External Integrations)**: Google Calendar two-way sync, GitHub activity tracking, Email/Social API adapters, and Cloud storage backup.
-- [ ] **Phase 9 (Intelligence & Predictive Analytics)**: Personal analytics dashboard, Predictive trend detection, Goal risk scoring, Schedule/Time optimization, and Semantic embeddings.
+(None currently active — Milestone 1.0 complete: 9/9 phases, 41/41 plans shipped and verified; awaiting Milestone 2.0 planning via `/gsd-new-milestone`)
 
 ### Out of Scope
 
@@ -72,6 +72,8 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 | Mandatory Human-in-the-Loop Confirmation Gate | Destructive mutations or external communications triggered by AI require explicit confirmation | Decided (Authoritative) |
 | Single-Owner User Model with Multi-User Schema Readiness | Ensures maximum privacy and speed for Hamza while tables retain user_id foreign keys for clean multi-user migration | Decided (Authoritative) |
 | Clean `src/` & Centralized Test Hierarchy | All test files are centralized in `scripts/tests/{phase}/{plan}/...` to guarantee a clean production codebase in `src/`. | Decided (Authoritative) |
+| In-App Typed Event Bus | In-process asynchronous event bus with post-commit emission, error containment, and depth-3 cycle guards, avoiding external Redis/broker overhead | Decided (Authoritative) |
+| Idempotent PostgreSQL-Backed Scheduler | Dual HTTP cron and worker daemon with distributed locks in PostgreSQL (`scheduler_locks`), eliminating external queue dependencies | Decided (Authoritative) |
 
 ## Evolution
 
@@ -91,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-22 after Phase 3 completion and transition to Phase 4*
+*Last updated: 2026-09-30 after Milestone 1.0 completion (9/9 phases, 41/41 plans complete and verified)*

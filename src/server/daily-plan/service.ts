@@ -28,6 +28,7 @@ import { toTaskDTO, listTasks } from "@/server/tasks/service";
 import { listHabits } from "@/server/habits/service";
 import { listTimeBlocks } from "@/server/calendar/service";
 import { normalizeDate, formatUtc } from "@/server/habits/streaks";
+import { githubActivityService } from "@/server/integrations/github/activity-service";
 import type {
   DailyPlanDTO,
   EveningReviewDTO,
@@ -35,6 +36,7 @@ import type {
   DailyPlanHistoryDTO,
   DailyPlanDaySummary,
   TaskDTO,
+  GitHubActivityDTO,
 } from "@/types";
 
 // Server-only runtime protection
@@ -207,6 +209,14 @@ export async function getDailyPlan(
     )
     .slice(0, 10);
 
+  // 7. Fetch GitHub Activities for Today (INTEG-02)
+  let githubActivities: GitHubActivityDTO[] = [];
+  try {
+    githubActivities = await githubActivityService.getActivitiesForDate(safeUserId, date);
+  } catch {
+    // Non-fatal if GitHub activity table is empty or offline
+  }
+
   return {
     date,
     plan: planRow ? toDailyPlanDTO(planRow) : null,
@@ -216,6 +226,7 @@ export async function getDailyPlan(
     todayHabits,
     todayTimeBlocks,
     suggestedTasks,
+    githubActivities,
   };
 }
 

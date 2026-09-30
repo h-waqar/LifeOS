@@ -30,7 +30,7 @@ describe("Plan 01-05: Adversarial API & Authorization Boundary Integration Suite
     if (!probe.isAvailable) return;
 
     // Clean any prior test user
-    await db.delete(user).where(eq(user.email, ownerUser.email));
+    await db.delete(user);
 
     // Sign up owner
     const signUpRes = await auth.api.signUpEmail({
@@ -57,7 +57,7 @@ describe("Plan 01-05: Adversarial API & Authorization Boundary Integration Suite
 
   afterAll(async () => {
     if (probe?.isAvailable) {
-      await db.delete(user).where(eq(user.email, ownerUser.email));
+      await db.delete(user);
       await closeDatabase();
     }
   });

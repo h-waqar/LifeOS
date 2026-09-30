@@ -24,6 +24,8 @@ import {
   Receipt,
   Loader2,
   Share2,
+  Zap,
+  BarChart3,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { signOut } from "@/lib/auth-client";
@@ -34,6 +36,7 @@ interface CommandPaletteProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onOpenQuickCapture?: () => void;
+  onOpenAssistant?: () => void;
 }
 
 function getEntityIcon(type: SearchEntityType) {
@@ -61,9 +64,11 @@ export function CommandPalette({
   open: controlledOpen,
   onOpenChange,
   onOpenQuickCapture,
+  onOpenAssistant,
 }: CommandPaletteProps = {}) {
   const [internalOpen, setInternalOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchMode, setSearchMode] = React.useState<"keyword" | "semantic">("keyword");
   const [searchResults, setSearchResults] = React.useState<SearchResultItem[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
   const [searchError, setSearchError] = React.useState<string | null>(null);
@@ -108,7 +113,7 @@ export function CommandPalette({
     return () => document.removeEventListener("keydown", down);
   }, [isOpen, setOpen]);
 
-  // Debounced cross-domain search fetch
+  // Debounced search fetch (Keyword or Semantic)
   React.useEffect(() => {
     const trimmed = searchQuery.trim();
     if (!trimmed) {
@@ -124,15 +129,54 @@ export function CommandPalette({
 
     const timeoutId = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `/api/search?q=${encodeURIComponent(trimmed)}&limit=25`
-        );
-        if (!res.ok) {
-          throw new Error("Search request failed");
-        }
-        const json = await res.json();
-        if (isMounted) {
-          setSearchResults(json.data?.results || []);
+        if (searchMode === "semantic") {
+          const res = await fetch(
+            `/api/search/semantic?q=${encodeURIComponent(trimmed)}&limit=25`
+          );
+          if (!res.ok) {
+            throw new Error("Semantic search request failed");
+          }
+          const json = await res.json();
+          if (isMounted) {
+            const mapped: SearchResultItem[] = (json.data?.results || []).map((r: any) => {
+              const entityType: SearchEntityType =
+                r.entityType === "learning_item"
+                  ? "learning"
+                  : r.entityType === "content_item"
+                  ? "content"
+                  : "note";
+
+              const href =
+                entityType === "note"
+                  ? `/notes?id=${r.entityId}`
+                  : entityType === "learning"
+                  ? `/learning?id=${r.entityId}`
+                  : `/content?id=${r.entityId}`;
+
+              return {
+                id: r.entityId,
+                title: r.title,
+                type: entityType,
+                href,
+                subtitle: `${r.similarityPercentage}% Match (pgvector)`,
+                snippet: r.snippet,
+                score: r.similarityScore,
+                updatedAt: r.updatedAt,
+              };
+            });
+            setSearchResults(mapped);
+          }
+        } else {
+          const res = await fetch(
+            `/api/search?q=${encodeURIComponent(trimmed)}&limit=25`
+          );
+          if (!res.ok) {
+            throw new Error("Search request failed");
+          }
+          const json = await res.json();
+          if (isMounted) {
+            setSearchResults(json.data?.results || []);
+          }
         }
       } catch {
         if (isMounted) {
@@ -150,7 +194,7 @@ export function CommandPalette({
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [searchQuery]);
+  }, [searchQuery, searchMode]);
 
   const runCommand = React.useCallback(
     (command: () => void) => {
@@ -235,10 +279,32 @@ export function CommandPalette({
               autoFocus
               value={searchQuery}
               onValueChange={setSearchQuery}
-              placeholder="Type a command or search..."
+              placeholder={
+                searchMode === "semantic"
+                  ? "Search knowledge conceptually with pgvector..."
+                  : "Type a command or search..."
+              }
               className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
               data-testid="command-palette-input"
             />
+            <button
+              type="button"
+              onClick={() => setSearchMode(searchMode === "keyword" ? "semantic" : "keyword")}
+              className={`ml-2 px-2 py-1 rounded text-xs flex items-center gap-1 transition-colors border shrink-0 ${
+                searchMode === "semantic"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted text-muted-foreground border-border hover:text-foreground"
+              }`}
+              data-testid="toggle-semantic-search"
+              title={
+                searchMode === "semantic"
+                  ? "Switch to standard keyword search"
+                  : "Switch to semantic vector search (pgvector)"
+              }
+            >
+              <Sparkles className="h-3 w-3" />
+              <span className="hidden sm:inline">{searchMode === "semantic" ? "Semantic" : "Keyword"}</span>
+            </button>
           </div>
           <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden p-2">
             <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
@@ -336,6 +402,25 @@ export function CommandPalette({
               className="px-2 py-1.5 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold"
             >
               <Command.Item
+                onSelect={() =>
+                  runCommand(() => {
+                    if (onOpenAssistant) {
+                      onOpenAssistant();
+                    } else {
+                      router.push("/assistant");
+                    }
+                  })
+                }
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-assistant"
+              >
+                <Sparkles className="mr-2 h-4 w-4 text-primary" />
+                <span>Ask AI Assistant...</span>
+                <kbd className="ml-auto pointer-events-none rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                  ⌘J
+                </kbd>
+              </Command.Item>
+              <Command.Item
                 onSelect={() => runCommand(() => router.push("/dashboard"))}
                 className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                 data-testid="cmd-dashboard"
@@ -430,6 +515,22 @@ export function CommandPalette({
               >
                 <Share2 className="mr-2 h-4 w-4 text-purple-500" />
                 <span>Go to Content</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/automations"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-automations"
+              >
+                <Zap className="mr-2 h-4 w-4 text-yellow-500" />
+                <span>Go to Automations</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/analytics"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-analytics"
+              >
+                <BarChart3 className="mr-2 h-4 w-4 text-emerald-500" />
+                <span>Go to Analytics</span>
               </Command.Item>
             </Command.Group>
 
@@ -539,6 +640,14 @@ export function CommandPalette({
               >
                 <PlusCircle className="mr-2 h-4 w-4 text-amber-500" />
                 <span>Create Learning Item</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => router.push("/automations?action=new"))}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                data-testid="cmd-new-automation"
+              >
+                <Zap className="mr-2 h-4 w-4 text-yellow-500" />
+                <span>Create Automation Rule</span>
               </Command.Item>
               <Command.Item
                 onSelect={() =>

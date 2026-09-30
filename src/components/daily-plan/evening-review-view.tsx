@@ -22,6 +22,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { GitHubActivityTimeline } from "./github-activity-timeline";
 
 interface EveningReviewViewProps {
   date: string;
@@ -723,6 +724,13 @@ export function EveningReviewView({
           </CardContent>
         </Card>
       )}
+
+      {/* GitHub Activity Timeline (INTEG-02) */}
+      <GitHubActivityTimeline
+        date={date}
+        activities={context.githubActivities || []}
+        onRefresh={onRefresh}
+      />
     </div>
   );
 }

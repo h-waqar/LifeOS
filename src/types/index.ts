@@ -1,3 +1,5 @@
+import type { GitHubActivityDTO } from "@/server/integrations/github/types";
+
 export type LifeArea =
   | "health"
   | "career"
@@ -317,6 +319,7 @@ export interface DailyPlanContextDTO {
   todayHabits: HabitDTO[];
   todayTimeBlocks: TimeBlockDTO[];
   suggestedTasks: TaskDTO[];
+  githubActivities?: GitHubActivityDTO[];
 }
 
 export interface DailyPlanDaySummary {
@@ -1142,5 +1145,166 @@ export interface LogMetricsInput {
   clicks: number;
   notes?: string | null;
 }
+
+// ============================================================================
+// Phase 6: AI Layer & Assistant Types
+// ============================================================================
+
+export type AIProviderName = "google" | "anthropic" | "openai" | "ollama";
+
+export type AIActionStatus =
+  | "pending"
+  | "executed"
+  | "rejected"
+  | "expired"
+  | "failed";
+
+export interface ActionPreview {
+  summary: string;
+  affectedEntities?: Array<{ domain: string; id?: string; name: string }>;
+  diff?: Record<string, { before?: unknown; after?: unknown }>;
+  warning?: string;
+}
+
+export interface AIConversationDTO {
+  id: string;
+  userId: string;
+  title: string;
+  provider: AIProviderName;
+  model: string;
+  systemPromptOverride?: string | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+export interface AIMessageDTO {
+  id: string;
+  conversationId: string;
+  userId: string;
+  role: "system" | "user" | "assistant" | "tool";
+  content: string;
+  toolCalls?: unknown;
+  toolResults?: unknown;
+  tokenCount?: number | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string | Date;
+}
+
+// ============================================================================
+// Phase 7: Automations & Notifications Types
+// ============================================================================
+
+export type {
+  NotificationType,
+  NotificationEntityType,
+  NotificationDTO,
+  QuietHoursConfig,
+  NotificationEligibilityResult,
+} from "@/server/notifications/types";
+
+export type {
+  AutomationTriggerType,
+  AutomationActionType,
+  ConditionOperator,
+  ConditionClause,
+  ConditionGroup,
+  ConditionsConfig,
+  AutomationRunStatus,
+  AutomationDTO,
+  AutomationRunDTO,
+  TestAutomationResult,
+  CreateAutomationInput,
+  UpdateAutomationInput,
+  ToggleAutomationInput,
+  TestAutomationInput,
+  ListAutomationsOptions,
+  ListRunsOptions,
+} from "@/server/automations/types";
+
+// ============================================================================
+// Phase 8: External Integrations Types
+// ============================================================================
+
+export type {
+  IntegrationProvider,
+  IntegrationStatus,
+  SyncDirection,
+  SyncType,
+  SyncStatus,
+  GoogleCalendarConnectionDTO,
+  GoogleCalendarDateTime,
+  GoogleCalendarEvent,
+  GoogleCalendarEventsListResponse,
+  GoogleTokenResponse,
+  GoogleUserInfo,
+  SyncOptions,
+  SyncResult,
+  CalendarEventMappingDTO,
+} from "@/server/integrations/google-calendar/types";
+
+export type {
+  GitHubActivityType,
+  GitHubActivityDTO,
+  GitHubConnectionDTO,
+  GitHubSyncResult,
+  ConnectGitHubInput,
+  SyncGitHubInput,
+  QueryActivitiesInput,
+} from "@/server/integrations/github/types";
+
+export type {
+  StorageProvider,
+  BackupStatus,
+  S3Config,
+  BackupConfig,
+  BackupManifest,
+  BackupNoteItem,
+  BackupPayload,
+  BackupRecordDTO,
+  RestoreVerificationResult,
+  BackupConfigInput,
+  CreateBackupInput,
+} from "@/server/integrations/backup/types";
+
+export type {
+  PeriodFilter,
+  TrendDirection,
+  MetricDelta,
+  TimeAllocationSummary,
+  HabitConsistencySummary,
+  ProjectVelocitySummary,
+  GoalProgressAnalytics,
+  CrossDomainCorrelations,
+  FocusWindow,
+  EnergyTierRecommendation,
+  ScheduleOptimizationResult,
+  AnalyticsDashboardDTO,
+} from "@/server/analytics/types";
+
+export type {
+  GoalRiskLevel,
+  DataSufficiency,
+  RiskFactorSeverity,
+  ContributingRiskFactor,
+  GoalForecastSignals,
+  GoalRiskForecastDTO,
+  GoalForecastSummaryDTO,
+  GoalForecastSignalInput,
+} from "@/server/goals/forecasting/types";
+
+export type {
+  KnowledgeEntityType,
+  SemanticSearchParams,
+  SemanticSearchResultItem,
+  SemanticSearchResponseDTO,
+  IndexEntityInput,
+  IndexingSummaryDTO,
+  EmbeddingStatusDTO,
+} from "@/server/search/types";
+
+
+
+
 
 

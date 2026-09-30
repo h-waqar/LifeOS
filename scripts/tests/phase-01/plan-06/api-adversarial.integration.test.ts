@@ -35,7 +35,7 @@ describe("Plan 01-06: Adversarial Application/API Security Boundary & Data-Acces
     if (!probe.isAvailable) return;
 
     // Clean any prior state
-    await db.delete(user).where(eq(user.email, testUser.email));
+    await db.delete(user);
 
     // Sign up test user
     const res = await auth.api.signUpEmail({
@@ -60,7 +60,7 @@ describe("Plan 01-06: Adversarial Application/API Security Boundary & Data-Acces
 
   afterAll(async () => {
     if (probe?.isAvailable) {
-      await db.delete(user).where(eq(user.email, testUser.email));
+      await db.delete(user);
       await closeDatabase();
     }
   });

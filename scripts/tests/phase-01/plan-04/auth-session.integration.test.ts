@@ -49,16 +49,12 @@ describe("Plan 01-04: Better Auth Authentication, Session Security & Server Auth
     if (!probe.isAvailable) return;
 
     // Clean any residual test data before starting
-    await db
-      .delete(user)
-      .where(inArray(user.email, [testUserA.email, testUserB.email]));
+    await db.delete(user);
   });
 
   afterAll(async () => {
     if (probe?.isAvailable) {
-      await db
-        .delete(user)
-        .where(inArray(user.email, [testUserA.email, testUserB.email]));
+      await db.delete(user);
       await closeDatabase();
     }
   });

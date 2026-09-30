@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { GitHubActivityTimeline } from "./github-activity-timeline";
 
 interface MorningPlanViewProps {
   date: string;
@@ -547,6 +548,13 @@ export function MorningPlanView({
           </CardContent>
         </Card>
       )}
+
+      {/* GitHub Activity Timeline (INTEG-02) */}
+      <GitHubActivityTimeline
+        date={date}
+        activities={context.githubActivities || []}
+        onRefresh={onRefresh}
+      />
     </div>
   );
 }
