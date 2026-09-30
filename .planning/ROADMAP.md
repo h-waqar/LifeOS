@@ -1,228 +1,278 @@
-# Roadmap: LifeOS
+# Roadmap: LifeOS (Milestone 2.0)
 
 ## Overview
 
-LifeOS is an integrated personal operating system built from scratch to unify tasks, projects, goals, daily planning, calendar, habits, notes, relationships, finances, content creation, and AI assistance into a single source of truth. The roadmap progresses through 9 coherent capability phases: establishing a rock-solid TypeScript & PostgreSQL foundation with Drizzle ORM and Better Auth (Phase 1), deploying the core productivity execution engine (Phase 2), connecting knowledge, learning, and relationships (Phase 3), adding personal finance (Phase 4), managing content ideation and scheduling (Phase 5), integrating the AI layer with human-in-the-loop safety (Phase 6), powering system automations and events (Phase 7), connecting external integrations like Google Calendar and GitHub (Phase 8), and delivering predictive personal intelligence (Phase 9).
+Milestone 2.0 transforms LifeOS from a standalone web-first personal operating system into an agent-accessible operating system. It introduces a provider-agnostic intelligence and execution platform enabling CLI agent harnesses (Claude Code, AGY CLI, Codex, Cursor, Windsurf) to safely inspect personal graph context and execute domain tasks through a shared, validated service layer. Milestone 2.0 progresses through 6 focused capability phases: refactoring domain services and delivering the Headless CLI (Phase 10), deploying the Model Context Protocol (MCP) server (Phase 11), providing a discoverable Skills Engine and documentation retrieval layer (Phase 12), implementing a Zero-Trust Agent Safety and attribution boundary (Phase 13), establishing a controlled Project Workspace and development execution harness (Phase 14), and expanding quick-capture ergonomics with Mobile PWA and Web Speech voice dictation (Phase 15).
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3...): Planned milestone work
-- Decimal phases (2.1, 2.2...): Urgent insertions (marked with INSERTED)
+**Phase Numbering:** Continuing from Milestone 1.0 (Phases 1–9 complete). Milestone 2.0 covers Phases 10–15.
 
-- [x] **Phase 1: Foundation** - TypeScript architecture, Next.js shell, PostgreSQL database with Drizzle ORM (foundational schema only: users, sessions / Better Auth tables, preferences, audit_log), Better Auth authentication, resource ownership authorization via user_id, design system, settings, and audit logging. *(INTERNAL QA COMPLETE / CONDITIONALLY ACCEPTED / CLOSED FOR DEVELOPMENT — Independent QA deferred to final project QA)*
-- [x] **Phase 2: Core Productivity** - Unified dashboard, tasks, projects, goals, calendar, time blocking, daily planning, and habits.
-- [x] **Phase 3: Knowledge, Learning & Relationships** - Rich Markdown notes, bidirectional linking, tags, global search, learning tracker, and Relationships / People CRM (Person, Interaction).
-- [x] **Phase 4: Personal Finance** - Accounts, transactions, categories, budgets, financial goals, and net worth reports.
-- [x] **Phase 5: Content & Social Media** - Content ideas, multi-platform drafts, content calendar, and analytics data model.
-- [x] **Phase 6: AI Layer & Assistant** - Multi-provider AI abstraction, personal graph RAG, structured tool calling with confirmation gates, and conversational assistant.
-- [x] **Phase 7: Automations & Event Engine** - In-app event bus, trigger-condition-action workflow engine, background jobs, and notifications.
-- [x] **Phase 8: External Integrations** - Google Calendar 2-way sync, GitHub activity feed, and automated cloud backup.
-- [x] **Phase 9: Intelligence & Predictive Analytics** - Cross-domain personal analytics, predictive trend detection, goal risk scoring, and semantic vector search.
+- [ ] **Phase 10: Shared Application Services & Headless CLI** - Pure headless service contracts, CLI runner foundation, entity CRUD commands, unified context inspection (`lifeos context`), and daily planning workflows.
+- [ ] **Phase 11: LifeOS Model Context Protocol (MCP) Server** - Standard stdio MCP transport, personal graph context resources (`lifeos://context/*`), structured tools delegating to canonical domain services, and agent session negotiation.
+- [ ] **Phase 12: Skills Engine & Contextual Documentation Retrieval** - Curated procedural skills registry (`skills/lifeos/*`), machine-readable frontmatter, and contextual documentation search over `.planning/` and architecture specifications.
+- [ ] **Phase 13: Zero-Trust Agent Safety, Permissions & Attribution Audit** - Five-tier agent capability permissions, mandatory HITL approval gates for high-impact mutations, zero-trust financial shield, time-bound challenge expiration, and granular `agent_audit_log`.
+- [ ] **Phase 14: Controlled Project Workspace & Development Execution Harness** - Project root sandboxing, controlled test/build execution runner, plan-to-task materialization, and pre-commit verification gates.
+- [ ] **Phase 15: Mobile PWA & Voice Dictation Quick Capture** - Web App Manifest, offline service worker caching with IndexedDB sync, and native Web Speech API voice capture in universal quick capture modal.
+
+---
 
 ## Phase Details
 
-### Phase 1: Foundation
-**Goal**: Establish the project architecture, PostgreSQL relational foundation using Drizzle ORM (foundational/auth tables only: users, sessions / Better Auth tables, user preferences, audit_log), Better Auth authentication, server-side resource ownership authorization via authenticated user_id, application navigation shell, design system, settings, and audit logging.
-**Depends on**: Nothing (first phase)
-**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, SHELL-01, SHELL-02, SHELL-03, SHELL-04, SEC-01, SEC-02, SEC-03, SEC-04
+### Phase 10: Shared Application Services & Headless CLI
+
+**Goal**: Decouple domain orchestration into a pure, headless application service layer and deliver the first-class `lifeos` CLI with deterministic command syntax, structured JSON/tabular outputs, and command-line execution for goals, projects, tasks, daily planning, and system status.
+**Depends on**: Milestone 1.0 v1 baseline (Phases 1–9)
+**Requirements**: CLI-01, CLI-02, CLI-03, CLI-04, CLI-05
 **Success Criteria** (what must be TRUE):
-  1. User can register/log in securely via Better Auth, and session persists across page reloads.
-  2. All server actions and API endpoints enforce server-side resource ownership validation against the authenticated user's user_id, maintaining strict separation between authentication and authorization.
-  3. Responsive application shell renders with sidebar navigation, theme switching, and global command palette shell.
-  4. Sensitive mutations produce immutable audit log entries in PostgreSQL.
-  5. Database migrations run cleanly with Drizzle ORM (foundational tables only; domain tables deferred per vertical-slice rule) and automated test suite passes.
-**Plans**: 11 plans
-**UI hint**: yes
+1. User can run `lifeos context` or `lifeos status` from the command line and view active goals, projects, prioritized tasks, and calendar blocks.
+2. Passing `--json` to any `lifeos` command returns deterministic, machine-readable JSON suitable for CLI agent parsing.
+3. User can create, update, list, and filter tasks, projects, goals, notes, and habits from the terminal with input validation against existing domain Zod schemas.
+4. User can complete the morning planning and evening review workflows directly from the terminal via `lifeos plan morning` and `lifeos plan evening`.
+5. CLI commands strictly invoke the same domain services (`src/server/*`) as the web application, preventing duplicate business logic.
+
+**Plans**: 3 plans
+**UI hint**: no (CLI / Server)
 
 Plans:
-- [x] 01-01: Project setup (Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Vitest)
-- [x] 01-02: PostgreSQL database setup with Drizzle ORM (foundational schema only: users, sessions / Better Auth tables, preferences, audit_log)
-- [x] 01-03: Database Hardening, Concurrency Lifecycle & Audit Log Security Boundary
-- [x] 01-04: Better Auth authentication, session security, and server authorization ownership guards
-- [x] 01-04.1: (INSERTED) Close Authentication Boundary Race Conditions & Production Hardening
-- [x] 01-05: Adversarial API & Authorization Boundary Integration Suite
-- [x] 01-06: (INSERTED) Adversarial Application/API Security Boundary & Data-Access Audit
-- [x] 01-07: Core Domain Model & Data Integrity (Projects, Tasks, PostgreSQL Composite Isolation & Invariants)
-- [x] 01-08: Task Hierarchy Hardening, Transactional Audit Logging & Concurrency Defense
-- [x] 01-09: Application Shell, Core Productivity Views & Browser E2E Verification *(INTERNAL QA COMPLETE / CONDITIONALLY ACCEPTED / CLOSED FOR DEVELOPMENT)*
-- [x] 01-10: Repository-Native Human Verification Loop Framework (.human-loop/)
+- [ ] **10-01: Shared Domain Service Contracts & Standalone CLI Runner Foundation**
+  - **Objective**: Establish pure domain service contracts and a standalone TypeScript CLI executable (`bin/lifeos.ts` / `src/cli/`) supporting session token auth, configuration loading, and standard error handling.
+  - **Files**: `src/cli/index.ts`, `src/cli/config.ts`, `src/cli/formatters.ts`, `src/server/tasks/service.ts`, `src/server/projects/service.ts`, `package.json`
+  - **Dependencies**: Milestone 1.0 server services
+  - **Requirements**: CLI-01, CLI-02
+  - **Verification**: `scripts/tests/phase-10/plan-01/cli-runner.test.ts` testing auth token validation, formatting modes (tabular vs JSON), and exit code contracts.
+- [ ] **10-02: Headless CLI Commands for Entity CRUD, Context Inspection & Daily Planning**
+  - **Objective**: Implement CLI subcommands for entity management (`lifeos tasks`, `lifeos projects`, `lifeos goals`, `lifeos habits`, `lifeos notes`), context aggregation (`lifeos context`, `lifeos status`), and daily planning (`lifeos plan morning`, `lifeos plan evening`).
+  - **Files**: `src/cli/commands/context.ts`, `src/cli/commands/tasks.ts`, `src/cli/commands/projects.ts`, `src/cli/commands/goals.ts`, `src/cli/commands/plan.ts`
+  - **Dependencies**: Plan 10-01
+  - **Requirements**: CLI-03, CLI-04, CLI-05
+  - **Verification**: `scripts/tests/phase-10/plan-02/cli-commands.test.ts` verifying argument parsing, Zod validation, entity mutations, and output structures.
+- [ ] **10-03: CLI Integration & Regression Test Suite**
+  - **Objective**: Verify end-to-end command execution against a test database, ensuring zero regression across existing web routes and service contracts.
+  - **Files**: `scripts/tests/phase-10/plan-03/cli-integration.test.ts`
+  - **Dependencies**: Plan 10-02
+  - **Requirements**: CLI-01, CLI-02, CLI-03, CLI-04, CLI-05
+  - **Verification**: Complete CLI integration test suite running with Vitest.
 
-### Phase 2: Core Productivity
-**Goal**: Deliver the primary execution engine: Goals → Projects → Tasks → Calendar / Time Blocking → Habits → Dashboard.
-**Depends on**: Phase 1
-**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, TASK-01, TASK-02, TASK-03, TASK-04, TASK-05, TASK-06, TASK-07, TASK-08, PROJ-01, PROJ-02, PROJ-03, PROJ-04, GOAL-01, GOAL-02, GOAL-03, GOAL-04, PLAN-01, PLAN-02, PLAN-03, PLAN-04, CAL-01, CAL-02, CAL-03, CAL-04, HABT-01, HABT-02, HABT-03, HABT-04
+---
+
+### Phase 11: LifeOS Model Context Protocol (MCP) Server
+
+**Goal**: Implement a dedicated, secure MCP server exposing standard resources, prompts, and tools for compatible agent harnesses (Claude Code, AGY CLI, Codex, Cursor, Windsurf) to inspect personal graph context and invoke validated domain operations through the shared service boundary.
+**Depends on**: Phase 10
+**Requirements**: MCP-01, MCP-02, MCP-03, MCP-04, MCP-05
 **Success Criteria** (what must be TRUE):
-  1. User can create a goal, break it into projects and tasks, and see progress calculate automatically without duplicate entry.
-  2. User can schedule tasks as calendar time blocks and track actual time spent.
-  3. User can complete the morning daily plan (top 3-5 focus) and evening review with rollover.
-  4. User can log habits with single-click check-ins and view accurate streak metrics.
-  5. Unified Dashboard answers "What matters right now?" with prioritized tasks and day overview.
-**Plans**: 6 plans
-**UI hint**: yes
+1. MCP client harnesses can connect to `lifeos mcp` via stdio transport and complete the MCP protocol handshake.
+2. Agent harnesses can read resources (`lifeos://context/overview`, `lifeos://tasks/today`, etc.) and receive accurate, fresh personal graph state.
+3. Agent harnesses can invoke structured tools (`lifeos_create_task`, `lifeos_update_task`, etc.) which execute safely through canonical application services.
+4. MCP tool handlers enforce authenticated `user_id` ownership checks and prevent direct SQL execution or bypass.
+5. All MCP connections require valid authentication tokens and log connection/disconnection lifecycle events.
 
-Plans:
-- [x] 02-01: Task management engine, priority scoring, dependencies, and universal quick capture
-- [x] 02-02: Goals & Projects hierarchy with multi-horizon tracking and automated progress rollups
-- [x] 02-03: Habits & Streaks engine with flexible frequency rules and single-click check-ins
-- [x] 02-04: Calendar & Time Blocking engine with task scheduling and overlap prevention
-- [x] 02-05: Daily planning morning routine and evening review workflow with zero-duplication rollover
-- [x] 02-06: Unified home dashboard & executive control center answering "What matters right now?"
-
-### Phase 3: Knowledge, Learning & Relationships
-**Goal**: Build a connected knowledge and relationship network with rich Markdown notes, bidirectional linking, tags, global search, learning system, and Relationships / People CRM (Person and Interaction entities).
-**Depends on**: Phase 2
-**Requirements**: NOTE-01, NOTE-02, NOTE-03, NOTE-04, NOTE-05, NOTE-06, CRM-01, CRM-02, CRM-03, CRM-04, CRM-05
-**Success Criteria** (what must be TRUE):
-  1. User can author markdown notes with bidirectional wikilinks ([[Note Title]]) and view backlinks in note inspector.
-  2. User can link notes to tasks, projects, goals, learning items, and people.
-  3. User can manage contacts (People) with relationship types, contact details, tags, and log interaction history with follow-up tracking.
-  4. User can execute full-text search across notes, tasks, projects, goals, and people with instant results.
-  5. User can log and track learning items (books, courses) with status, ratings, and progress notes.
 **Plans**: 4 plans
-**UI hint**: yes
+**UI hint**: no (MCP Server)
 
 Plans:
-- [x] 03-01: Markdown note editor with wikilinks, tags, and backlink graph inspection
-- [x] 03-02: Relationships / People CRM module (Person and Interaction schemas, contact management, follow-up tracking)
-- [x] 03-03: PostgreSQL full-text search across all entities (notes, tasks, projects, goals, people) and global command palette integration
-- [x] 03-04: Learning system for tracking books, courses, articles, and skill notes
+- [ ] **11-01: MCP Server Foundation, Transport & Security Handshake**
+  - **Objective**: Set up the Model Context Protocol server using `@modelcontextprotocol/sdk` over stdio transport with encrypted token authentication and capability negotiation.
+  - **Files**: `src/server/mcp/server.ts`, `src/server/mcp/transport.ts`, `src/server/mcp/auth.ts`, `src/server/mcp/types.ts`
+  - **Dependencies**: Phase 10 CLI foundation
+  - **Requirements**: MCP-01, MCP-05
+  - **Verification**: `scripts/tests/phase-11/plan-01/mcp-handshake.test.ts` verifying protocol handshake, auth failure rejection, and capability negotiation.
+- [ ] **11-02: MCP Personal Graph Resources & Standard Prompts**
+  - **Objective**: Implement standard MCP URI resources (`lifeos://context/overview`, `lifeos://goals/active`, `lifeos://projects/active`, `lifeos://tasks/today`, `lifeos://finance/summary`) and prompt templates for planning and task breakdown.
+  - **Files**: `src/server/mcp/resources/context.ts`, `src/server/mcp/resources/entities.ts`, `src/server/mcp/prompts/planning.ts`
+  - **Dependencies**: Plan 11-01
+  - **Requirements**: MCP-02
+  - **Verification**: `scripts/tests/phase-11/plan-02/mcp-resources.test.ts` verifying resource resolution, serialization, and freshness.
+- [ ] **11-03: MCP Domain Tools Registry & Canonical Service Adapters**
+  - **Objective**: Register MCP tools (`lifeos_create_task`, `lifeos_update_task`, `lifeos_create_goal`, `lifeos_create_project`, `lifeos_create_note`, `lifeos_search`) with strict Zod argument schemas delegating directly to domain services.
+  - **Files**: `src/server/mcp/tools/task-tools.ts`, `src/server/mcp/tools/project-tools.ts`, `src/server/mcp/tools/goal-tools.ts`, `src/server/mcp/tools/search-tools.ts`, `src/server/mcp/tools/registry.ts`
+  - **Dependencies**: Plan 11-02
+  - **Requirements**: MCP-03, MCP-04
+  - **Verification**: `scripts/tests/phase-11/plan-03/mcp-tools.test.ts` verifying tool validation, execution, and zero-bypass guarantees.
+- [ ] **11-04: MCP End-to-End Test Suite & Client Harness Verification**
+  - **Objective**: Verify end-to-end MCP client integration scenarios using a simulated MCP client harness.
+  - **Files**: `scripts/tests/phase-11/plan-04/mcp-client-e2e.test.ts`
+  - **Dependencies**: Plan 11-03
+  - **Requirements**: MCP-01, MCP-02, MCP-03, MCP-04, MCP-05
+  - **Verification**: Automated test asserting full client-to-server conversation, tool call execution, and state persistence.
 
-### Phase 4: Personal Finance
-**Goal**: Provide a private financial ledger connecting accounts, transactions, category budgets, and financial goals.
-**Depends on**: Phase 2
-**Requirements**: FIN-01, FIN-02, FIN-03, FIN-04, FIN-05
+---
+
+### Phase 12: Skills Engine & Contextual Documentation Retrieval
+
+**Goal**: Provide machine-discoverable procedural skills (`skills/lifeos/*`) and dynamic documentation retrieval mechanisms allowing external agents to search, retrieve, and follow domain rules, planning workflows, and architectural constraints without whole-repo context dumping.
+**Depends on**: Phase 10, Phase 11
+**Requirements**: SKILL-01, SKILL-02, SKILL-03, SKILL-04
 **Success Criteria** (what must be TRUE):
-  1. User can record income, expense, and transfer transactions across accounts.
-  2. Category budgets display real-time spending vs monthly targets.
-  3. Financial transactions and savings targets link to Financial Goals.
-  4. System computes net worth, cash flow, and savings rates with 100% verified test math.
-**Plans**: 2 plans
-**UI hint**: yes
+1. Curated procedural skills exist in `skills/lifeos/` covering task decomposition, goal alignment, weekly reviews, and code verification.
+2. Each skill exposes standardized YAML frontmatter queryable via CLI (`lifeos skills list`) and MCP tool (`lifeos_get_skill`).
+3. External agents can query `lifeos docs search [query]` and receive top matching ADRs, domain specifications, and phase documentation using hybrid search.
+4. Agents can inspect `.planning/` state (current milestone, completed summaries, pending todos) via dedicated skill context helpers.
+
+**Plans**: 3 plans
+**UI hint**: no (Skills / Docs Engine)
 
 Plans:
-- [x] 04-01: Financial accounts, categories, and transaction ledger with transfer handling
-- [x] 04-02: Monthly budgets, net worth computation, and financial goal progress reports
+- [ ] **12-01: Curated Procedural Skills Registry & Metadata Engine**
+  - **Objective**: Author domain procedural skills in `skills/lifeos/` (task-breakdown, goal-alignment, weekly-review, error-diagnosis) with YAML frontmatter parser and validation schema.
+  - **Files**: `skills/lifeos/*/SKILL.md`, `src/server/skills/registry.ts`, `src/server/skills/parser.ts`, `src/server/skills/types.ts`
+  - **Dependencies**: Phase 10 CLI
+  - **Requirements**: SKILL-01, SKILL-02
+  - **Verification**: `scripts/tests/phase-12/plan-01/skills-registry.test.ts` verifying frontmatter validation, parsing, and trigger condition matching.
+- [ ] **12-02: Contextual Documentation Search & Planning Graph Integration**
+  - **Objective**: Build documentation search service indexing architecture specs, ADRs, and `.planning/` artifacts, integrating with hybrid search and `.planning/` state inspectors.
+  - **Files**: `src/server/docs/search-service.ts`, `src/server/docs/planning-inspector.ts`, `src/cli/commands/docs.ts`, `src/server/mcp/tools/doc-tools.ts`
+  - **Dependencies**: Plan 12-01
+  - **Requirements**: SKILL-03, SKILL-04
+  - **Verification**: `scripts/tests/phase-12/plan-02/doc-search.test.ts` asserting retrieval relevance, planning state extraction, and ranking.
+- [ ] **12-03: Skills & Documentation Retrieval Verification Suite**
+  - **Objective**: Full integration test asserting agent discovery of skills and relevant doc retrieval for simulated prompts.
+  - **Files**: `scripts/tests/phase-12/plan-03/skills-integration.test.ts`
+  - **Dependencies**: Plan 12-02
+  - **Requirements**: SKILL-01, SKILL-02, SKILL-03, SKILL-04
+  - **Verification**: Vitest suite confirming skill execution contracts and document retrieval benchmarks.
 
-### Phase 5: Content & Social Media
-**Goal**: Enable content creation, multi-platform drafts, and editorial scheduling prior to external publishing integrations.
-**Depends on**: Phase 2
-**Requirements**: CONT-01, CONT-02, CONT-03, CONT-04, CONT-05
+---
+
+### Phase 13: Zero-Trust Agent Safety, Permissions & Attribution Audit
+
+**Goal**: Establish strict multi-tier agent capability boundaries (READ, WRITE, EXECUTE, DESTRUCTIVE, SENSITIVE), enforce mandatory human-in-the-loop (HITL) approval gates with expiration for high-impact mutations, prevent financial domain bypass, and record comprehensive audit logs attributing every agent-driven action.
+**Depends on**: Phase 10, Phase 11
+**Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05
 **Success Criteria** (what must be TRUE):
-  1. User can capture content ideas and organize them by topics and target distribution channels.
-  2. User can draft platform variants (Twitter thread, LinkedIn post, Blog) for a single idea.
-  3. Content calendar provides visual scheduling across publication dates.
-  4. Content transitions through workflow statuses (Idea → Draft → In Review → Scheduled → Published).
-**Plans**: 2 plans
-**UI hint**: yes
+1. Operations requiring DESTRUCTIVE or SENSITIVE permissions are intercepted, held in pending challenge state, and rejected unless approved by human confirmation.
+2. Financial domain ledger mutations and account transfers are blocked for agent callers with a strict read-only financial shield.
+3. Unconfirmed mutation challenges expire automatically after TTL (default 10 minutes) and become impossible to execute.
+4. `agent_audit_log` records every agent-initiated tool call or CLI command with provider, session, tool name, arguments, diff, and outcome.
+5. Forward database migration (0027_...) applies cleanly without disturbing historical migrations 0000–0026.
+
+**Plans**: 4 plans
+**UI hint**: yes (Approval Card / Notification Integration)
 
 Plans:
-- [x] 05-01: Content idea capture, multi-platform draft editor, and workflow status transitions
-- [x] 05-02: Visual content calendar and manual performance metrics tracking
+- [ ] **13-01: Forward Database Migration for Agent Tokens, Scopes & Audit Log**
+  - **Objective**: Create safe forward migration `0027_agent_safety_and_audit` defining `agent_tokens`, `agent_permissions`, `agent_challenges`, and `agent_audit_log` tables with composite indexes.
+  - **Files**: `src/server/db/schema/agents.ts`, `src/server/db/schema/index.ts`, `src/server/db/migrations/0027_agent_safety_and_audit.sql`, `src/server/db/migrations/meta/_journal.json`
+  - **Dependencies**: Phase 11 MCP server
+  - **Requirements**: SAFE-01, SAFE-04
+  - **Verification**: `scripts/tests/phase-13/plan-01/schema-migration.test.ts` verifying journal integrity, table creation, and constraints.
+- [ ] **13-02: Multi-Tier Permission Evaluator & Zero-Trust Financial Shield**
+  - **Objective**: Implement permission evaluation middleware classifying actions into READ, WRITE, EXECUTE, DESTRUCTIVE, SENSITIVE and completely blocking mutating financial actions for agent callers.
+  - **Files**: `src/server/agents/permissions/evaluator.ts`, `src/server/agents/permissions/types.ts`, `src/server/agents/finance-shield.ts`
+  - **Dependencies**: Plan 13-01
+  - **Requirements**: SAFE-01, SAFE-03
+  - **Verification**: `scripts/tests/phase-13/plan-02/permission-evaluator.test.ts` asserting permission denials, tier boundaries, and finance mutation blocks.
+- [ ] **13-03: HITL Approval Challenge Lifecycle & TTL Expiration Engine**
+  - **Objective**: Implement challenge generation, notification dispatch, database locking (`SELECT ... FOR UPDATE`), and automatic TTL expiration sweeper for unconfirmed high-impact agent operations.
+  - **Files**: `src/server/agents/challenges/challenge-service.ts`, `src/server/agents/challenges/ttl-sweeper.ts`, `src/components/assistant/action-confirmation-card.tsx`
+  - **Dependencies**: Plan 13-02
+  - **Requirements**: SAFE-02, SAFE-05
+  - **Verification**: `scripts/tests/phase-13/plan-03/challenge-lifecycle.test.ts` verifying approval gating, rejection, expiration, and race prevention.
+- [ ] **13-04: Agent Attribution Audit Logger & Security Integration Suite**
+  - **Objective**: Implement transactional agent attribution logger recording detailed pre/post state snapshots, and write comprehensive adversarial integration test suite.
+  - **Files**: `src/server/agents/audit/attribution-logger.ts`, `scripts/tests/phase-13/plan-04/agent-security.integration.test.ts`
+  - **Dependencies**: Plan 13-03
+  - **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05
+  - **Verification**: Adversarial security suite verifying permission bypass attempts, token hijacking defenses, and audit log completeness.
 
-### Phase 6: AI Layer & Assistant
-**Goal**: Integrate a contextual AI assistant with multi-provider support, personal graph RAG, structured tool calling, and human-in-the-loop confirmation.
-**Depends on**: Phase 3
-**Requirements**: AI-01, AI-02, AI-03, AI-04, AI-05
+---
+
+### Phase 14: Controlled Project Workspace & Development Execution Harness
+
+**Goal**: Provide a sandboxed, project-scoped execution harness for external agents to inspect repository state, plan work into LifeOS tasks, safely run test/build/type-check workflows, and commit verified code changes with strict host isolation and permission constraints.
+**Depends on**: Phase 10, Phase 13
+**Requirements**: WORK-01, WORK-02, WORK-03, WORK-04
 **Success Criteria** (what must be TRUE):
-  1. AI assistant seamlessly switches between Gemini, Claude, OpenAI, and local Ollama models.
-  2. Natural language quick capture extracts tasks, dates, and priorities into structured entities.
-  3. Side-effect mutations require explicit user confirmation before committing to the database.
-  4. Context retrieval grounds assistant responses in the user personal data graph.
-**Plans**: 7 plans
-**UI hint**: yes
+1. Agent commands are strictly restricted to the project workspace directory with path traversal attempts rejected.
+2. Execution harness executes project verification commands (`pnpm test`, `tsc --noEmit`, `pnpm build`) and captures structured failure/success logs.
+3. Agents can convert approved implementation plans into structured, prioritized LifeOS tasks linked to projects.
+4. Git commit operations by agents are blocked unless verification commands report 0 errors.
+
+**Plans**: 3 plans
+**UI hint**: no (Harness / Tooling)
 
 Plans:
-- [x] 06-01: Multi-provider AI abstraction layer and core client infrastructure
-- [x] 06-02: AI schema, conversation persistence & context assembly engine
-- [x] 06-03: Personal graph & context retrieval engine (RAG)
-- [x] 06-04: Structured tool registry & domain service wrappers
-- [x] 06-05: Human-in-the-Loop confirmation gate & action engine
-- [x] 06-06: Natural language quick capture & proactive planning engine
-- [x] 06-07: Conversational assistant UI & system integration
+- [ ] **14-01: Project Workspace Isolation Sandbox & Command Runner**
+  - **Objective**: Implement workspace path containment and execution runner with process timeouts, output buffering, and prohibited command blocklists (e.g. `rm -rf /`, arbitrary curl piped to bash).
+  - **Files**: `src/server/agents/workspace/sandbox.ts`, `src/server/agents/workspace/command-runner.ts`, `src/server/agents/workspace/types.ts`
+  - **Dependencies**: Phase 13 safety layer
+  - **Requirements**: WORK-01, WORK-02
+  - **Verification**: `scripts/tests/phase-14/plan-01/workspace-sandbox.test.ts` verifying path containment, blocklist enforcement, and timeout handling.
+- [ ] **14-02: Plan-to-Task Materialization & Pre-Commit Verification Gate**
+  - **Objective**: Implement plan parser that materializes structured LifeOS tasks with dependencies, and a verification gate that asserts clean `tsc` and test results before allowing commit actions.
+  - **Files**: `src/server/agents/workspace/plan-materializer.ts`, `src/server/agents/workspace/commit-gate.ts`, `src/cli/commands/workspace.ts`
+  - **Dependencies**: Plan 14-01
+  - **Requirements**: WORK-03, WORK-04
+  - **Verification**: `scripts/tests/phase-14/plan-02/commit-gate.test.ts` verifying plan task creation and commit blocking on test failures.
+- [ ] **14-03: Development Execution Harness Integration Suite**
+  - **Objective**: Verify end-to-end agent development workflow: plan reading → task generation → command execution → verification → commit gating.
+  - **Files**: `scripts/tests/phase-14/plan-03/workspace-integration.test.ts`
+  - **Dependencies**: Plan 14-02
+  - **Requirements**: WORK-01, WORK-02, WORK-03, WORK-04
+  - **Verification**: Full Vitest integration test suite simulating agent workflow.
 
-### Phase 7: Automations & Event Engine
-**Goal**: Deliver an in-app event bus, trigger-condition-action automation rules, background jobs, and notifications.
-**Depends on**: Phase 2
-**Requirements**: AUTO-01, AUTO-02, AUTO-03, AUTO-04
+---
+
+### Phase 15: Mobile PWA & Voice Dictation Quick Capture
+
+**Goal**: Enable instant mobile capture and offline accessibility through a Progressive Web App (PWA) manifest with service worker caching for offline task/note creation and native Web Speech API voice capture dictating thoughts directly into structured inbox items.
+**Depends on**: Milestone 1.0 Phase 2, Phase 6
+**Requirements**: MOB-01, MOB-02, MOB-03, MOB-04
 **Success Criteria** (what must be TRUE):
-  1. Domain events trigger user-defined automation rules reliably without race conditions.
-  2. Background scheduler handles recurring task generation, reminders, and evening review prompts.
-  3. In-app notifications inform the user of overdue items and automation executions.
-**Plans**: 5 plans
-**UI hint**: yes
+1. Application is installable as a PWA on mobile browsers with a valid `manifest.json` and service worker caching static shell assets.
+2. User can capture tasks and notes while offline, with records stored in IndexedDB and automatically synced to PostgreSQL upon reconnect.
+3. Quick capture modal includes a microphone button that transcribes speech into text using the browser's native Web Speech API.
+4. Spoken text is automatically parsed by the NLP quick-capture service to extract task title, priority, due date, and tags without manual typing.
+
+**Plans**: 3 plans
+**UI hint**: yes (PWA / Voice UI)
 
 Plans:
-- [x] 07-01: In-app Event Bus and domain event publisher/subscriber architecture
-- [x] 07-02: Database schema, notifications engine & in-app notification UI
-- [x] 07-03: Trigger-condition-action automation rule engine & execution lifecycle
-- [x] 07-04: Background scheduler, scheduled automations & periodic sweepers
-- [x] 07-05: Automations management UI & system integration
+- [ ] **15-01: Progressive Web App Manifest, Service Worker & Offline Sync Engine**
+  - **Objective**: Configure Web App Manifest, service worker for shell caching, and client-side IndexedDB queue with background sync on online event.
+  - **Files**: `public/manifest.json`, `src/app/manifest.ts`, `src/lib/pwa/service-worker.ts`, `src/lib/pwa/offline-store.ts`, `src/lib/pwa/sync-manager.ts`
+  - **Dependencies**: Milestone 1.0 shell
+  - **Requirements**: MOB-01, MOB-02
+  - **Verification**: `scripts/tests/phase-15/plan-01/offline-sync.test.ts` verifying IndexedDB queuing, online event triggers, and API sync.
+- [ ] **15-02: Web Speech API Voice Dictation & NLP Quick Capture Integration**
+  - **Objective**: Integrate speech recognition hook in `quick-capture-modal.tsx` with recording indicator, interim transcripts, and automatic delegation to NLP quick-capture parser.
+  - **Files**: `src/hooks/use-speech-recognition.ts`, `src/components/quick-capture-modal.tsx`, `src/components/voice/voice-dictation-button.tsx`
+  - **Dependencies**: Plan 15-01
+  - **Requirements**: MOB-03, MOB-04
+  - **Verification**: `scripts/tests/phase-15/plan-02/voice-dictation.test.ts` testing transcript handling, fallback when Web Speech is unsupported, and NLP parsing linkage.
+- [ ] **15-03: Mobile Capture & PWA End-to-End Verification Suite**
+  - **Objective**: Verify offline capture recovery, speech-to-task creation flow, and mobile responsive layout compliance.
+  - **Files**: `scripts/tests/phase-15/plan-03/mobile-capture-e2e.test.ts`
+  - **Dependencies**: Plan 15-02
+  - **Requirements**: MOB-01, MOB-02, MOB-03, MOB-04
+  - **Verification**: Vitest component and service integration tests validating offline-to-online reconciliation and voice NLP extraction.
 
-### Phase 8: External Integrations
-**Goal**: Connect LifeOS to external third-party services (Google Calendar, GitHub, Cloud Storage) using secure adapters.
-**Depends on**: Phase 2, Phase 7
-**Requirements**: INTEG-01, INTEG-02, INTEG-03, INTEG-04
-**Success Criteria** (what must be TRUE):
-  1. Google Calendar sync reflects external calendar events and pushes LifeOS scheduled blocks.
-  2. GitHub activity (commits, PRs) appears in the daily productivity timeline.
-  3. Automated backup exports database and notes to external storage.
-**Plans**: 2 plans
-**UI hint**: yes
-
-Plans:
-- [x] 08-01: Google Calendar two-way synchronization via OAuth adapter
-- [x] 08-02: GitHub activity timeline ingestion and automated cloud backup adapter
-
-### Phase 9: Intelligence & Predictive Analytics
-**Goal**: Deliver cross-domain personal analytics, predictive trend detection, goal risk assessment, and semantic search.
-**Depends on**: Phase 6, Phase 7
-**Requirements**: INTEL-01, INTEL-02, INTEL-03, INTEL-04
-**Success Criteria** (what must be TRUE):
-  1. Analytics dashboard displays deep cross-domain correlations (e.g. habits vs velocity).
-  2. Predictive engine flags at-risk goals based on current velocity and remaining days.
-  3. Semantic vector search allows conceptual query matching across the knowledge graph.
-**Plans**: 2 plans
-**UI hint**: yes
-
-Plans:
-- [x] 09-01: Cross-domain personal analytics dashboard and trend calculation engine
-- [x] 09-02: Goal risk forecasting and PostgreSQL pgvector semantic knowledge search
+---
 
 ## Database Architecture & Vertical-Slice Rule
 
-LifeOS strictly enforces a vertical-slice database evolution rule:
-1. **No Upfront Monolithic Schema**: Domain schemas MUST be introduced alongside the phase that implements their corresponding functionality. Creating database tables before their business logic exists is prohibited.
-2. **Phase 1 Database Scope**: Strictly limited to foundational/authentication tables:
-   - `users`
-   - `sessions` / Better Auth required tables (`accounts`, `verifications`, etc.)
-   - `preferences` (if required by Phase 1 design)
-   - `audit_log`
-   Do NOT create Task, Project, Goal, Habit, Calendar, Note, Person, Interaction, Finance, Content, AI, or other domain tables during Phase 1 unless strictly required by an explicitly approved Phase 1 vertical slice.
-3. **Domain Schema Introductions by Phase**:
-   - **Phase 1: Foundation**: Foundational & Auth (`users`, `sessions`, Better Auth tables, `user_preferences`, `audit_log`)
-   - **Phase 2: Core Productivity**: Tasks, Projects, Goals, Habits, Timeblocks (`tasks`, `subtasks`, `task_dependencies`, `projects`, `goals`, `goal_metrics`, `habits`, `habit_entries`, `time_blocks`, `daily_plans`, `evening_reviews`)
-   - **Phase 3: Knowledge, Learning & Relationships**: Notes, Tags, Learning, Contacts (`notes`, `tags`, `entity_tags`, `note_links`, `learning_items`, `people`, `interactions`)
-   - **Phase 4: Personal Finance**: Accounts, Transactions, Budgets (`accounts`, `transactions`, `categories`, `budgets`)
-   - **Phase 5: Content & Social Media**: Content items, drafts, editorial calendar (`content_items`, `content_platforms`, `content_publications`, `content_metrics`)
-   - **Phase 6: AI Layer & Assistant**: AI sessions and tool action logs (`ai_conversations`, `ai_messages`, `ai_actions`)
-   - **Phase 7: Automations & Event Engine**: Triggers, rules, and events (`automations`, `automation_runs`, `notifications`)
-   - **Phase 8: External Integrations**: Third-party connections and sync states (`integration_connections`, `sync_logs`)
-   - **Phase 9: Intelligence & Predictive Analytics**: Analytics aggregates and vector embeddings (`analytics_snapshots`, `pgvector` embeddings)
+Milestone 2.0 strictly maintains the vertical-slice schema evolution rules and migration integrity:
+
+1. **Forward Migrations Only**: All new schema additions (Phase 13: `agent_tokens`, `agent_permissions`, `agent_challenges`, `agent_audit_log`) MUST be introduced via safe forward migration `0027_agent_safety_and_audit.sql` and appended to `_journal.json`.
+2. **Preserve Migration History**: Historical migrations 0000–0026 are immutable. Absent Drizzle Kit intermediate snapshots for 0012–0026 are recognized as non-blocking technical debt and must NOT be casually modified or regenerated without a verified schema-introspection baseline.
+3. **No Direct SQL in Agents/CLI/MCP**: Database mutations MUST flow through domain services (`src/server/*`) enforcing authenticated `user_id` ownership checks.
+4. **Single-Tenant Foreign Key Hygiene**: All new tables must retain composite or direct `user_id` foreign keys with `ON DELETE CASCADE` or `ON DELETE RESTRICT` as domain semantics dictate.
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
+Phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15
 
 | Phase | Plans Complete | Status | Completed |
 |---|---|---|---|
-| 1. Foundation | 11/11 | Conditionally Accepted | 2026-09-14 |
-| 2. Core Productivity | 6/6 | Completed | 2026-09-17 |
-| 3. Knowledge, Learning & Relationships | 4/4 | Completed | 2026-09-22 |
-| 4. Personal Finance | 2/2 | Completed | 2026-09-22 |
-| 5. Content & Social Media | 2/2 | Completed | 2026-09-22 |
-| 6. AI Layer & Assistant | 7/7 | Completed | 2026-09-23 |
-| 7. Automations & Event Engine | 5/5 | Completed | 2026-09-30 |
-| 8. External Integrations | 2/2 | Completed | 2026-09-30 |
-| 9. Intelligence & Predictive Analytics | 2/2 | Completed | 2026-09-30 |
+| 10. Shared Application Services & Headless CLI | 0/3 | Planned | - |
+| 11. LifeOS Model Context Protocol (MCP) Server | 0/4 | Planned | - |
+| 12. Skills Engine & Contextual Documentation Retrieval | 0/3 | Planned | - |
+| 13. Zero-Trust Agent Safety, Permissions & Attribution Audit | 0/4 | Planned | - |
+| 14. Controlled Project Workspace & Development Execution Harness | 0/3 | Planned | - |
+| 15. Mobile PWA & Voice Dictation Quick Capture | 0/3 | Planned | - |
+
+---
+*Roadmap defined: 2026-09-30*
+*Milestone: v2.0 Autonomous Intelligence & Agent Interface*

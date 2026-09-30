@@ -15,6 +15,17 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 - **Success Metric / Ultimate Test**: If the user stopped using every other productivity application tomorrow, LifeOS can still tell them what matters right now, what they need to do, why it matters, how they are progressing, and what they should do next.
 - **Strategy Notes**: Master product requirements defined in prd.md (v1.0 master specification).
 
+## Current Milestone: v2.0 Autonomous Intelligence & Agent Interface
+
+**Goal:** Transform LifeOS into an agent-accessible operating system by building a provider-agnostic intelligence and execution layer (MCP Server, Headless CLI, Curated Skills, Controlled Project Execution, Agent Permissions & Attribution Audit) while maintaining a strict zero-trust boundary, domain service invariants, and zero data loss.
+
+**Target features:**
+- Provider-agnostic Model Context Protocol (MCP) server for LifeOS context retrieval and validated domain mutations
+- First-class Headless CLI (`lifeos`) with structured JSON and human-readable output
+- Procedural Skills System & Documentation Context Layer grounded in `.planning/` and domain architecture
+- Controlled project execution environment with fine-grained agent permissions, zero-trust HITL confirmation gates, and complete audit logging
+- Mobile PWA offline synchronization and voice dictation quick-capture
+
 ## Requirements
 
 ### Validated
@@ -31,7 +42,12 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 
 ### Active
 
-(None currently active — Milestone 1.0 complete: 9/9 phases, 41/41 plans shipped and verified; awaiting Milestone 2.0 planning via `/gsd-new-milestone`)
+- [ ] **Phase 10 (Shared Application Services & Headless CLI)**: Pure headless service contracts, CLI runner foundation, entity CRUD commands, unified context inspection (`lifeos context`), and daily planning workflows — v2.0
+- [ ] **Phase 11 (LifeOS Model Context Protocol Server)**: Standard stdio MCP transport, personal graph context resources, structured tools delegating to canonical domain services, and agent session negotiation — v2.0
+- [ ] **Phase 12 (Skills Engine & Contextual Documentation Retrieval)**: Curated procedural skills registry (`skills/lifeos/*`), machine-readable frontmatter, and contextual documentation search over `.planning/` and architecture specifications — v2.0
+- [ ] **Phase 13 (Zero-Trust Agent Safety, Permissions & Attribution Audit)**: Five-tier agent capability permissions, mandatory HITL approval gates for high-impact mutations, zero-trust financial shield, time-bound challenge expiration, and granular `agent_audit_log` — v2.0
+- [ ] **Phase 14 (Controlled Project Workspace & Development Execution Harness)**: Project root sandboxing, controlled test/build execution runner, plan-to-task materialization, and pre-commit verification gates — v2.0
+- [ ] **Phase 15 (Mobile PWA & Voice Dictation Quick Capture)**: Web App Manifest, offline service worker caching with IndexedDB sync, and native Web Speech API voice capture in universal quick capture modal — v2.0
 
 ### Out of Scope
 
@@ -93,4 +109,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-30 after Milestone 1.0 completion (9/9 phases, 41/41 plans complete and verified)*
+*Last updated: 2026-09-30 after Milestone 2.0 initiation and roadmap creation (Phases 10–15)*
