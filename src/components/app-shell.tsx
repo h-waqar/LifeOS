@@ -213,6 +213,14 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground" data-testid="app-shell">
+      {/* Skip to Main Content Link for Keyboard and Screen Reader Accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Skip to main content
+      </a>
+
       {/* Global Command Palette */}
       <CommandPalette
         open={commandPaletteOpen}
@@ -238,6 +246,7 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* Desktop Sidebar */}
       <aside
+        aria-label="Sidebar Navigation"
         className={cn(
           "hidden md:flex flex-col border-r bg-card/60 backdrop-blur transition-all duration-300 z-30",
           sidebarCollapsed ? "w-16" : "w-64"
@@ -344,7 +353,7 @@ export function AppShell({ children }: AppShellProps) {
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 space-y-1 px-3 py-2">
+        <nav aria-label="Desktop Navigation" className="flex-1 space-y-1 px-3 py-2">
           {navItems.map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(item.href + "/");
@@ -469,7 +478,7 @@ export function AppShell({ children }: AppShellProps) {
                 <span>Quick search...</span>
               </button>
 
-              <nav className="space-y-1">
+              <nav aria-label="Mobile Drawer Navigation" className="space-y-1">
                 {navItems.map((item) => {
                   const isActive =
                     pathname === item.href || pathname.startsWith(item.href + "/");
@@ -534,12 +543,12 @@ export function AppShell({ children }: AppShellProps) {
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Mobile Header Bar */}
-        <header className="flex h-16 items-center justify-between border-b px-4 md:hidden bg-card/50 backdrop-blur">
+        <header role="banner" className="flex h-16 items-center justify-between border-b px-4 md:hidden bg-card/50 backdrop-blur">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="rounded-md p-2 text-muted-foreground hover:bg-accent"
-              aria-label="Open menu"
+              className="rounded-md p-2 text-muted-foreground hover:bg-accent min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label="Open navigation menu"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -549,37 +558,39 @@ export function AppShell({ children }: AppShellProps) {
             <NotificationCenter />
             <Button
               variant="ghost"
-              size="icon"
+              size="touch-icon"
               onClick={() => setAssistantDrawerOpen(true)}
               aria-label="Open AI Assistant"
               title="Open AI Assistant (Cmd+J)"
-              className="text-primary hover:text-primary hover:bg-primary/10"
+              className="text-primary hover:text-primary hover:bg-primary/10 min-h-[44px] min-w-[44px]"
             >
               <Sparkles className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
-              size="icon"
+              size="touch-icon"
               onClick={() => setQuickCaptureOpen(true)}
               aria-label="Quick capture task"
               title="Universal Quick Capture"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
             >
               <PlusCircle className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
-              size="icon"
+              size="touch-icon"
               onClick={() => setCommandPaletteOpen(true)}
               aria-label="Command palette"
+              className="min-h-[44px] min-w-[44px]"
             >
               <Command className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
-              size="icon"
+              size="touch-icon"
               onClick={toggleTheme}
               aria-label="Toggle theme"
+              className="min-h-[44px] min-w-[44px]"
             >
               {resolvedTheme === "dark" ? (
                 <Sun className="h-4 w-4" />
@@ -591,9 +602,89 @@ export function AppShell({ children }: AppShellProps) {
         </header>
 
         {/* Page View Body */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 touch-momentum outline-none"
+        >
           {children}
         </main>
+
+        {/* Mobile Bottom Navigation Bar (Natural Thumb Zone) */}
+        <nav
+          aria-label="Mobile Bottom Navigation"
+          data-testid="mobile-bottom-nav"
+          className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t bg-card/95 backdrop-blur px-2 pb-[env(safe-area-inset-bottom)] md:hidden shadow-lg"
+        >
+          <Link
+            href="/dashboard"
+            className={cn(
+              "flex flex-col items-center justify-center min-h-[44px] min-w-[44px] px-2 py-1 text-[11px] font-medium transition-colors",
+              pathname === "/dashboard"
+                ? "text-primary font-semibold"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            aria-label="Dashboard"
+            data-testid="bottom-nav-dashboard"
+          >
+            <LayoutDashboard className="h-5 w-5 mb-0.5" />
+            <span>Home</span>
+          </Link>
+
+          <Link
+            href="/tasks"
+            className={cn(
+              "flex flex-col items-center justify-center min-h-[44px] min-w-[44px] px-2 py-1 text-[11px] font-medium transition-colors",
+              pathname === "/tasks" || pathname.startsWith("/tasks/")
+                ? "text-primary font-semibold"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            aria-label="Tasks"
+            data-testid="bottom-nav-tasks"
+          >
+            <CheckSquare className="h-5 w-5 mb-0.5" />
+            <span>Tasks</span>
+          </Link>
+
+          {/* Quick Capture Floating Action in Center of Thumb Zone */}
+          <button
+            type="button"
+            onClick={() => setQuickCaptureOpen(true)}
+            className="flex flex-col items-center justify-center min-h-[48px] min-w-[48px] -mt-4 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-transform active:scale-95"
+            aria-label="Quick capture task"
+            data-testid="bottom-nav-quick-capture"
+          >
+            <PlusCircle className="h-6 w-6" />
+            <span className="sr-only">Quick Capture</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setAssistantDrawerOpen(true)}
+            className={cn(
+              "flex flex-col items-center justify-center min-h-[44px] min-w-[44px] px-2 py-1 text-[11px] font-medium transition-colors",
+              assistantDrawerOpen
+                ? "text-primary font-semibold"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            aria-label="Open AI Assistant"
+            data-testid="bottom-nav-assistant"
+          >
+            <Sparkles className="h-5 w-5 mb-0.5 text-primary" />
+            <span>AI</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            className="flex flex-col items-center justify-center min-h-[44px] min-w-[44px] px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Open navigation menu"
+            data-testid="bottom-nav-menu"
+          >
+            <Menu className="h-5 w-5 mb-0.5" />
+            <span>Menu</span>
+          </button>
+        </nav>
       </div>
     </div>
   );

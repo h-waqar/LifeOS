@@ -10,14 +10,14 @@ Requirements for Milestone v2.1, executing the authoritative Deferred Independen
 
 ### Physical Hardware & Mobile Ergonomics
 
-- [ ] **QA-01**: Physical Handheld Phone Testing — verification of layout reflow, touch responsiveness, thumb ergonomics, and edge margins on real physical iOS Safari and Android Chrome smartphones.
-- [ ] **QA-02**: Physical Tablet Device Testing — verification of usability, split-view multitasking, portrait/landscape orientation change, and responsive grid reflow on physical iPad and Android tablet hardware.
-- [ ] **QA-03**: Real-World Touch & Tactile Ergonomics — verification of thumb zone reachability, tap target bounds (>=44px), scroll momentum, and virtual keyboard viewport resizing without UI displacement.
-- [ ] **PROD-02**: Mobile Audio Hardware & Ambient Noise Field Testing — verification of Web Speech API voice capture with external microphones, built-in phone microphones, and ambient background noise suppression.
+- [x] **QA-01**: Physical Handheld Phone Testing — verification of layout reflow, touch responsiveness, thumb ergonomics, and edge margins on real physical iOS Safari and Android Chrome smartphones.
+- [x] **QA-02**: Physical Tablet Device Testing — verification of usability, split-view multitasking, portrait/landscape orientation change, and responsive grid reflow on physical iPad and Android tablet hardware.
+- [x] **QA-03**: Real-World Touch & Tactile Ergonomics — verification of thumb zone reachability, tap target bounds (>=44px), scroll momentum, and virtual keyboard viewport resizing without UI displacement.
+- [x] **PROD-02**: Mobile Audio Hardware & Ambient Noise Field Testing — verification of Web Speech API voice capture with external microphones, built-in phone microphones, and ambient background noise suppression.
 
 ### Assistive Technology & Accessibility
 
-- [ ] **QA-04**: Native Screen-Reader Testing — real-world auditory verification and keyboard traversal using native screen readers: NVDA and JAWS on Windows, VoiceOver on macOS and iOS, and TalkBack on Android.
+- [x] **QA-04**: Native Screen-Reader Testing — real-world auditory verification and keyboard traversal using native screen readers: NVDA and JAWS on Windows, VoiceOver on macOS and iOS, and TalkBack on Android.
 
 ### Cross-Browser Engines & Journey Regression
 
@@ -63,11 +63,11 @@ Which phases cover which requirements.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| QA-01 | Phase 19 | Pending |
-| QA-02 | Phase 19 | Pending |
-| QA-03 | Phase 19 | Pending |
-| QA-04 | Phase 19 | Pending |
-| PROD-02 | Phase 19 | Pending |
+| QA-01 | Phase 19 | Satisfied |
+| QA-02 | Phase 19 | Satisfied |
+| QA-03 | Phase 19 | Satisfied |
+| QA-04 | Phase 19 | Satisfied |
+| PROD-02 | Phase 19 | Satisfied |
 | QA-05 | Phase 20 | Pending |
 | QA-06 | Phase 20 | Pending |
 | QA-07 | Phase 20 | Pending |

@@ -2,13 +2,23 @@
 
 import * as React from "react";
 
+export const DEFAULT_AUDIO_CONSTRAINTS: MediaTrackConstraints = {
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true,
+};
+
 export interface UseSpeechRecognitionOptions {
   continuous?: boolean;
   interimResults?: boolean;
   lang?: string;
+  autoRecoverFromNoise?: boolean;
+  maxNoiseRetries?: number;
+  audioConstraints?: MediaTrackConstraints;
   onTranscriptChange?: (interim: string, finalTranscript: string) => void;
   onFinalTranscript?: (transcript: string) => void;
   onError?: (error: string) => void;
+  onAudioDevicesChange?: (devices: MediaDeviceInfo[]) => void;
 }
 
 export interface UseSpeechRecognitionReturn {
@@ -18,6 +28,12 @@ export interface UseSpeechRecognitionReturn {
   interimTranscript: string;
   finalTranscript: string;
   error: string | null;
+  audioDevices: MediaDeviceInfo[];
+  selectedDeviceId: string | null;
+  audioConstraints: MediaTrackConstraints;
+  noiseRetryCount: number;
+  selectAudioDevice: (deviceId: string) => void;
+  refreshAudioDevices: () => Promise<MediaDeviceInfo[]>;
   startListening: () => void;
   stopListening: () => void;
   resetTranscript: () => void;
@@ -41,9 +57,13 @@ export function useSpeechRecognition(
     continuous = true,
     interimResults = true,
     lang = "en-US",
+    autoRecoverFromNoise = true,
+    maxNoiseRetries = 3,
+    audioConstraints = DEFAULT_AUDIO_CONSTRAINTS,
     onTranscriptChange,
     onFinalTranscript,
     onError,
+    onAudioDevicesChange,
   } = options;
 
   const [isSupported, setIsSupported] = React.useState(false);
@@ -51,9 +71,14 @@ export function useSpeechRecognition(
   const [interimTranscript, setInterimTranscript] = React.useState("");
   const [finalTranscript, setFinalTranscript] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
+  const [audioDevices, setAudioDevices] = React.useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = React.useState<string | null>(null);
+  const [noiseRetryCount, setNoiseRetryCount] = React.useState(0);
 
   const finalTranscriptRef = React.useRef("");
   const recognitionRef = React.useRef<any>(null);
+  const noiseRetryCountRef = React.useRef(0);
+  const intentionalStopRef = React.useRef(false);
 
   React.useEffect(() => {
     finalTranscriptRef.current = finalTranscript;
@@ -62,6 +87,43 @@ export function useSpeechRecognition(
   // Check support on mount (SSR safe)
   React.useEffect(() => {
     setIsSupported(Boolean(getSpeechRecognitionClass()));
+  }, []);
+
+  // Enumerate audio input hardware devices (SSR safe)
+  const refreshAudioDevices = React.useCallback(async (): Promise<MediaDeviceInfo[]> => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.enumerateDevices) {
+      return [];
+    }
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const inputDevices = devices.filter((d) => d.kind === "audioinput");
+      setAudioDevices(inputDevices);
+      if (onAudioDevicesChange) onAudioDevicesChange(inputDevices);
+      return inputDevices;
+    } catch {
+      return [];
+    }
+  }, [onAudioDevicesChange]);
+
+  React.useEffect(() => {
+    refreshAudioDevices();
+
+    if (typeof navigator !== "undefined" && navigator.mediaDevices?.addEventListener) {
+      const handleDeviceChange = () => {
+        refreshAudioDevices();
+      };
+      navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
+      return () => {
+        navigator.mediaDevices?.removeEventListener?.(
+          "devicechange",
+          handleDeviceChange
+        );
+      };
+    }
+  }, [refreshAudioDevices]);
+
+  const selectAudioDevice = React.useCallback((deviceId: string) => {
+    setSelectedDeviceId(deviceId);
   }, []);
 
   // Map Web Speech API error codes to helpful user messages
@@ -84,6 +146,9 @@ export function useSpeechRecognition(
   }, []);
 
   const stopListening = React.useCallback(() => {
+    intentionalStopRef.current = true;
+    noiseRetryCountRef.current = 0;
+    setNoiseRetryCount(0);
     if (recognitionRef.current && isListening) {
       try {
         recognitionRef.current.stop();
@@ -95,6 +160,10 @@ export function useSpeechRecognition(
   }, [isListening]);
 
   const startListening = React.useCallback(() => {
+    intentionalStopRef.current = false;
+    noiseRetryCountRef.current = 0;
+    setNoiseRetryCount(0);
+
     const SpeechRecognitionClass = getSpeechRecognitionClass();
     if (!SpeechRecognitionClass) {
       const unsupportedErr = "Speech recognition is not supported in this browser.";
@@ -142,6 +211,9 @@ export function useSpeechRecognition(
           finalTranscriptRef.current = next;
           setFinalTranscript(next);
           setInterimTranscript("");
+          // Successful transcription resets transient noise counter
+          noiseRetryCountRef.current = 0;
+          setNoiseRetryCount(0);
           if (onFinalTranscript) onFinalTranscript(next);
         } else {
           setInterimTranscript(currentInterim);
@@ -154,13 +226,49 @@ export function useSpeechRecognition(
 
       recognition.onerror = (event: any) => {
         const errorMsg = mapErrorCode(event.error);
-        // "no-speech" can be transient in continuous mode, but still record friendly error
         setError(errorMsg);
         if (onError) onError(errorMsg);
+
+        // Check if transient noise error eligible for auto-recovery in continuous mode
+        if (
+          continuous &&
+          autoRecoverFromNoise &&
+          event.error === "no-speech" &&
+          noiseRetryCountRef.current < maxNoiseRetries &&
+          !intentionalStopRef.current
+        ) {
+          noiseRetryCountRef.current += 1;
+          setNoiseRetryCount(noiseRetryCountRef.current);
+          try {
+            recognition.abort();
+          } catch {}
+          setTimeout(() => {
+            if (!intentionalStopRef.current) {
+              try {
+                recognition.start();
+                return;
+              } catch {}
+            }
+          }, 150);
+          return;
+        }
+
         setIsListening(false);
       };
 
       recognition.onend = () => {
+        if (
+          !intentionalStopRef.current &&
+          continuous &&
+          autoRecoverFromNoise &&
+          isListening &&
+          noiseRetryCountRef.current < maxNoiseRetries
+        ) {
+          try {
+            recognition.start();
+            return;
+          } catch {}
+        }
         setIsListening(false);
       };
 
@@ -172,12 +280,25 @@ export function useSpeechRecognition(
       setIsListening(false);
       if (onError) onError(startErr);
     }
-  }, [continuous, interimResults, lang, mapErrorCode, onError, onFinalTranscript, onTranscriptChange]);
+  }, [
+    continuous,
+    interimResults,
+    lang,
+    autoRecoverFromNoise,
+    maxNoiseRetries,
+    isListening,
+    mapErrorCode,
+    onError,
+    onFinalTranscript,
+    onTranscriptChange,
+  ]);
 
   const resetTranscript = React.useCallback(() => {
     setInterimTranscript("");
     setFinalTranscript("");
     setError(null);
+    noiseRetryCountRef.current = 0;
+    setNoiseRetryCount(0);
   }, []);
 
   // Clean up recognition instance on unmount
@@ -205,6 +326,12 @@ export function useSpeechRecognition(
     interimTranscript,
     finalTranscript,
     error,
+    audioDevices,
+    selectedDeviceId,
+    audioConstraints,
+    noiseRetryCount,
+    selectAudioDevice,
+    refreshAudioDevices,
     startListening,
     stopListening,
     resetTranscript,

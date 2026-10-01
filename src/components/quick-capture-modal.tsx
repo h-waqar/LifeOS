@@ -146,26 +146,66 @@ export function QuickCaptureModal({
   const [aiMode, setAiMode] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  const previousActiveElement = React.useRef<HTMLElement | null>(null);
 
   const tokens = React.useMemo(() => parseTokensClient(input), [input]);
 
+  // Track and restore focus upon open/close
   React.useEffect(() => {
     if (isOpen) {
+      previousActiveElement.current =
+        typeof document !== "undefined"
+          ? (document.activeElement as HTMLElement)
+          : null;
       setError(null);
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
+      if (
+        previousActiveElement.current &&
+        typeof previousActiveElement.current.focus === "function"
+      ) {
+        previousActiveElement.current.focus();
+        previousActiveElement.current = null;
+      }
       setInput("");
       setError(null);
     }
   }, [isOpen]);
 
-  // Global keydown listeners for Esc and submit on Enter
+  // Focus trap inside dialog and Escape dismissal
   React.useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        e.preventDefault();
         onClose();
+        return;
+      }
+
+      if (e.key === "Tab") {
+        if (!dialogRef.current) return;
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+        );
+        const focusableArray = Array.from(focusable);
+        if (focusableArray.length === 0) return;
+
+        const firstElement = focusableArray[0];
+        const lastElement = focusableArray[focusableArray.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
       }
     };
 
@@ -310,15 +350,16 @@ export function QuickCaptureModal({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="quick-capture-title"
-      className="fixed inset-0 z-50 flex items-start justify-center bg-background/80 backdrop-blur-sm pt-20 sm:pt-28 px-4"
+      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-background/80 backdrop-blur-sm pt-8 sm:pt-0 pb-16 px-4 safe-bottom safe-top"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-2xl rounded-xl border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto rounded-xl border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center justify-between pb-3 border-b">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary animate-pulse" />
@@ -331,7 +372,7 @@ export function QuickCaptureModal({
               type="button"
               onClick={() => setAiMode(!aiMode)}
               className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                "flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-full text-xs font-medium border transition-colors",
                 aiMode
                   ? "bg-primary/10 border-primary text-primary"
                   : "border-border text-muted-foreground hover:text-foreground"
@@ -342,7 +383,7 @@ export function QuickCaptureModal({
             </button>
             <button
               onClick={onClose}
-              className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              className="rounded-md p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               aria-label="Close"
             >
               <X className="h-4 w-4" />
@@ -358,6 +399,7 @@ export function QuickCaptureModal({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="e.g. Write architecture brief !critical ^tomorrow @high #Core ~45m +spec"
+              aria-label="Quick capture task input"
               className="w-full rounded-lg border bg-background pl-4 pr-12 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               disabled={isSubmitting}
             />
@@ -375,7 +417,11 @@ export function QuickCaptureModal({
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-2.5 rounded-md">
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-2.5 rounded-md"
+            >
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -463,14 +509,14 @@ export function QuickCaptureModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-1.5 rounded-md text-sm hover:bg-accent"
+                className="px-4 py-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md text-sm hover:bg-accent"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!input.trim() || isSubmitting}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium shadow hover:bg-primary/90 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-[44px] min-w-[44px] rounded-md bg-primary text-primary-foreground text-sm font-medium shadow hover:bg-primary/90 disabled:opacity-50"
               >
                 {isSubmitting ? "Capturing..." : "Capture Task"}
               </button>

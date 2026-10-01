@@ -64,13 +64,17 @@ export function VoiceDictationButton({
         type="button"
         disabled
         aria-label="Voice dictation unsupported"
+        aria-disabled="true"
         title="Web Speech API is not supported in this browser"
         className={cn(
-          "relative inline-flex items-center justify-center p-2 rounded-lg text-muted-foreground/40 cursor-not-allowed border border-transparent transition-colors",
+          "relative inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2 rounded-lg text-muted-foreground/40 cursor-not-allowed border border-transparent transition-colors",
           className
         )}
       >
         <MicOff className="h-4 w-4" />
+        <span className="sr-only" role="status" aria-live="polite">
+          Voice dictation is unsupported in this browser
+        </span>
       </button>
     );
   }
@@ -88,7 +92,7 @@ export function VoiceDictationButton({
           : "Click to dictate task with your voice"
       }
       className={cn(
-        "relative inline-flex items-center justify-center p-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        "relative inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
         isListening
           ? "bg-red-500/10 text-red-500 border border-red-500/40 shadow-sm animate-pulse"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-transparent",
@@ -107,6 +111,12 @@ export function VoiceDictationButton({
       ) : (
         <Mic className="h-4 w-4" />
       )}
+      {/* Screen Reader Live Status Announcement */}
+      <span className="sr-only" role="status" aria-live="polite">
+        {isListening
+          ? "Voice dictation active, listening for speech"
+          : "Voice dictation inactive"}
+      </span>
     </button>
   );
 }
