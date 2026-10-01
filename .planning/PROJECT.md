@@ -19,6 +19,22 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 
 - **Shipped v1.0**: Full Personal Operating System (Phases 1–9, 41 plans, 82 requirements, 1,171 tests).
 - **Shipped v2.0**: Autonomous Intelligence & Agent Interface (Phases 10–18, 27 plans, 27 requirements, 1,820 tests, zero-trust safety boundary, stdio MCP server, headless CLI, procedural skills, sandboxed workspace execution harness, and verified commit engine).
+- **Active Milestone**: v2.1 — Production Hardening & External Quality Assurance (Phases 19–21, 10 requirements covering physical devices, screen-reader accessibility, cross-browser compatibility, and production deployment validation).
+
+## Current Milestone: v2.1 Production Hardening & External Quality Assurance
+
+**Goal:** Execute the authoritative deferred independent QA register, validate physical mobile and tablet hardware, enforce desktop cross-browser engine parity, and resolve production deployment and migration snapshot debt.
+
+**Target features:**
+- Physical Handheld Phone Testing (real iOS Safari & Android Chrome viewport, touch, and margin verification)
+- Physical Tablet Testing (iPadOS Safari & Android Chrome split-view, orientation change, grid reflow)
+- Real-World Touch & Tactile Usability (thumb zone reachability, >=44px tap targets, momentum scrolling, keyboard resize)
+- Native Screen-Reader Accessibility (NVDA, JAWS, VoiceOver macOS/iOS, TalkBack auditory inspection)
+- Independent End-to-End Regression Testing (unbiased third-party tester walkthrough)
+- Cross-Browser Engine Compatibility (Mozilla Firefox Gecko, Apple Safari WebKit, Microsoft Edge desktop verification)
+- Final Production-Environment Verification (TLS termination, reverse proxy headers, HTTP/2 or HTTP/3, CDN caching)
+- Mobile Audio Hardware & Ambient Noise Field Verification (real-device microphone testing for Voice Quick Capture)
+- Drizzle Kit Migration Snapshot Introspection & Baseline Alignment (reconciling historical snapshots 0012–0026 without schema drift)
 
 ## Requirements
 
@@ -45,7 +61,16 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 
 ### Active
 
-*(None — Milestone 2.0 complete. Start next milestone via `/gsd-new-milestone`.)*
+- [ ] **QA-01**: Physical handheld smartphone testing on real iOS Safari and Android Chrome devices — v2.1
+- [ ] **QA-02**: Physical tablet testing on real iPadOS Safari and Android Chrome devices — v2.1
+- [ ] **QA-03**: Real-world touch, tactile usability, thumb zones, tap target bounds, and momentum scrolling — v2.1
+- [ ] **QA-04**: Native screen-reader auditory verification (NVDA, JAWS, VoiceOver macOS/iOS, TalkBack) — v2.1
+- [ ] **QA-05**: Cross-browser desktop engine compatibility (Mozilla Firefox Gecko, Apple Safari WebKit, Microsoft Edge) — v2.1
+- [ ] **QA-06**: Independent tester adversarial challenge of H01–H12 core productivity journeys — v2.1
+- [ ] **QA-07**: Holistic project-wide regression across Core OS (Phases 1–9) and Agent Platform (Phases 10–18) — v2.1
+- [ ] **PROD-01**: Production deployment verification (TLS termination, reverse proxy headers, HTTP/2 or HTTP/3, CDN caching) — v2.1
+- [ ] **PROD-02**: Mobile audio hardware variations & ambient noise field verification for Voice Quick Capture — v2.1
+- [ ] **PROD-03**: Drizzle Kit migration snapshot introspection and schema baseline alignment for historical migrations 0012–0026 — v2.1
 
 ### Out of Scope
 
@@ -112,4 +137,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-02 after v2.0 milestone completion*
+*Last updated: 2026-10-02 after v2.1 milestone initialization*

@@ -1,58 +1,28 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v2.0",
+  "milestone": "v2.1",
   "phases": [
     {
-      "number": "10",
-      "name": "Shared Application Services & Headless CLI",
-      "status": "complete"
+      "number": "19",
+      "name": "External Platform, Mobile Hardware & Assistive Device Validation",
+      "status": "pending"
     },
     {
-      "number": "11",
-      "name": "LifeOS Model Context Protocol (MCP) Server",
-      "status": "complete"
+      "number": "20",
+      "name": "Cross-Browser Engine & Adversarial Journey Regression",
+      "status": "pending"
     },
     {
-      "number": "12",
-      "name": "Skills Engine & Contextual Documentation Retrieval",
-      "status": "complete"
-    },
-    {
-      "number": "13",
-      "name": "Zero-Trust Agent Safety, Permissions & Attribution Audit",
-      "status": "complete"
-    },
-    {
-      "number": "14",
-      "name": "Security Boundary Escape Remediation & Repository-Wide Zero-Trust Closure",
-      "status": "complete"
-    },
-    {
-      "number": "15",
-      "name": "Mobile PWA & Voice Dictation Quick Capture",
-      "status": "complete"
-    },
-    {
-      "number": "16",
-      "name": "Controlled Project Workspace & Execution Harness",
-      "status": "complete"
-    },
-    {
-      "number": "17",
-      "name": "Workspace Agent Surface & Development Workflow Integration",
-      "status": "complete"
-    },
-    {
-      "number": "18",
-      "name": "Closed-Loop Autonomous Agent Execution & Verified Commit Engine",
-      "status": "complete"
+      "number": "21",
+      "name": "Production Infrastructure Hardening & Migration Baseline Alignment",
+      "status": "pending"
     }
   ],
   "next": {
-    "command": "/gsd-progress",
-    "label": "Show progress",
-    "reason": "Unsure of state — showing progress"
+    "command": "/gsd-discuss-phase",
+    "label": "Discuss Phase 19",
+    "reason": "Milestone v2.1 initialized — discuss first phase"
   },
-  "updated_at": "2026-10-01T21:04:40.363Z"
+  "updated_at": "2026-10-02T04:05:00.000Z"
 }
