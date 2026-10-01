@@ -1,3 +1,24 @@
+---
+phase: 11-lifeos-model-context-protocol-mcp-server
+plan: 03
+one-liner: MCP domain mutation and search tools delegating directly to canonical services with caller spoofing rejection
+requirements-completed:
+  - MCP-03
+  - MCP-04
+key-files:
+  created:
+    - src/server/mcp/tools/task-tools.ts
+    - src/server/mcp/tools/project-tools.ts
+    - src/server/mcp/tools/goal-tools.ts
+    - src/server/mcp/tools/note-tools.ts
+    - src/server/mcp/tools/search-tools.ts
+    - src/server/mcp/tools/habit-tools.ts
+    - src/server/mcp/tools/registry.ts
+    - scripts/tests/phase-11/plan-03/mcp-tools.test.ts
+key-decisions:
+  - "Financial Shield in MCP: Prohibit financial write tools; enforce zero-bypass service delegation"
+---
+
 # Plan 11-03: MCP Domain Tools & Canonical Service Adapters — Summary
 
 ## Execution Summary

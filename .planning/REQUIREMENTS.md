@@ -5,7 +5,7 @@
 
 ## Milestone 2.0 Requirements
 
-Requirements for Milestone 2.0 release across Phases 10 through 15. Each requirement maps to exactly one roadmap phase.
+Requirements for Milestone 2.0 release across Phases 10 through 18. Each requirement maps to exactly one roadmap phase.
 
 ### Headless CLI & Shared Application Services
 
@@ -40,10 +40,10 @@ Requirements for Milestone 2.0 release across Phases 10 through 15. Each require
 
 ### Controlled Project Workspace & Execution Harness
 
-- [ ] **WORK-01**: Agent development execution is restricted to the project root directory, preventing file traversal or process execution outside the repository.
-- [ ] **WORK-02**: System provides validated commands for running test suites (`pnpm test`), type checking (`tsc --noEmit`), and production builds (`pnpm build`) with structured status reporting and failure output capture.
-- [ ] **WORK-03**: Agents can convert an approved implementation plan into structured LifeOS tasks linked to an active project with priority, estimated duration, and dependency ordering.
-- [ ] **WORK-04**: System enforces that agent-generated code changes pass TypeScript compilation and relevant unit/integration tests before allowing git commit execution.
+- [x] **WORK-01**: Agent development execution is restricted to the project root directory, preventing file traversal or process execution outside the repository.
+- [x] **WORK-02**: System provides validated commands for running test suites (`pnpm test`), type checking (`tsc --noEmit`), and production builds (`pnpm build`) with structured status reporting and failure output capture.
+- [x] **WORK-03**: Agents can convert an approved implementation plan into structured LifeOS tasks linked to an active project with priority, estimated duration, and dependency ordering.
+- [x] **WORK-04**: System enforces that agent-generated code changes pass TypeScript compilation and relevant unit/integration tests before allowing git commit execution.
 
 ### Mobile PWA & Voice Dictation Quick Capture
 
@@ -82,24 +82,24 @@ Deferred to future releases after Milestone 2.0 execution:
 | CLI-03 | Phase 10 | Complete |
 | CLI-04 | Phase 10 | Complete |
 | CLI-05 | Phase 10 | Complete |
-| MCP-01 | Phase 11 | Pending |
-| MCP-02 | Phase 11 | Pending |
-| MCP-03 | Phase 11 | Pending |
-| MCP-04 | Phase 11 | Pending |
-| MCP-05 | Phase 11 | Pending |
-| SKILL-01 | Phase 12 | Pending |
-| SKILL-02 | Phase 12 | Pending |
-| SKILL-03 | Phase 12 | Pending |
-| SKILL-04 | Phase 12 | Pending |
-| SAFE-01 | Phase 13 | Pending |
-| SAFE-02 | Phase 13 | Pending |
-| SAFE-03 | Phase 13 | Pending |
-| SAFE-04 | Phase 13 | Pending |
-| SAFE-05 | Phase 13 | Pending |
-| WORK-01 | Phase 14 | Pending |
-| WORK-02 | Phase 14 | Pending |
-| WORK-03 | Phase 14 | Pending |
-| WORK-04 | Phase 14 | Pending |
+| MCP-01 | Phase 11 | Complete |
+| MCP-02 | Phase 11 | Complete |
+| MCP-03 | Phase 11 | Complete |
+| MCP-04 | Phase 11 | Complete |
+| MCP-05 | Phase 11 | Complete |
+| SKILL-01 | Phase 12 | Complete |
+| SKILL-02 | Phase 12 | Complete |
+| SKILL-03 | Phase 12 | Complete |
+| SKILL-04 | Phase 12 | Complete |
+| SAFE-01 | Phase 13 | Complete |
+| SAFE-02 | Phase 13 | Complete |
+| SAFE-03 | Phase 13 | Complete |
+| SAFE-04 | Phase 13 | Complete |
+| SAFE-05 | Phase 13 | Complete |
+| WORK-01 | Phase 16 / 17 / 18 | Complete |
+| WORK-02 | Phase 16 / 17 / 18 | Complete |
+| WORK-03 | Phase 16 / 17 / 18 | Complete |
+| WORK-04 | Phase 16 / 17 / 18 | Complete |
 | MOB-01 | Phase 15 | Complete |
 | MOB-02 | Phase 15 | Complete |
 | MOB-03 | Phase 15 | Complete |

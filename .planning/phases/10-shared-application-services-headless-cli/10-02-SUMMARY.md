@@ -1,3 +1,25 @@
+---
+phase: 10-shared-application-services-headless-cli
+plan: 02
+one-liner: Headless CLI commands for entity CRUD, unified context/status inspection, and morning/evening daily planning
+requirements-completed:
+  - CLI-03
+  - CLI-04
+  - CLI-05
+key-files:
+  created:
+    - src/cli/commands/context.ts
+    - src/cli/commands/tasks.ts
+    - src/cli/commands/projects.ts
+    - src/cli/commands/goals.ts
+    - src/cli/commands/notes.ts
+    - src/cli/commands/habits.ts
+    - src/cli/commands/plan.ts
+    - scripts/tests/phase-10/plan-02/cli-commands.test.ts
+key-decisions:
+  - "Direct Service Delegation: CLI commands strictly invoke domain services without raw SQL"
+---
+
 # Plan 10-02: Headless CLI Commands for Entity CRUD, Context Inspection & Daily Planning — Summary
 
 ## Execution Summary

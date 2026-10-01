@@ -1,3 +1,22 @@
+---
+phase: 11-lifeos-model-context-protocol-mcp-server
+plan: 02
+one-liner: Canonical personal graph resources and standard planning prompts with deterministic key-sorted serialization
+requirements-completed:
+  - MCP-02
+key-files:
+  created:
+    - src/server/mcp/formatters.ts
+    - src/server/mcp/resources/context.ts
+    - src/server/mcp/resources/entities.ts
+    - src/server/mcp/resources/registry.ts
+    - src/server/mcp/prompts/planning.ts
+    - src/server/mcp/prompts/registry.ts
+    - scripts/tests/phase-11/plan-02/mcp-resources.test.ts
+key-decisions:
+  - "Resource URI Design: Canonical lifeos://context/* resources with standard aliases"
+---
+
 # Plan 11-02: MCP Personal Graph Resources & Standard Prompts — Summary
 
 ## Execution Summary

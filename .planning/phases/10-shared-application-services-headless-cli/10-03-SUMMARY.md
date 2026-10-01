@@ -1,3 +1,21 @@
+---
+phase: 10-shared-application-services-headless-cli
+plan: 03
+one-liner: CLI integration and subprocess verification suite with adversarial security boundaries and zero regression
+requirements-completed:
+  - CLI-01
+  - CLI-02
+  - CLI-03
+  - CLI-04
+  - CLI-05
+key-files:
+  created:
+    - scripts/tests/phase-10/plan-03/cli-integration.test.ts
+    - scripts/tests/phase-10/plan-03/cli-adversarial.test.ts
+key-decisions:
+  - "Caller Spoofing Prevention: Reject --userId, --user_id, --userid with UsageError"
+---
+
 # Plan 10-03: CLI Integration, Subprocess Verification & Full Regression Suite — Summary
 
 ## Execution Summary

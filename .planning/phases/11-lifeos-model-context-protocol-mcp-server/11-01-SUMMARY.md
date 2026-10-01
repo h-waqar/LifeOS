@@ -1,3 +1,22 @@
+---
+phase: 11-lifeos-model-context-protocol-mcp-server
+plan: 01
+one-liner: MCP server foundation using official SDK with stdio transport, encrypted token authentication, and capability negotiation
+requirements-completed:
+  - MCP-01
+  - MCP-05
+key-files:
+  created:
+    - src/server/mcp/server.ts
+    - src/server/mcp/transport.ts
+    - src/server/mcp/auth.ts
+    - src/server/mcp/types.ts
+    - src/cli/commands/mcp.ts
+    - scripts/tests/phase-11/plan-01/mcp-handshake.test.ts
+key-decisions:
+  - "MCP Transport: Stdio transport with framed JSON-RPC 2.0 on stdout and diagnostics on stderr"
+---
+
 # Plan 11-01: MCP Server Foundation, Transport & Security Handshake — Summary
 
 ## Execution Summary

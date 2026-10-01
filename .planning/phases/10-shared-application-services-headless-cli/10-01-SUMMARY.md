@@ -1,3 +1,28 @@
+---
+phase: 10-shared-application-services-headless-cli
+plan: 01
+one-liner: Pure TypeScript standalone CLI executable and runner foundation with session token auth, configuration loading, and secret scrubbing
+requirements-completed:
+  - CLI-01
+  - CLI-02
+key-files:
+  created:
+    - bin/lifeos.js
+    - bin/lifeos.ts
+    - src/cli/index.ts
+    - src/cli/config.ts
+    - src/cli/auth.ts
+    - src/cli/formatters.ts
+    - src/cli/errors.ts
+    - src/cli/lifecycle.ts
+    - src/cli/types.ts
+    - scripts/tests/phase-10/plan-01/cli-runner.test.ts
+  modified:
+    - package.json
+key-decisions:
+  - "CLI Credential Storage: Secure POSIX 0o600 storage at ~/.config/lifeos/credentials.json"
+---
+
 # Plan 10-01: Shared Domain Service Contracts & Standalone CLI Runner Foundation — Summary
 
 ## Execution Summary

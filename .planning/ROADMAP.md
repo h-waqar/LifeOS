@@ -6,14 +6,17 @@ Milestone 2.0 transforms LifeOS from a standalone web-first personal operating s
 
 ## Phases
 
-**Phase Numbering:** Continuing from Milestone 1.0 (Phases 1–9 complete). Milestone 2.0 covers Phases 10–15.
+**Phase Numbering:** Continuing from Milestone 1.0 (Phases 1–9 complete). Milestone 2.0 covers Phases 10–18.
 
 - [x] **Phase 10: Shared Application Services & Headless CLI** - Pure headless service contracts, CLI runner foundation, entity CRUD commands, unified context inspection (`lifeos context`), and daily planning workflows.
-- [ ] **Phase 11: LifeOS Model Context Protocol (MCP) Server** - Standard stdio MCP transport, personal graph context resources (`lifeos://context/*`), structured tools delegating to canonical domain services, and agent session negotiation.
-- [ ] **Phase 12: Skills Engine & Contextual Documentation Retrieval** - Curated procedural skills registry (`skills/lifeos/*`), machine-readable frontmatter, and contextual documentation search over `.planning/` and architecture specifications.
-- [ ] **Phase 13: Zero-Trust Agent Safety, Permissions & Attribution Audit** - Five-tier agent capability permissions, mandatory HITL approval gates for high-impact mutations, zero-trust financial shield, time-bound challenge expiration, and granular `agent_audit_log`.
-- [ ] **Phase 14: Controlled Project Workspace & Development Execution Harness** - Project root sandboxing, controlled test/build execution runner, plan-to-task materialization, and pre-commit verification gates.
+- [x] **Phase 11: LifeOS Model Context Protocol (MCP) Server** - Standard stdio MCP transport, personal graph context resources (`lifeos://context/*`), structured tools delegating to canonical domain services, and agent session negotiation.
+- [x] **Phase 12: Skills Engine & Contextual Documentation Retrieval** - Curated procedural skills registry (`skills/lifeos/*`), machine-readable frontmatter, and contextual documentation search over `.planning/` and architecture specifications.
+- [x] **Phase 13: Zero-Trust Agent Safety, Permissions & Attribution Audit** - Five-tier agent capability permissions, mandatory HITL approval gates for high-impact mutations, zero-trust financial shield, time-bound challenge expiration, and granular `agent_audit_log`.
+- [x] **Phase 14: Security Boundary Escape Remediation & Repository-Wide Zero-Trust Closure** - Comprehensive remediation across webhooks, legacy AI tools, transactional audit rollback, and production challenge sweeper.
 - [x] **Phase 15: Mobile PWA & Voice Dictation Quick Capture** - Web App Manifest, offline service worker caching with IndexedDB sync, and native Web Speech API voice capture in universal quick capture modal.
+- [x] **Phase 16: Controlled Project Workspace & Execution Harness** - Sandboxed repository execution harness, path containment, validated command runners, plan-to-task materialization with DAG topology, and pre-commit verification gates.
+- [x] **Phase 17: Workspace Agent Surface & Development Workflow Integration** - Expose workspace operations via Headless CLI (`lifeos workspace`), MCP Server tools (`lifeos_workspace_*`), procedural skills registry, and end-to-end integration test suite.
+- [x] **Phase 18: Closed-Loop Autonomous Agent Execution & Verified Commit Engine** - Plan execution state inspection (`lifeos workspace status / next-task`), MCP task query parity (`lifeos_list_tasks`, `lifeos_get_task`), time-bound Verification Qualification Lease, sandboxed audited commit execution (`lifeos workspace commit`), and pre-commit hook gating.
 
 ---
 
@@ -178,39 +181,23 @@ Plans:
 
 ---
 
-### Phase 14: Controlled Project Workspace & Development Execution Harness
+### Phase 14: Security Boundary Escape Remediation & Repository-Wide Zero-Trust Closure
 
-**Goal**: Provide a sandboxed, project-scoped execution harness for external agents to inspect repository state, plan work into LifeOS tasks, safely run test/build/type-check workflows, and commit verified code changes with strict host isolation and permission constraints.
-**Depends on**: Phase 10, Phase 13
-**Requirements**: WORK-01, WORK-02, WORK-03, WORK-04
+**Goal**: Remediate repository-wide security boundary escapes discovered in post-Phase 13 audit across inbound webhooks, legacy AI tool invocations, transactional audit logging rollback, and scheduler challenge TTL sweeper.
+**Depends on**: Phase 13
+**Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05
 **Success Criteria** (what must be TRUE):
-1. Agent commands are strictly restricted to the project workspace directory with path traversal attempts rejected.
-2. Execution harness executes project verification commands (`pnpm test`, `tsc --noEmit`, `pnpm build`) and captures structured failure/success logs.
-3. Agents can convert approved implementation plans into structured, prioritized LifeOS tasks linked to projects.
-4. Git commit operations by agents are blocked unless verification commands report 0 errors.
-
-**Plans**: 3 plans
-**UI hint**: no (Harness / Tooling)
+1. Inbound generic and GitHub webhooks derive identity strictly from registered credentials; arbitrary `userId` parameters or headers are rejected fail-closed.
+2. AI assistant action confirmation routes strictly through `executeAgentOperation` with financial shield enforcement.
+3. Database mutations and `agent_audit_log` share atomic PostgreSQL transactions; audit write failure rolls back the mutation.
+4. Challenge TTL sweeper is integrated and active in production `SchedulerEngine`.
 
 Plans:
-- [ ] **14-01: Project Workspace Isolation Sandbox & Command Runner**
-  - **Objective**: Implement workspace path containment and execution runner with process timeouts, output buffering, and prohibited command blocklists (e.g. `rm -rf /`, arbitrary curl piped to bash).
-  - **Files**: `src/server/agents/workspace/sandbox.ts`, `src/server/agents/workspace/command-runner.ts`, `src/server/agents/workspace/types.ts`
-  - **Dependencies**: Phase 13 safety layer
-  - **Requirements**: WORK-01, WORK-02
-  - **Verification**: `scripts/tests/phase-14/plan-01/workspace-sandbox.test.ts` verifying path containment, blocklist enforcement, and timeout handling.
-- [ ] **14-02: Plan-to-Task Materialization & Pre-Commit Verification Gate**
-  - **Objective**: Implement plan parser that materializes structured LifeOS tasks with dependencies, and a verification gate that asserts clean `tsc` and test results before allowing commit actions.
-  - **Files**: `src/server/agents/workspace/plan-materializer.ts`, `src/server/agents/workspace/commit-gate.ts`, `src/cli/commands/workspace.ts`
-  - **Dependencies**: Plan 14-01
-  - **Requirements**: WORK-03, WORK-04
-  - **Verification**: `scripts/tests/phase-14/plan-02/commit-gate.test.ts` verifying plan task creation and commit blocking on test failures.
-- [ ] **14-03: Development Execution Harness Integration Suite**
-  - **Objective**: Verify end-to-end agent development workflow: plan reading → task generation → command execution → verification → commit gating.
-  - **Files**: `scripts/tests/phase-14/plan-03/workspace-integration.test.ts`
-  - **Dependencies**: Plan 14-02
-  - **Requirements**: WORK-01, WORK-02, WORK-03, WORK-04
-  - **Verification**: Full Vitest integration test suite simulating agent workflow.
+- [x] **14-01: Inbound Webhook Identity Spoofing & Fail-Closed HMAC Verification**
+- [x] **14-02: Legacy AI Action Execution Boundary & Financial Shield Defense**
+- [x] **14-03: Atomic Database Transaction Coupling & Null-Byte Sanitization**
+- [x] **14-04: Challenge TTL Sweeper Production Integration & CLI Argument Hashing**
+- [x] **14-05: Real PostgreSQL Security & Failure-Injection Verification Suite**
 
 ---
 
@@ -225,28 +212,73 @@ Plans:
 3. Quick capture modal includes a microphone button that transcribes speech into text using the browser's native Web Speech API.
 4. Spoken text is automatically parsed by the NLP quick-capture service to extract task title, priority, due date, and tags without manual typing.
 
-**Plans**: 3 plans
-**UI hint**: yes (PWA / Voice UI)
-
 Plans:
 - [x] **15-01: Progressive Web App Manifest, Service Worker & Offline Sync Engine**
-  - **Objective**: Configure Web App Manifest, service worker for shell caching, and client-side IndexedDB queue with background sync on online event.
-  - **Files**: `public/manifest.json`, `src/app/manifest.ts`, `src/lib/pwa/service-worker.ts`, `src/lib/pwa/offline-store.ts`, `src/lib/pwa/sync-manager.ts`
-  - **Dependencies**: Milestone 1.0 shell
-  - **Requirements**: MOB-01, MOB-02
-  - **Verification**: `scripts/tests/phase-15/plan-01/offline-sync.test.ts` verifying IndexedDB queuing, online event triggers, and API sync.
 - [x] **15-02: Web Speech API Voice Dictation & NLP Quick Capture Integration**
-  - **Objective**: Integrate speech recognition hook in `quick-capture-modal.tsx` with recording indicator, interim transcripts, and automatic delegation to NLP quick-capture parser.
-  - **Files**: `src/hooks/use-speech-recognition.ts`, `src/components/quick-capture-modal.tsx`, `src/components/voice/voice-dictation-button.tsx`
-  - **Dependencies**: Plan 15-01
-  - **Requirements**: MOB-03, MOB-04
-  - **Verification**: `scripts/tests/phase-15/plan-02/voice-dictation.test.ts` testing transcript handling, fallback when Web Speech is unsupported, and NLP parsing linkage.
 - [x] **15-03: Mobile Capture & PWA End-to-End Verification Suite**
-  - **Objective**: Verify offline capture recovery, speech-to-task creation flow, and mobile responsive layout compliance.
-  - **Files**: `scripts/tests/phase-15/plan-03/mobile-capture-e2e.test.ts`
-  - **Dependencies**: Plan 15-02
-  - **Requirements**: MOB-01, MOB-02, MOB-03, MOB-04
-  - **Verification**: Vitest component and service integration tests validating offline-to-online reconciliation and voice NLP extraction.
+
+---
+
+### Phase 16: Controlled Project Workspace & Execution Harness
+
+**Goal**: Provide a sandboxed, project-scoped execution harness for external agents to inspect repository state, plan work into LifeOS tasks, safely run test/build/type-check workflows, and enforce pre-commit verification gates with strict host isolation and permission constraints.
+**Depends on**: Phase 10, Phase 13, Phase 14
+**Requirements**: WORK-01, WORK-02, WORK-03, WORK-04
+**Success Criteria** (what must be TRUE):
+1. Agent commands are strictly restricted to the project workspace directory with path traversal attempts rejected.
+2. Execution harness executes project verification commands (`pnpm test`, `tsc --noEmit`, `pnpm build`, `pnpm lint`) and captures structured failure/success logs with bounded output.
+3. Agents can convert approved implementation plans into structured, prioritized LifeOS tasks linked to projects with dependency ordering and topological validation.
+4. Pre-commit verification gate enforces that agent code changes pass TypeScript compilation, tests, build, and linting before allowing git commit execution.
+
+Plans:
+- [x] **16-01: Project Workspace Isolation Sandbox & Validated Command Runner**
+  - **Objective**: Establish path sandboxing with canonical realpath containment (`assertSandboxPath`) and safe subprocess execution for allowlisted verification commands (`test`, `typecheck`, `build`, `lint`).
+  - **Files**: `src/server/agents/workspace/sandbox.ts`, `src/server/agents/workspace/command-runner.ts`, `src/server/agents/workspace/types.ts`
+  - **Dependencies**: Phase 10 CLI, Phase 13/14 Safety Boundary
+  - **Requirements**: WORK-01, WORK-02
+  - **Verification**: `scripts/tests/phase-16/plan-01/workspace-sandbox.test.ts` (39/39 passing)
+- [x] **16-02: Plan-to-Task Materialization & Pre-Commit Verification Gate**
+  - **Objective**: Implement plan materializer converting plan files into topologically ordered tasks, and build pre-commit verification gate enforcing typecheck, tests, build, and linting.
+  - **Files**: `src/server/agents/workspace/plan-materializer.ts`, `src/server/agents/workspace/verification-gate.ts`
+  - **Dependencies**: Plan 16-01
+  - **Requirements**: WORK-03, WORK-04
+  - **Verification**: `scripts/tests/phase-16/plan-02/plan-materializer.test.ts` (26/26 passing) & `scripts/tests/phase-16/plan-02/verification-gate.test.ts` (22/22 passing)
+
+---
+
+### Phase 17: Workspace Agent Surface & Development Workflow Integration
+
+**Goal**: Expose the Phase 16 workspace execution harness, plan materializer, and pre-commit verification gate through the Headless CLI (`lifeos workspace`), MCP Server tools (`lifeos_workspace_run`, `lifeos_workspace_materialize_plan`, `lifeos_workspace_verify`), procedural skills registry (`skills/lifeos/workspace-development`), and an end-to-end integration test suite.
+**Depends on**: Phase 10, Phase 11, Phase 12, Phase 13, Phase 16
+**Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, CLI-02, MCP-03, SKILL-01
+**Success Criteria** (what must be TRUE):
+1. User and agents can execute `lifeos workspace run`, `lifeos workspace verify`, and `lifeos workspace materialize` via the CLI runner with `--json` and tabular outputs.
+2. MCP server exposes validated workspace tools (`lifeos_workspace_run`, `lifeos_workspace_materialize_plan`, `lifeos_workspace_verify`) delegating to canonical sandboxed services.
+3. Procedural skill `skills/lifeos/workspace-development/SKILL.md` is discoverable via CLI and MCP skill tools.
+4. End-to-end integration test suite verifies the full development loop: plan file reading -> plan materialization -> command execution -> verification gate -> commit qualification.
+5. All zero-trust permissions (`EXECUTE`, `WRITE`), caller anti-spoofing, path containment, and financial shield boundary invariants are preserved.
+
+Plans:
+- [x] **17-01: Workspace CLI Commands, MCP Tools Registry & End-to-End Development Integration**
+
+---
+
+### Phase 18: Closed-Loop Autonomous Agent Execution & Verified Commit Engine
+
+**Goal**: Deliver a closed-loop autonomous development lifecycle: plan execution state tracking and next unblocked step resolution (`lifeos workspace status / next-task`), MCP task query parity (`lifeos_list_tasks`, `lifeos_get_task`), time-bound Verification Qualification Leases, controlled and audited sandboxed commit execution (`lifeos workspace commit`), and pre-commit hook gating.
+**Depends on**: Phase 16, Phase 17
+**Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, MCP-02, MCP-03, SAFE-01, SAFE-04
+**Success Criteria** (what must be TRUE):
+1. Agents can query materialized plan execution state and next unblocked task via CLI (`lifeos workspace status`, `lifeos workspace next-task`) and MCP tools (`lifeos_workspace_plan_status`, `lifeos_workspace_next_task`).
+2. MCP server achieves task inspection parity with CLI by exposing `lifeos_list_tasks` and `lifeos_get_task` under `READ` capability.
+3. Pre-commit verification produces a time-bound, working-tree-hash-bound Verification Qualification Lease (`VerificationLease`) enabling commit eligibility.
+4. Agents can execute sandboxed, audited commits via CLI (`lifeos workspace commit`) and MCP (`lifeos_workspace_commit`) strictly gated by an active verification lease with 0 working-tree drift.
+5. Repository provides an installable pre-commit hook enforcing that manual or subprocess `git commit` runs require a valid verification qualification lease.
+6. All workspace execution and commit operations record complete `beforeState` / `afterState` results in `agent_audit_log`.
+
+Plans:
+- [x] **18-01: Plan Execution Observability, Next-Task Resolution & MCP Task Query Parity**
+- [x] **18-02: Verification Qualification Leases, Sandboxed Audited Commit & Pre-Commit Hook Gating**
 
 ---
 
@@ -262,17 +294,21 @@ Milestone 2.0 strictly maintains the vertical-slice schema evolution rules and m
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15
+Phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18
 
 | Phase | Plans Complete | Status | Completed |
 |---|---|---|---|
-| 10. Shared Application Services & Headless CLI | 0/3 | Planned | - |
-| 11. LifeOS Model Context Protocol (MCP) Server | 0/4 | Planned | - |
-| 12. Skills Engine & Contextual Documentation Retrieval | 0/3 | Planned | - |
-| 13. Zero-Trust Agent Safety, Permissions & Attribution Audit | 0/4 | Planned | - |
-| 14. Controlled Project Workspace & Development Execution Harness | 0/3 | Planned | - |
-| 15. Mobile PWA & Voice Dictation Quick Capture | 0/3 | Planned | - |
+| 10. Shared Application Services & Headless CLI | 3/3 | Complete | 2026-09-30 |
+| 11. LifeOS Model Context Protocol (MCP) Server | 4/4 | Complete | 2026-09-30 |
+| 12. Skills Engine & Contextual Documentation Retrieval | 3/3 | Complete | 2026-10-01 |
+| 13. Zero-Trust Agent Safety, Permissions & Attribution Audit | 4/4 | Complete | 2026-10-01 |
+| 14. Security Boundary Escape Remediation & Repository-Wide Zero-Trust Closure | 5/5 | Complete | 2026-10-01 |
+| 15. Mobile PWA & Voice Dictation Quick Capture | 3/3 | Complete | 2026-10-01 |
+| 16. Controlled Project Workspace & Execution Harness | 2/2 | Complete | 2026-10-01 |
+| 17. Workspace Agent Surface & Development Workflow Integration | 1/1 | Complete | 2026-10-01 |
+| 18. Closed-Loop Autonomous Agent Execution & Verified Commit Engine | 2/2 | Complete | 2026-10-01 |
 
 ---
 *Roadmap defined: 2026-09-30*
+*Last updated: 2026-10-01 after Plan 18-02 completion (Milestone 2.0 Complete)*
 *Milestone: v2.0 Autonomous Intelligence & Agent Interface*
