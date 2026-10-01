@@ -327,7 +327,7 @@ describe("Plan 08-01: Google Calendar Sync Engine (Unit & Integration Tests)", (
 
     it("recovers from HTTP 410 Gone by clearing syncToken and executing full sync", async () => {
       // Set expired sync token in metadata
-      await db
+      const [updatedConn] = await db
         .update(integrationConnections)
         .set({
           metadata: {
@@ -335,7 +335,8 @@ describe("Plan 08-01: Google Calendar Sync Engine (Unit & Integration Tests)", (
             syncToken: "expired_sync_token_410",
           },
         })
-        .where(eq(integrationConnections.id, connectionId));
+        .where(eq(integrationConnections.id, connectionId))
+        .returning();
 
       let callCount = 0;
       vi.spyOn(mockClient, "listEvents").mockImplementation(async (_token, opts) => {

@@ -214,7 +214,7 @@ export class GoogleCalendarSyncEngine {
     const timeMin = options.timeMin ?? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const timeMax = options.timeMax ?? new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
 
-    do {
+    while (true) {
       let response;
       try {
         response = await this.client.listEvents(accessToken, {
@@ -252,7 +252,11 @@ export class GoogleCalendarSyncEngine {
       if (response.nextSyncToken) {
         result.nextSyncToken = response.nextSyncToken;
       }
-    } while (pageToken);
+
+      if (!pageToken) {
+        break;
+      }
+    }
   }
 
   /**
