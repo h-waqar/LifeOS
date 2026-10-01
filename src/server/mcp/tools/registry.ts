@@ -15,6 +15,7 @@ import { registerSearchTools } from "./search-tools";
 import { registerHabitTools } from "./habit-tools";
 import { registerSkillTools } from "./skill-tools";
 import { registerDocTools } from "./doc-tools";
+import { registerWorkspaceTools } from "./workspace-tools";
 
 export function registerTools(server: McpServer, context: McpContext): void {
   // 1. Task tools (3)
@@ -40,6 +41,9 @@ export function registerTools(server: McpServer, context: McpContext): void {
 
   // 8. Documentation & Planning tools (3)
   registerDocTools(server, context);
+
+  // 9. Workspace tools (3)
+  registerWorkspaceTools(server, context);
 
   // Assert Financial Shield Boundary
   const registeredTools = (server as unknown as { _registeredTools?: Record<string, unknown> })._registeredTools;

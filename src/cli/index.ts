@@ -21,6 +21,7 @@ import { handleMcp } from "./commands/mcp";
 import { handleSkills } from "./commands/skills";
 import { handleDocs } from "./commands/docs";
 import { handleAgents } from "./commands/agents";
+import { handleWorkspace } from "./commands/workspace";
 import type {
   CommandContext,
   CommandResult,
@@ -149,6 +150,7 @@ Core Commands:
   skills             Discover and retrieve procedural skills guidance (list, get, match)
   docs               Search and inspect documentation, specs, and planning state
   agent              Manage agent tokens, approval challenges, and audit logs
+  workspace          Execute sandboxed workspace commands, verify code, and materialize plans
 
 For command-specific help, run:
   lifeos [command] --help
@@ -238,6 +240,11 @@ export const COMMAND_REGISTRY: Record<string, { run: CommandFn; requiresAuth: bo
     run: handleAgents,
     requiresAuth: true,
     help: "lifeos agent [token|challenge|audit] [action] [flags]",
+  },
+  workspace: {
+    run: handleWorkspace,
+    requiresAuth: true,
+    help: "lifeos workspace [run|verify|materialize|status|next-task] [flags]",
   },
 };
 
