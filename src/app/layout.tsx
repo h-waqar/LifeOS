@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PwaRegister } from "@/components/pwa/pwa-register";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -7,6 +8,12 @@ export const metadata: Metadata = {
   title: "LifeOS - Personal Operating System",
   description:
     "Unified system connecting goals, projects, tasks, time, knowledge, money, learning, and relationships.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "LifeOS",
+  },
 };
 
 const themeScript = `
@@ -33,10 +40,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#09090b" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
         <ThemeProvider>
+          <PwaRegister />
           {children}
           <Toaster richColors position="bottom-right" />
         </ThemeProvider>
