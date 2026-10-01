@@ -50,9 +50,9 @@
     }
   ],
   "next": {
-    "command": "/gsd-audit-milestone v2.0",
-    "label": "Audit and Complete Milestone 2.0",
-    "reason": "Phase 18 Closed-Loop Autonomous Agent Execution & Verified Commit Engine completed and verified; all 9 Milestone 2.0 phases complete"
+    "command": "/gsd-progress",
+    "label": "Show progress",
+    "reason": "Unsure of state — showing progress"
   },
-  "updated_at": "2026-10-01T20:30:00.000Z"
+  "updated_at": "2026-10-01T21:04:40.363Z"
 }

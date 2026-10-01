@@ -15,16 +15,10 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 - **Success Metric / Ultimate Test**: If the user stopped using every other productivity application tomorrow, LifeOS can still tell them what matters right now, what they need to do, why it matters, how they are progressing, and what they should do next.
 - **Strategy Notes**: Master product requirements defined in prd.md (v1.0 master specification).
 
-## Current Milestone: v2.0 Autonomous Intelligence & Agent Interface
+## Current State
 
-**Goal:** Transform LifeOS into an agent-accessible operating system by building a provider-agnostic intelligence and execution layer (MCP Server, Headless CLI, Curated Skills, Controlled Project Execution, Agent Permissions & Attribution Audit) while maintaining a strict zero-trust boundary, domain service invariants, and zero data loss.
-
-**Target features:**
-- Provider-agnostic Model Context Protocol (MCP) server for LifeOS context retrieval and validated domain mutations
-- First-class Headless CLI (`lifeos`) with structured JSON and human-readable output
-- Procedural Skills System & Documentation Context Layer grounded in `.planning/` and domain architecture
-- Controlled project execution environment with fine-grained agent permissions, zero-trust HITL confirmation gates, and complete audit logging
-- Mobile PWA offline synchronization and voice dictation quick-capture
+- **Shipped v1.0**: Full Personal Operating System (Phases 1–9, 41 plans, 82 requirements, 1,171 tests).
+- **Shipped v2.0**: Autonomous Intelligence & Agent Interface (Phases 10–18, 27 plans, 27 requirements, 1,820 tests, zero-trust safety boundary, stdio MCP server, headless CLI, procedural skills, sandboxed workspace execution harness, and verified commit engine).
 
 ## Requirements
 
@@ -39,30 +33,34 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 - ✓ **Phase 7 (Automation & Event Bus)**: Event bus, Trigger-condition-action workflow engine, Background jobs / scheduler, and System notifications — v1.0
 - ✓ **Phase 8 (External Integrations)**: Google Calendar two-way sync, GitHub activity tracking, Email/Social API adapters, and Cloud storage backup — v1.0
 - ✓ **Phase 9 (Intelligence & Predictive Analytics)**: Personal analytics dashboard, Predictive trend detection, Goal risk scoring, Schedule/Time optimization, and Semantic embeddings — v1.0
+- ✓ **Phase 10 (Shared Application Services & Headless CLI)**: Pure headless service contracts, CLI runner foundation, entity CRUD commands, unified context inspection (`lifeos context`), and daily planning workflows — v2.0
+- ✓ **Phase 11 (LifeOS Model Context Protocol Server)**: Standard stdio MCP transport, personal graph context resources, structured tools delegating to canonical domain services, and agent session negotiation — v2.0
+- ✓ **Phase 12 (Skills Engine & Contextual Documentation Retrieval)**: Curated procedural skills registry (`skills/lifeos/*`), machine-readable frontmatter, and contextual documentation search over `.planning/` and architecture specifications — v2.0
+- ✓ **Phase 13 (Zero-Trust Agent Safety, Permissions & Attribution Audit)**: Five-tier agent capability permissions, mandatory HITL approval gates for high-impact mutations, zero-trust financial shield, time-bound challenge expiration, and granular `agent_audit_log` — v2.0
+- ✓ **Phase 14 (Security Boundary Escape Remediation & Repository-Wide Zero-Trust Closure)**: Webhook HMAC verification, unified legacy AI tools under `executeAgentOperation`, transactional audit rollback, and background challenge TTL sweeper — v2.0
+- ✓ **Phase 15 (Mobile PWA & Voice Dictation Quick Capture)**: Web App Manifest, offline service worker caching with IndexedDB sync, and native Web Speech API voice capture in universal quick capture modal — v2.0
+- ✓ **Phase 16 (Controlled Project Workspace Execution Harness)**: Project root sandboxing, realpath containment, validated command runner, plan-to-task materialization with DAG topology, and pre-commit verification gates — v2.0
+- ✓ **Phase 17 (Workspace Agent Surface & Development Workflow Integration)**: Expose workspace operations via Headless CLI (`lifeos workspace`), MCP Server tools (`lifeos_workspace_*`), procedural skill, and full development lifecycle integration test suite — v2.0
+- ✓ **Phase 18 (Closed-Loop Autonomous Agent Execution & Verified Commit Engine)**: Plan execution state inspection (`lifeos workspace status / next-task`), MCP task query parity (`lifeos_list_tasks`, `lifeos_get_task`), time-bound Verification Qualification Lease, sandboxed audited commit execution (`lifeos workspace commit`), and pre-commit hook gating — v2.0
 
 ### Active
 
-- [ ] **Phase 10 (Shared Application Services & Headless CLI)**: Pure headless service contracts, CLI runner foundation, entity CRUD commands, unified context inspection (`lifeos context`), and daily planning workflows — v2.0
-- [ ] **Phase 11 (LifeOS Model Context Protocol Server)**: Standard stdio MCP transport, personal graph context resources, structured tools delegating to canonical domain services, and agent session negotiation — v2.0
-- [ ] **Phase 12 (Skills Engine & Contextual Documentation Retrieval)**: Curated procedural skills registry (`skills/lifeos/*`), machine-readable frontmatter, and contextual documentation search over `.planning/` and architecture specifications — v2.0
-- [ ] **Phase 13 (Zero-Trust Agent Safety, Permissions & Attribution Audit)**: Five-tier agent capability permissions, mandatory HITL approval gates for high-impact mutations, zero-trust financial shield, time-bound challenge expiration, and granular `agent_audit_log` — v2.0
-- [ ] **Phase 14 (Controlled Project Workspace & Development Execution Harness)**: Project root sandboxing, controlled test/build execution runner, plan-to-task materialization, and pre-commit verification gates — v2.0
-- [ ] **Phase 15 (Mobile PWA & Voice Dictation Quick Capture)**: Web App Manifest, offline service worker caching with IndexedDB sync, and native Web Speech API voice capture in universal quick capture modal — v2.0
+*(None — Milestone 2.0 complete. Start next milestone via `/gsd-new-milestone`.)*
 
 ### Out of Scope
 
-- **Multi-tenant SaaS for teams**: LifeOS is designed as a single-user personal OS for the owner; team collaboration features, workspaces, and tenant billing are excluded for v1.
+- **Multi-tenant SaaS for teams**: LifeOS is designed as a single-user personal OS for the owner; team collaboration features, workspaces, and tenant billing are excluded.
 - **Unconstrained autonomous execution**: AI agents must never execute destructive actions, delete data, or publish externally without explicit human confirmation.
 - **Distributed microservices**: No Kubernetes or multi-repo microservice architecture; a modular monolith running in Docker on a single VPS or locally minimizes operational overhead.
-- **Direct automated social publishing in MVP**: Publishing integrations are deferred to Phase 8; Phase 5 focuses on content ideation, drafting, and scheduling.
+- **Direct automated social publishing**: Publishing integrations are deferred; content focuses on ideation, drafting, and scheduling.
 - **Replacing relational modeling with unstructured JSON blobs**: Core business entities must be strictly normalized with foreign keys and migrations in PostgreSQL.
 - **Upfront monolithic database schema**: Building the complete domain database schema upfront violates the vertical-slice rule.
 
 ## Context
 
 - Master specification defined in prd.md (110 sections, 2,600+ lines).
-- Greenfield codebase; development must follow specification-driven development with AI paired-programming and atomic GSD tracking.
-- The system must prevent architecture drift: prd.md is the product contract, code is the implementation, and any divergence must be explicitly documented and resolved.
+- 1,820 automated tests across 143 test files covering 100% of domain business logic and agent security boundaries.
+- Zero-drift architecture: prd.md is the product contract, code is the implementation, and any divergence must be explicitly documented and resolved.
 
 ## Constraints
 
@@ -78,18 +76,23 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Next.js App Router + TypeScript Full-Stack | Unified TypeScript codebase, server actions / route handlers, React Server Components, and seamless SSR/client hydration | Decided (Authoritative) |
-| Drizzle ORM with PostgreSQL | PRD mandates strict relational modeling, migrations, foreign keys, transaction safety, and indexing. Drizzle provides type-safe SQL, explicit schema definitions, automated migrations, and zero-runtime overhead. Prisma is rejected to eliminate unresolved ORM choices. | Decided (Authoritative) |
-| Better Auth for Authentication & Sessions | Better Auth provides secure session cookies, CSRF protection, and standard auth tables with clean TypeScript/Drizzle integration. Replaces NextAuth and custom Argon2 alternatives. | Decided (Authoritative) |
-| Strict Separation of Auth and Resource Ownership | Authentication and authorization remain separate concerns. Authentication verifies identity; application authorization enforces resource ownership using the authenticated user's user_id on all endpoints and server actions. Client-supplied user IDs are never trusted. | Decided (Authoritative) |
-| Relationships / People CRM in Phase 3 | Person and Interaction entities from PRD Section 25 are not deferred to v2. Add Relationships / People CRM to Phase 3 alongside Knowledge & Learning, enabling notes, tasks, and search to link to contacts. | Decided (Authoritative) |
-| Vertical-Slice Database Scope (Phase 1 Boundary) | Domain schemas must be introduced with the phase implementing their corresponding functionality. Do not build the entire database schema upfront. Phase 1 database scope is strictly limited to foundational/authentication infrastructure (users, sessions / Better Auth required tables, preferences if required by Phase 1 design, audit_log). Domain tables are prohibited in Phase 1. | Decided (Authoritative) |
+| Drizzle ORM with PostgreSQL | PRD mandates strict relational modeling, migrations, foreign keys, transaction safety, and indexing. Drizzle provides type-safe SQL, explicit schema definitions, automated migrations, and zero-runtime overhead. | Decided (Authoritative) |
+| Better Auth for Authentication & Sessions | Better Auth provides secure session cookies, CSRF protection, and standard auth tables with clean TypeScript/Drizzle integration. | Decided (Authoritative) |
+| Strict Separation of Auth and Resource Ownership | Authentication and authorization remain separate concerns. Authentication verifies identity; application authorization enforces resource ownership using authenticated user_id on all endpoints and server actions. | Decided (Authoritative) |
+| Vertical-Slice Database Scope | Domain schemas must be introduced with the phase implementing corresponding functionality. Prevents speculative schema bloat. | Decided (Authoritative) |
 | Modular Monolith Architecture | Keeps local execution simple, eliminates distributed system failure modes, allows easy Docker VPS deployment | Decided (Authoritative) |
 | Multi-Provider AI Abstraction Layer | Enables switching between Gemini, Anthropic Claude, OpenAI, and local Ollama without rewriting business logic | Decided (Authoritative) |
 | Mandatory Human-in-the-Loop Confirmation Gate | Destructive mutations or external communications triggered by AI require explicit confirmation | Decided (Authoritative) |
-| Single-Owner User Model with Multi-User Schema Readiness | Ensures maximum privacy and speed for Hamza while tables retain user_id foreign keys for clean multi-user migration | Decided (Authoritative) |
 | Clean `src/` & Centralized Test Hierarchy | All test files are centralized in `scripts/tests/{phase}/{plan}/...` to guarantee a clean production codebase in `src/`. | Decided (Authoritative) |
-| In-App Typed Event Bus | In-process asynchronous event bus with post-commit emission, error containment, and depth-3 cycle guards, avoiding external Redis/broker overhead | Decided (Authoritative) |
+| In-App Typed Event Bus | In-process asynchronous event bus with post-commit emission, error containment, and depth-3 cycle guards | Decided (Authoritative) |
 | Idempotent PostgreSQL-Backed Scheduler | Dual HTTP cron and worker daemon with distributed locks in PostgreSQL (`scheduler_locks`), eliminating external queue dependencies | Decided (Authoritative) |
+| Official Stdio MCP Transport | Standardizes agent integration protocol for desktop and CLI agent harnesses without network socket overhead | Decided (Authoritative — v2.0) |
+| Five-Tier Agent Capability Matrix | READ, WRITE, EXECUTE, DESTRUCTIVE, SENSITIVE tiers enforce granular capability bounding across all caller paths | Decided (Authoritative — v2.0) |
+| Zero-Trust Financial Shield | Absolute fail-closed boundary prohibiting automated agent mutations to financial ledgers, accounts, or budgets | Decided (Authoritative — v2.0) |
+| Pessimistic Row Locking for HITL Approvals | `SELECT ... FOR UPDATE` row locks prevent double-submit and replay race conditions on approval challenges | Decided (Authoritative — v2.0) |
+| Transactional Audit Logging Coupling | Database mutations and `agent_audit_log` records are committed atomically; failure of audit log rolls back mutation | Decided (Authoritative — v2.0) |
+| Realpath Workspace Sandbox Containment | Canonical repository path verification eliminates directory traversal and unauthorized script execution | Decided (Authoritative — v2.0) |
+| Verification Qualification Lease Engine | Time-bound state-hashed qualification leases decouple pre-commit gating from long test runs while preserving safety | Decided (Authoritative — v2.0) |
 
 ## Evolution
 
@@ -109,4 +112,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-30 after Milestone 2.0 initiation and roadmap creation (Phases 10–15)*
+*Last updated: 2026-10-02 after v2.0 milestone completion*

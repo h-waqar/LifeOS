@@ -1,5 +1,35 @@
 # Milestones
 
+## v2.0 Autonomous Intelligence & Agent Interface (Shipped: 2026-10-02)
+
+**Scope:** 9/9 phases complete (Phases 10–18), 27/27 plans complete, 27/27 requirements satisfied and mapped (100% coverage)
+
+**Verification & Quality:**
+- **Test Suite:** 143/143 test files passed (1,820 passed, 20 skipped guarded by live PostgreSQL probe, 0 failed, 0 regressions)
+- **TypeScript:** 0 compilation errors (`tsc --noEmit` exit code 0)
+- **Production Build:** PASS (`next build` exit code 0, 31/31 routes & static pages rendered cleanly)
+- **Security & Authorization:** Five-tier agent capability permissions (`READ`, `WRITE`, `EXECUTE`, `DESTRUCTIVE`, `SENSITIVE`), fail-closed Zero-Trust Financial Shield, mandatory HITL approval challenges with pessimistic row locks (`SELECT ... FOR UPDATE`) and 5-minute TTL, transactional rollback on audit failure, inbound webhook HMAC verification, and caller identity spoofing protection.
+- **Agent Surface & Sandboxing:** Provider-agnostic stdio MCP server (20 domain resources/prompts/tools), headless CLI (`lifeos`), procedural skills registry (`skills/lifeos/*`), contextual documentation search over `.planning/`, path-traversal containment sandbox with realpath validation, bounded subprocess runner, qualification leases, and verified pre-commit hook gating.
+- **Mobile Capture:** Progressive Web App manifest, service worker shell caching, IndexedDB offline sync, and Web Speech API voice capture with NLP text extraction.
+- **Known verification overrides:** 0 newly acknowledged, 2 quick tasks carried forward from v1.0 (see STATE.md Deferred Items).
+
+**Key accomplishments across 9 capability phases:**
+1. **Shared Services & Headless CLI (Phase 10 — 3 plans):** Pure TypeScript standalone CLI executable and runner foundation with session token auth, configuration loading, secret scrubbing, entity CRUD commands, unified context/status inspection (`lifeos context`, `lifeos status`), and morning/evening daily planning workflows.
+2. **Model Context Protocol Server (Phase 11 — 4 plans):** MCP server foundation using official SDK with stdio transport, encrypted token authentication, personal graph context resources (`lifeos://context/*`), standard planning prompts, and structured domain tools with caller spoofing rejection.
+3. **Skills Engine & Contextual Docs (Phase 12 — 3 plans):** Curated procedural skills registry with YAML frontmatter schema validation, CLI/MCP discovery interfaces, contextual documentation search over ADRs/specs, and planning graph inspection with strict path sandboxing.
+4. **Zero-Trust Agent Safety & Audit (Phase 13 — 4 plans):** Forward database migration 0027 establishing agent tokens, permissions, challenges, and audit log tables; five-tier permission evaluator; fail-closed zero-trust financial shield across all agent caller paths; mandatory HITL approval challenge lifecycle with pessimistic row locking and automatic TTL expiration engine; comprehensive agent attribution audit logger.
+5. **Security Boundary Escape Remediation (Phase 14 — 5 plans):** Inbound webhook timing-safe HMAC signature verification, unified legacy AI tool execution under `executeAgentOperation` with strict financial shield enforcement, atomic database transaction coupling between mutations and audit logging with rollback, background challenge TTL sweeper in `SchedulerEngine`, deterministic CLI runner argument hashing, and real PostgreSQL failure-injection verification suite.
+6. **Mobile PWA & Voice Dictation (Phase 15 — 3 plans):** Progressive Web App manifest, service worker shell caching, IndexedDB offline capture sync engine, native Web Speech API voice dictation button in universal quick capture modal, and NLP date/priority extraction from spoken text.
+7. **Controlled Project Workspace Harness (Phase 16 — 2 plans):** Project workspace isolation sandbox with realpath containment, validated command runner with bounded output and execution timeouts, plan-to-task materialization with DAG topological sort, and fail-closed pre-commit verification gate.
+8. **Workspace Agent Surface & Integration (Phase 17 — 1 plan):** Workspace CLI commands (`lifeos workspace run|verify|materialize`), MCP tools (`lifeos_workspace_*`), procedural skill (`workspace-development`), and full development lifecycle integration test suite.
+9. **Autonomous Execution & Verified Commit Engine (Phase 18 — 2 plans):** Plan execution observability (`lifeos workspace status / next-task`), MCP task queries (`lifeos_list_tasks`, `lifeos_get_task`), closed-loop step execution with bounded retries, time-bound Verification Qualification Lease, sandboxed audited commit execution (`lifeos workspace commit`), and pre-commit hook gating with zero drift.
+
+**Remaining Non-Blocking Technical Debt:**
+1. Historical Drizzle Kit intermediate snapshots for migrations 0012–0026 remain absent (handwritten SQL); runtime migrations 0000–0027 fully journaled and verified.
+2. Physical mobile device audio hardware variations (external microphones, background noise suppression) documented in `15-VERIFICATION.md` and deferred to physical device field testing.
+
+---
+
 ## v1.0 Full Personal Operating System (Shipped: 2026-09-30)
 
 **Scope:** 9/9 phases complete, 41/41 plans complete, 82/82 requirements satisfied and mapped (100% coverage)
