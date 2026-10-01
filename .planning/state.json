@@ -31,13 +31,13 @@
     {
       "number": "15",
       "name": "Mobile PWA & Voice Dictation Quick Capture",
-      "status": "pending"
+      "status": "complete"
     }
   ],
   "next": {
-    "command": "/gsd-execute-phase 15",
-    "label": "Execute Phase 15",
-    "reason": "Phase 14 security boundary escapes fully remediated and verified; ready for Phase 15"
+    "command": "/gsd-complete-milestone v2.0",
+    "label": "Complete Milestone 2.0",
+    "reason": "Phase 15 Mobile PWA & Voice Dictation Quick Capture completed and verified; all Milestone 2.0 phases complete"
   },
-  "updated_at": "2026-10-01T08:10:00.000Z"
+  "updated_at": "2026-10-01T09:56:00.000Z"
 }

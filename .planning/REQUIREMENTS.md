@@ -47,10 +47,10 @@ Requirements for Milestone 2.0 release across Phases 10 through 15. Each require
 
 ### Mobile PWA & Voice Dictation Quick Capture
 
-- [ ] **MOB-01**: Web application includes a compliant Web App Manifest (`manifest.json`) and service worker configuration enabling "Add to Home Screen" on mobile devices with cached shell assets.
-- [ ] **MOB-02**: User can capture tasks and draft notes while offline via IndexedDB local storage, with automatic sync to PostgreSQL upon network reconnection.
-- [ ] **MOB-03**: Universal quick capture modal incorporates a microphone button using native Web Speech API speech-to-text to transcribe spoken thoughts into task titles and note content.
-- [ ] **MOB-04**: Voice-transcribed input can be automatically parsed by the NLP quick capture service to extract dates, priorities, and tags with zero manual typing.
+- [x] **MOB-01**: Web application includes a compliant Web App Manifest (`manifest.json`) and service worker configuration enabling "Add to Home Screen" on mobile devices with cached shell assets.
+- [x] **MOB-02**: User can capture tasks and draft notes while offline via IndexedDB local storage, with automatic sync to PostgreSQL upon network reconnection.
+- [x] **MOB-03**: Universal quick capture modal incorporates a microphone button using native Web Speech API speech-to-text to transcribe spoken thoughts into task titles and note content.
+- [x] **MOB-04**: Voice-transcribed input can be automatically parsed by the NLP quick capture service to extract dates, priorities, and tags with zero manual typing.
 
 ## v3 Requirements (Deferred)
 
@@ -100,10 +100,10 @@ Deferred to future releases after Milestone 2.0 execution:
 | WORK-02 | Phase 14 | Pending |
 | WORK-03 | Phase 14 | Pending |
 | WORK-04 | Phase 14 | Pending |
-| MOB-01 | Phase 15 | Pending |
-| MOB-02 | Phase 15 | Pending |
-| MOB-03 | Phase 15 | Pending |
-| MOB-04 | Phase 15 | Pending |
+| MOB-01 | Phase 15 | Complete |
+| MOB-02 | Phase 15 | Complete |
+| MOB-03 | Phase 15 | Complete |
+| MOB-04 | Phase 15 | Complete |
 
 **Coverage:**
 - Milestone 2.0 requirements: 27 total

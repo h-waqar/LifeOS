@@ -13,7 +13,7 @@ Milestone 2.0 transforms LifeOS from a standalone web-first personal operating s
 - [ ] **Phase 12: Skills Engine & Contextual Documentation Retrieval** - Curated procedural skills registry (`skills/lifeos/*`), machine-readable frontmatter, and contextual documentation search over `.planning/` and architecture specifications.
 - [ ] **Phase 13: Zero-Trust Agent Safety, Permissions & Attribution Audit** - Five-tier agent capability permissions, mandatory HITL approval gates for high-impact mutations, zero-trust financial shield, time-bound challenge expiration, and granular `agent_audit_log`.
 - [ ] **Phase 14: Controlled Project Workspace & Development Execution Harness** - Project root sandboxing, controlled test/build execution runner, plan-to-task materialization, and pre-commit verification gates.
-- [ ] **Phase 15: Mobile PWA & Voice Dictation Quick Capture** - Web App Manifest, offline service worker caching with IndexedDB sync, and native Web Speech API voice capture in universal quick capture modal.
+- [x] **Phase 15: Mobile PWA & Voice Dictation Quick Capture** - Web App Manifest, offline service worker caching with IndexedDB sync, and native Web Speech API voice capture in universal quick capture modal.
 
 ---
 
@@ -229,19 +229,19 @@ Plans:
 **UI hint**: yes (PWA / Voice UI)
 
 Plans:
-- [ ] **15-01: Progressive Web App Manifest, Service Worker & Offline Sync Engine**
+- [x] **15-01: Progressive Web App Manifest, Service Worker & Offline Sync Engine**
   - **Objective**: Configure Web App Manifest, service worker for shell caching, and client-side IndexedDB queue with background sync on online event.
   - **Files**: `public/manifest.json`, `src/app/manifest.ts`, `src/lib/pwa/service-worker.ts`, `src/lib/pwa/offline-store.ts`, `src/lib/pwa/sync-manager.ts`
   - **Dependencies**: Milestone 1.0 shell
   - **Requirements**: MOB-01, MOB-02
   - **Verification**: `scripts/tests/phase-15/plan-01/offline-sync.test.ts` verifying IndexedDB queuing, online event triggers, and API sync.
-- [ ] **15-02: Web Speech API Voice Dictation & NLP Quick Capture Integration**
+- [x] **15-02: Web Speech API Voice Dictation & NLP Quick Capture Integration**
   - **Objective**: Integrate speech recognition hook in `quick-capture-modal.tsx` with recording indicator, interim transcripts, and automatic delegation to NLP quick-capture parser.
   - **Files**: `src/hooks/use-speech-recognition.ts`, `src/components/quick-capture-modal.tsx`, `src/components/voice/voice-dictation-button.tsx`
   - **Dependencies**: Plan 15-01
   - **Requirements**: MOB-03, MOB-04
   - **Verification**: `scripts/tests/phase-15/plan-02/voice-dictation.test.ts` testing transcript handling, fallback when Web Speech is unsupported, and NLP parsing linkage.
-- [ ] **15-03: Mobile Capture & PWA End-to-End Verification Suite**
+- [x] **15-03: Mobile Capture & PWA End-to-End Verification Suite**
   - **Objective**: Verify offline capture recovery, speech-to-task creation flow, and mobile responsive layout compliance.
   - **Files**: `scripts/tests/phase-15/plan-03/mobile-capture-e2e.test.ts`
   - **Dependencies**: Plan 15-02
