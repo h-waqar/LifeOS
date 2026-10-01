@@ -181,6 +181,24 @@ import {
   type KnowledgeEmbedding,
   type NewKnowledgeEmbedding,
 } from "./embeddings";
+import {
+  agentTokens,
+  agentToken,
+  agentPermissions,
+  agentPermission,
+  agentChallenges,
+  agentChallenge,
+  agentAuditLog,
+  agentAuditLogs,
+  type AgentToken,
+  type NewAgentToken,
+  type AgentPermission,
+  type NewAgentPermission,
+  type AgentChallenge,
+  type NewAgentChallenge,
+  type AgentAuditLog,
+  type NewAgentAuditLog,
+} from "./agents";
 
 const note = notes;
 const noteLink = noteLinks;
@@ -278,6 +296,14 @@ export {
   analyticsSnapshot,
   knowledgeEmbeddings,
   knowledgeEmbedding,
+  agentTokens,
+  agentToken,
+  agentPermissions,
+  agentPermission,
+  agentChallenges,
+  agentChallenge,
+  agentAuditLog,
+  agentAuditLogs,
 };
 
 export type {
@@ -297,6 +323,14 @@ export type {
   NewAnalyticsSnapshot,
   KnowledgeEmbedding,
   NewKnowledgeEmbedding,
+  AgentToken,
+  NewAgentToken,
+  AgentPermission,
+  NewAgentPermission,
+  AgentChallenge,
+  NewAgentChallenge,
+  AgentAuditLog,
+  NewAgentAuditLog,
 };
 
 // Drizzle Relations Declarations
@@ -344,6 +378,10 @@ export const userRelations = relations(user, ({ one, many }) => ({
   webhookDeliveries: many(webhookDeliveries),
   analyticsSnapshots: many(analyticsSnapshots),
   knowledgeEmbeddings: many(knowledgeEmbeddings),
+  agentTokens: many(agentTokens),
+  agentPermissions: many(agentPermissions),
+  agentChallenges: many(agentChallenges),
+  agentAuditLogs: many(agentAuditLog),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -923,6 +961,53 @@ export const knowledgeEmbeddingsRelations = relations(
   })
 );
 
+export const agentTokensRelations = relations(agentTokens, ({ one, many }) => ({
+  user: one(user, {
+    fields: [agentTokens.userId],
+    references: [user.id],
+  }),
+  permissions: many(agentPermissions),
+  challenges: many(agentChallenges),
+  auditLogs: many(agentAuditLog),
+}));
+
+export const agentPermissionsRelations = relations(agentPermissions, ({ one }) => ({
+  agentToken: one(agentTokens, {
+    fields: [agentPermissions.agentTokenId],
+    references: [agentTokens.id],
+  }),
+  user: one(user, {
+    fields: [agentPermissions.userId],
+    references: [user.id],
+  }),
+}));
+
+export const agentChallengesRelations = relations(agentChallenges, ({ one }) => ({
+  agentToken: one(agentTokens, {
+    fields: [agentChallenges.agentTokenId],
+    references: [agentTokens.id],
+  }),
+  user: one(user, {
+    fields: [agentChallenges.userId],
+    references: [user.id],
+  }),
+}));
+
+export const agentAuditLogRelations = relations(agentAuditLog, ({ one }) => ({
+  user: one(user, {
+    fields: [agentAuditLog.userId],
+    references: [user.id],
+  }),
+  agentToken: one(agentTokens, {
+    fields: [agentAuditLog.agentTokenId],
+    references: [agentTokens.id],
+  }),
+  challenge: one(agentChallenges, {
+    fields: [agentAuditLog.challengeId],
+    references: [agentChallenges.id],
+  }),
+}));
+
 // Inferred TypeScript Model Types
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
@@ -1128,6 +1213,17 @@ export const PHASE_9_TABLE_NAMES = [
   "analytics_snapshots",
   "knowledge_embeddings",
 ] as const;
+
+/**
+ * Approved Phase 13 table names (Plan 13-01).
+ */
+export const PHASE_13_TABLE_NAMES = [
+  "agent_tokens",
+  "agent_permissions",
+  "agent_challenges",
+  "agent_audit_log",
+] as const;
+
 
 
 

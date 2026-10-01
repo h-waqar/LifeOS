@@ -8,7 +8,7 @@ Milestone 2.0 transforms LifeOS from a standalone web-first personal operating s
 
 **Phase Numbering:** Continuing from Milestone 1.0 (Phases 1–9 complete). Milestone 2.0 covers Phases 10–15.
 
-- [ ] **Phase 10: Shared Application Services & Headless CLI** - Pure headless service contracts, CLI runner foundation, entity CRUD commands, unified context inspection (`lifeos context`), and daily planning workflows.
+- [x] **Phase 10: Shared Application Services & Headless CLI** - Pure headless service contracts, CLI runner foundation, entity CRUD commands, unified context inspection (`lifeos context`), and daily planning workflows.
 - [ ] **Phase 11: LifeOS Model Context Protocol (MCP) Server** - Standard stdio MCP transport, personal graph context resources (`lifeos://context/*`), structured tools delegating to canonical domain services, and agent session negotiation.
 - [ ] **Phase 12: Skills Engine & Contextual Documentation Retrieval** - Curated procedural skills registry (`skills/lifeos/*`), machine-readable frontmatter, and contextual documentation search over `.planning/` and architecture specifications.
 - [ ] **Phase 13: Zero-Trust Agent Safety, Permissions & Attribution Audit** - Five-tier agent capability permissions, mandatory HITL approval gates for high-impact mutations, zero-trust financial shield, time-bound challenge expiration, and granular `agent_audit_log`.
@@ -35,19 +35,19 @@ Milestone 2.0 transforms LifeOS from a standalone web-first personal operating s
 **UI hint**: no (CLI / Server)
 
 Plans:
-- [ ] **10-01: Shared Domain Service Contracts & Standalone CLI Runner Foundation**
+- [x] **10-01: Shared Domain Service Contracts & Standalone CLI Runner Foundation**
   - **Objective**: Establish pure domain service contracts and a standalone TypeScript CLI executable (`bin/lifeos.ts` / `src/cli/`) supporting session token auth, configuration loading, and standard error handling.
   - **Files**: `src/cli/index.ts`, `src/cli/config.ts`, `src/cli/formatters.ts`, `src/server/tasks/service.ts`, `src/server/projects/service.ts`, `package.json`
   - **Dependencies**: Milestone 1.0 server services
   - **Requirements**: CLI-01, CLI-02
   - **Verification**: `scripts/tests/phase-10/plan-01/cli-runner.test.ts` testing auth token validation, formatting modes (tabular vs JSON), and exit code contracts.
-- [ ] **10-02: Headless CLI Commands for Entity CRUD, Context Inspection & Daily Planning**
+- [x] **10-02: Headless CLI Commands for Entity CRUD, Context Inspection & Daily Planning**
   - **Objective**: Implement CLI subcommands for entity management (`lifeos tasks`, `lifeos projects`, `lifeos goals`, `lifeos habits`, `lifeos notes`), context aggregation (`lifeos context`, `lifeos status`), and daily planning (`lifeos plan morning`, `lifeos plan evening`).
   - **Files**: `src/cli/commands/context.ts`, `src/cli/commands/tasks.ts`, `src/cli/commands/projects.ts`, `src/cli/commands/goals.ts`, `src/cli/commands/plan.ts`
   - **Dependencies**: Plan 10-01
   - **Requirements**: CLI-03, CLI-04, CLI-05
   - **Verification**: `scripts/tests/phase-10/plan-02/cli-commands.test.ts` verifying argument parsing, Zod validation, entity mutations, and output structures.
-- [ ] **10-03: CLI Integration & Regression Test Suite**
+- [x] **10-03: CLI Integration & Regression Test Suite**
   - **Objective**: Verify end-to-end command execution against a test database, ensuring zero regression across existing web routes and service contracts.
   - **Files**: `scripts/tests/phase-10/plan-03/cli-integration.test.ts`
   - **Dependencies**: Plan 10-02
@@ -72,25 +72,25 @@ Plans:
 **UI hint**: no (MCP Server)
 
 Plans:
-- [ ] **11-01: MCP Server Foundation, Transport & Security Handshake**
+- [x] **11-01: MCP Server Foundation, Transport & Security Handshake**
   - **Objective**: Set up the Model Context Protocol server using `@modelcontextprotocol/sdk` over stdio transport with encrypted token authentication and capability negotiation.
   - **Files**: `src/server/mcp/server.ts`, `src/server/mcp/transport.ts`, `src/server/mcp/auth.ts`, `src/server/mcp/types.ts`
   - **Dependencies**: Phase 10 CLI foundation
   - **Requirements**: MCP-01, MCP-05
   - **Verification**: `scripts/tests/phase-11/plan-01/mcp-handshake.test.ts` verifying protocol handshake, auth failure rejection, and capability negotiation.
-- [ ] **11-02: MCP Personal Graph Resources & Standard Prompts**
+- [x] **11-02: MCP Personal Graph Resources & Standard Prompts**
   - **Objective**: Implement standard MCP URI resources (`lifeos://context/overview`, `lifeos://goals/active`, `lifeos://projects/active`, `lifeos://tasks/today`, `lifeos://finance/summary`) and prompt templates for planning and task breakdown.
   - **Files**: `src/server/mcp/resources/context.ts`, `src/server/mcp/resources/entities.ts`, `src/server/mcp/prompts/planning.ts`
   - **Dependencies**: Plan 11-01
   - **Requirements**: MCP-02
   - **Verification**: `scripts/tests/phase-11/plan-02/mcp-resources.test.ts` verifying resource resolution, serialization, and freshness.
-- [ ] **11-03: MCP Domain Tools Registry & Canonical Service Adapters**
+- [x] **11-03: MCP Domain Tools Registry & Canonical Service Adapters**
   - **Objective**: Register MCP tools (`lifeos_create_task`, `lifeos_update_task`, `lifeos_create_goal`, `lifeos_create_project`, `lifeos_create_note`, `lifeos_search`) with strict Zod argument schemas delegating directly to domain services.
   - **Files**: `src/server/mcp/tools/task-tools.ts`, `src/server/mcp/tools/project-tools.ts`, `src/server/mcp/tools/goal-tools.ts`, `src/server/mcp/tools/search-tools.ts`, `src/server/mcp/tools/registry.ts`
   - **Dependencies**: Plan 11-02
   - **Requirements**: MCP-03, MCP-04
   - **Verification**: `scripts/tests/phase-11/plan-03/mcp-tools.test.ts` verifying tool validation, execution, and zero-bypass guarantees.
-- [ ] **11-04: MCP End-to-End Test Suite & Client Harness Verification**
+- [x] **11-04: MCP End-to-End Test Suite & Client Harness Verification**
   - **Objective**: Verify end-to-end MCP client integration scenarios using a simulated MCP client harness.
   - **Files**: `scripts/tests/phase-11/plan-04/mcp-client-e2e.test.ts`
   - **Dependencies**: Plan 11-03
@@ -114,19 +114,19 @@ Plans:
 **UI hint**: no (Skills / Docs Engine)
 
 Plans:
-- [ ] **12-01: Curated Procedural Skills Registry & Metadata Engine**
+- [x] **12-01: Curated Procedural Skills Registry & Metadata Engine**
   - **Objective**: Author domain procedural skills in `skills/lifeos/` (task-breakdown, goal-alignment, weekly-review, error-diagnosis) with YAML frontmatter parser and validation schema.
   - **Files**: `skills/lifeos/*/SKILL.md`, `src/server/skills/registry.ts`, `src/server/skills/parser.ts`, `src/server/skills/types.ts`
   - **Dependencies**: Phase 10 CLI
   - **Requirements**: SKILL-01, SKILL-02
   - **Verification**: `scripts/tests/phase-12/plan-01/skills-registry.test.ts` verifying frontmatter validation, parsing, and trigger condition matching.
-- [ ] **12-02: Contextual Documentation Search & Planning Graph Integration**
+- [x] **12-02: Contextual Documentation Search & Planning Graph Integration**
   - **Objective**: Build documentation search service indexing architecture specs, ADRs, and `.planning/` artifacts, integrating with hybrid search and `.planning/` state inspectors.
   - **Files**: `src/server/docs/search-service.ts`, `src/server/docs/planning-inspector.ts`, `src/cli/commands/docs.ts`, `src/server/mcp/tools/doc-tools.ts`
   - **Dependencies**: Plan 12-01
   - **Requirements**: SKILL-03, SKILL-04
   - **Verification**: `scripts/tests/phase-12/plan-02/doc-search.test.ts` asserting retrieval relevance, planning state extraction, and ranking.
-- [ ] **12-03: Skills & Documentation Retrieval Verification Suite**
+- [x] **12-03: Skills & Documentation Retrieval Verification Suite**
   - **Objective**: Full integration test asserting agent discovery of skills and relevant doc retrieval for simulated prompts.
   - **Files**: `scripts/tests/phase-12/plan-03/skills-integration.test.ts`
   - **Dependencies**: Plan 12-02
@@ -151,27 +151,27 @@ Plans:
 **UI hint**: yes (Approval Card / Notification Integration)
 
 Plans:
-- [ ] **13-01: Forward Database Migration for Agent Tokens, Scopes & Audit Log**
+- [x] **13-01: Forward Database Migration for Agent Tokens, Scopes & Audit Log**
   - **Objective**: Create safe forward migration `0027_agent_safety_and_audit` defining `agent_tokens`, `agent_permissions`, `agent_challenges`, and `agent_audit_log` tables with composite indexes.
   - **Files**: `src/server/db/schema/agents.ts`, `src/server/db/schema/index.ts`, `src/server/db/migrations/0027_agent_safety_and_audit.sql`, `src/server/db/migrations/meta/_journal.json`
   - **Dependencies**: Phase 11 MCP server
   - **Requirements**: SAFE-01, SAFE-04
   - **Verification**: `scripts/tests/phase-13/plan-01/schema-migration.test.ts` verifying journal integrity, table creation, and constraints.
-- [ ] **13-02: Multi-Tier Permission Evaluator & Zero-Trust Financial Shield**
+- [x] **13-02: Multi-Tier Permission Evaluator & Zero-Trust Financial Shield**
   - **Objective**: Implement permission evaluation middleware classifying actions into READ, WRITE, EXECUTE, DESTRUCTIVE, SENSITIVE and completely blocking mutating financial actions for agent callers.
   - **Files**: `src/server/agents/permissions/evaluator.ts`, `src/server/agents/permissions/types.ts`, `src/server/agents/finance-shield.ts`
   - **Dependencies**: Plan 13-01
   - **Requirements**: SAFE-01, SAFE-03
   - **Verification**: `scripts/tests/phase-13/plan-02/permission-evaluator.test.ts` asserting permission denials, tier boundaries, and finance mutation blocks.
-- [ ] **13-03: HITL Approval Challenge Lifecycle & TTL Expiration Engine**
+- [x] **13-03: HITL Approval Challenge Lifecycle & TTL Expiration Engine**
   - **Objective**: Implement challenge generation, notification dispatch, database locking (`SELECT ... FOR UPDATE`), and automatic TTL expiration sweeper for unconfirmed high-impact agent operations.
   - **Files**: `src/server/agents/challenges/challenge-service.ts`, `src/server/agents/challenges/ttl-sweeper.ts`, `src/components/assistant/action-confirmation-card.tsx`
   - **Dependencies**: Plan 13-02
   - **Requirements**: SAFE-02, SAFE-05
   - **Verification**: `scripts/tests/phase-13/plan-03/challenge-lifecycle.test.ts` verifying approval gating, rejection, expiration, and race prevention.
-- [ ] **13-04: Agent Attribution Audit Logger & Security Integration Suite**
+- [x] **13-04: Agent Attribution Audit Logger & Security Integration Suite**
   - **Objective**: Implement transactional agent attribution logger recording detailed pre/post state snapshots, and write comprehensive adversarial integration test suite.
-  - **Files**: `src/server/agents/audit/attribution-logger.ts`, `scripts/tests/phase-13/plan-04/agent-security.integration.test.ts`
+  - **Files**: `src/server/agents/audit/attribution-logger.ts`, `scripts/tests/phase-13/plan-04/agent-security.test.ts`
   - **Dependencies**: Plan 13-03
   - **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05
   - **Verification**: Adversarial security suite verifying permission bypass attempts, token hijacking defenses, and audit log completeness.

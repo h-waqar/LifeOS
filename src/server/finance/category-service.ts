@@ -12,6 +12,7 @@ import {
   type UpdateCategoryInput,
 } from "./validation";
 import { NotFoundError } from "./errors";
+import { guardFinancialMutation } from "@/server/agents/finance-shield";
 
 // Server-only runtime protection
 if (typeof window !== "undefined" && !process.env.VITEST) {
@@ -137,6 +138,7 @@ export async function createCategory(
   userId: string,
   input: CreateCategoryInput
 ): Promise<FinanceCategory> {
+  guardFinancialMutation("createCategory");
   const validated = createCategorySchema.parse(input);
 
   const [created] = await db
@@ -175,6 +177,7 @@ export async function updateCategory(
   categoryId: string,
   input: UpdateCategoryInput
 ): Promise<FinanceCategory> {
+  guardFinancialMutation("updateCategory");
   const validated = updateCategorySchema.parse(input);
 
   const existing = await getCategoryById(userId, categoryId);
@@ -224,5 +227,6 @@ export async function archiveCategory(
   userId: string,
   categoryId: string
 ): Promise<FinanceCategory> {
+  guardFinancialMutation("archiveCategory");
   return updateCategory(userId, categoryId, { isArchived: true });
 }

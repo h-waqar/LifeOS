@@ -190,6 +190,13 @@
       "when": 1791000000000,
       "tag": "0026_pgvector_knowledge_embeddings",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791100000000,
+      "tag": "0027_agent_safety_and_audit",
+      "breakpoints": true
     }
   ]
 }

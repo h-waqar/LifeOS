@@ -18,6 +18,7 @@ import {
   type BudgetUtilizationResult,
 } from "./calculations";
 import { NotFoundError, InvariantViolationError } from "./errors";
+import { guardFinancialMutation } from "@/server/agents/finance-shield";
 
 // Server-only runtime protection
 if (typeof window !== "undefined" && !process.env.VITEST) {
@@ -75,6 +76,7 @@ export async function upsertBudget(
   userId: string,
   input: UpsertBudgetInput
 ): Promise<FinanceBudget> {
+  guardFinancialMutation("upsertBudget");
   const validated = upsertBudgetSchema.parse(input);
 
   // Verify category belongs to user
@@ -225,6 +227,7 @@ export async function copyBudgetsFromPreviousMonth(
   userId: string,
   input: CopyPreviousBudgetsInput
 ): Promise<{ copiedCount: number }> {
+  guardFinancialMutation("copyBudgetsFromPreviousMonth");
   const validated = copyPreviousBudgetsSchema.parse(input);
   const prevMonth = getPreviousMonth(validated.targetMonth);
 
@@ -296,6 +299,7 @@ export async function deleteBudget(
   userId: string,
   budgetId: string
 ): Promise<void> {
+  guardFinancialMutation("deleteBudget");
   const [existing] = await db
     .select()
     .from(financeBudgets)

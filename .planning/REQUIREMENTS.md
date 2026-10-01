@@ -9,34 +9,34 @@ Requirements for Milestone 2.0 release across Phases 10 through 15. Each require
 
 ### Headless CLI & Shared Application Services
 
-- [ ] **CLI-01**: User can invoke `lifeos` command-line utility with persistent session/API token authentication and environment configuration without launching a browser.
-- [ ] **CLI-02**: User and agent scripts can query `lifeos` commands with `--json` flag to receive deterministic, strictly-typed JSON output, or standard formatted tabular output by default.
-- [ ] **CLI-03**: User can execute `lifeos context` and `lifeos status` to inspect current goals, active projects, top daily tasks, upcoming calendar blocks, and unread notifications in one unified command.
-- [ ] **CLI-04**: User can create, read, update, list, and filter tasks, projects, goals, notes, and habits directly via `lifeos [entity] [action]` with input validation against domain Zod schemas.
-- [ ] **CLI-05**: User can start, view, and complete morning planning and evening review workflows via `lifeos plan morning` and `lifeos plan evening`.
+- [x] **CLI-01**: User can invoke `lifeos` command-line utility with persistent session/API token authentication and environment configuration without launching a browser.
+- [x] **CLI-02**: User and agent scripts can query `lifeos` commands with `--json` flag to receive deterministic, strictly-typed JSON output, or standard formatted tabular output by default.
+- [x] **CLI-03**: User can execute `lifeos context` and `lifeos status` to inspect current goals, active projects, top daily tasks, upcoming calendar blocks, and unread notifications in one unified command.
+- [x] **CLI-04**: User can create, read, update, list, and filter tasks, projects, goals, notes, and habits directly via `lifeos [entity] [action]` with input validation against domain Zod schemas.
+- [x] **CLI-05**: User can start, view, and complete morning planning and evening review workflows via `lifeos plan morning` and `lifeos plan evening`.
 
 ### Model Context Protocol (MCP) Server
 
-- [ ] **MCP-01**: External agent harnesses (Claude Code, AGY CLI, Codex, Cursor, Windsurf) can connect to LifeOS MCP Server over standard stdio transport using the official Model Context Protocol specification.
-- [ ] **MCP-02**: MCP server exposes readable resources (`lifeos://context/overview`, `lifeos://goals/active`, `lifeos://projects/active`, `lifeos://tasks/today`, `lifeos://finance/summary`) and standardized agent prompts for planning and task breakdown.
-- [ ] **MCP-03**: MCP server provides structured tools (`lifeos_create_task`, `lifeos_update_task`, `lifeos_create_goal`, `lifeos_create_project`, `lifeos_create_note`, `lifeos_search`) with Zod-backed input schemas delegating directly to canonical application services.
-- [ ] **MCP-04**: MCP tool handlers strictly invoke canonical application domain services with authenticated `user_id` ownership checks, preventing direct database mutations or validation bypasses.
-- [ ] **MCP-05**: MCP server authenticates incoming agent connections via encrypted API tokens, negotiates supported capability flags, and logs session lifecycle events.
+- [x] **MCP-01**: External agent harnesses (Claude Code, AGY CLI, Codex, Cursor, Windsurf) can connect to LifeOS MCP Server over standard stdio transport using the official Model Context Protocol specification.
+- [x] **MCP-02**: MCP server exposes readable resources (`lifeos://context/overview`, `lifeos://goals/active`, `lifeos://projects/active`, `lifeos://tasks/today`, `lifeos://finance/summary`) and standardized agent prompts for planning and task breakdown.
+- [x] **MCP-03**: MCP server provides structured tools (`lifeos_create_task`, `lifeos_update_task`, `lifeos_create_goal`, `lifeos_create_project`, `lifeos_create_note`, `lifeos_search`) with Zod-backed input schemas delegating directly to canonical application services.
+- [x] **MCP-04**: MCP tool handlers strictly invoke canonical application domain services with authenticated `user_id` ownership checks, preventing direct database mutations or validation bypasses.
+- [x] **MCP-05**: MCP server authenticates incoming agent connections via encrypted API tokens, negotiates supported capability flags, and logs session lifecycle events.
 
 ### Skills System & Documentation Context Engine
 
-- [ ] **SKILL-01**: System provides a discoverable registry of domain procedural skills (`skills/lifeos/*`) defining step-by-step guidance for goal decomposition, weekly review, task prioritization, and bug remediation.
-- [ ] **SKILL-02**: Each skill defines standardized frontmatter (name, description, trigger_when, allowed_operations, required_context, verification_requirements) queryable via CLI and MCP tool.
-- [ ] **SKILL-03**: Agents can search and retrieve relevant architecture decision records (ADRs), domain specifications, and phase plans via `lifeos docs search [query]` without whole-codebase token loading.
-- [ ] **SKILL-04**: Skills system integrates with `.planning/` directory structure, allowing agents to inspect previous decisions, completed phase summaries, and pending todos before executing tasks.
+- [x] **SKILL-01**: System provides a discoverable registry of domain procedural skills (`skills/lifeos/*`) defining step-by-step guidance for goal decomposition, weekly review, task prioritization, and bug remediation.
+- [x] **SKILL-02**: Each skill defines standardized frontmatter (name, description, trigger_when, allowed_operations, required_context, verification_requirements) queryable via CLI and MCP tool.
+- [x] **SKILL-03**: Agents can search and retrieve relevant architecture decision records (ADRs), domain specifications, and phase plans via `lifeos docs search [query]` without whole-codebase token loading.
+- [x] **SKILL-04**: Skills system integrates with `.planning/` directory structure, allowing agents to inspect previous decisions, completed phase summaries, and pending todos before executing tasks.
 
 ### Zero-Trust Agent Safety, Permissions & Attribution Audit
 
-- [ ] **SAFE-01**: System enforces a five-tier permission model (READ, WRITE, EXECUTE, DESTRUCTIVE, SENSITIVE) for all agent-initiated operations, restricting unauthorized actions by default.
-- [ ] **SAFE-02**: Any agent operation classified as DESTRUCTIVE (deleting tasks/projects/goals) or SENSITIVE (updating credentials, altering account settings) generates an approval challenge requiring human confirmation before execution.
-- [ ] **SAFE-03**: System strictly prohibits autonomous agent-driven financial transaction mutations, account creations, or balance adjustments through CLI and MCP, enforcing read-only financial summaries for AI agents.
-- [ ] **SAFE-04**: System logs every agent action to `agent_audit_log` with agent identifier, provider type, session ID, tool name, arguments, previous state, new state, execution duration, and human approval status.
-- [ ] **SAFE-05**: Pending agent mutation requests expire automatically after a configurable TTL (default 10 minutes), invalidating unconfirmed operations and preventing stale execution races.
+- [x] **SAFE-01**: System enforces a five-tier permission model (READ, WRITE, EXECUTE, DESTRUCTIVE, SENSITIVE) for all agent-initiated operations, restricting unauthorized actions by default.
+- [x] **SAFE-02**: Any agent operation classified as DESTRUCTIVE (deleting tasks/projects/goals) or SENSITIVE (updating credentials, altering account settings) generates an approval challenge requiring human confirmation before execution.
+- [x] **SAFE-03**: System strictly prohibits autonomous agent-driven financial transaction mutations, account creations, or balance adjustments through CLI and MCP, enforcing read-only financial summaries for AI agents.
+- [x] **SAFE-04**: System logs every agent action to `agent_audit_log` with agent identifier, provider type, session ID, tool name, arguments, previous state, new state, execution duration, and human approval status.
+- [x] **SAFE-05**: Pending agent mutation requests expire automatically after a configurable TTL (default 10 minutes), invalidating unconfirmed operations and preventing stale execution races.
 
 ### Controlled Project Workspace & Execution Harness
 
@@ -77,11 +77,11 @@ Deferred to future releases after Milestone 2.0 execution:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CLI-01 | Phase 10 | Pending |
-| CLI-02 | Phase 10 | Pending |
-| CLI-03 | Phase 10 | Pending |
-| CLI-04 | Phase 10 | Pending |
-| CLI-05 | Phase 10 | Pending |
+| CLI-01 | Phase 10 | Complete |
+| CLI-02 | Phase 10 | Complete |
+| CLI-03 | Phase 10 | Complete |
+| CLI-04 | Phase 10 | Complete |
+| CLI-05 | Phase 10 | Complete |
 | MCP-01 | Phase 11 | Pending |
 | MCP-02 | Phase 11 | Pending |
 | MCP-03 | Phase 11 | Pending |

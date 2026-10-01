@@ -13,6 +13,7 @@ import {
   type UpdateAccountInput,
 } from "./validation";
 import { NotFoundError, InvariantViolationError } from "./errors";
+import { guardFinancialMutation } from "@/server/agents/finance-shield";
 
 // Server-only runtime protection
 if (typeof window !== "undefined" && !process.env.VITEST) {
@@ -31,6 +32,7 @@ export async function createAccount(
   userId: string,
   input: CreateAccountInput
 ): Promise<FinanceAccount> {
+  guardFinancialMutation("createAccount");
   const validated = createAccountSchema.parse(input);
 
   const [created] = await db
@@ -119,6 +121,7 @@ export async function updateAccount(
   accountId: string,
   input: UpdateAccountInput
 ): Promise<FinanceAccount> {
+  guardFinancialMutation("updateAccount");
   const validated = updateAccountSchema.parse(input);
 
   const existing = await getAccountById(userId, accountId);
@@ -170,6 +173,7 @@ export async function archiveAccount(
   userId: string,
   accountId: string
 ): Promise<FinanceAccount> {
+  guardFinancialMutation("archiveAccount");
   return updateAccount(userId, accountId, { isArchived: true });
 }
 
@@ -181,6 +185,7 @@ export async function deleteAccount(
   userId: string,
   accountId: string
 ): Promise<void> {
+  guardFinancialMutation("deleteAccount");
   const existing = await getAccountById(userId, accountId);
   if (!existing) {
     throw new NotFoundError(`Account not found: ${accountId}`);

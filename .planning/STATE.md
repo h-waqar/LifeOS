@@ -1,16 +1,20 @@
 ---
 gsd_state_version: "1.0"
 milestone: v2.0
-milestone_name: Autonomous Intelligence & Agent Interface
-status: planning
-last_updated: "2026-09-30T11:35:43.582Z"
-last_activity: 2026-09-30
+current_phase: 13
+current_phase_name: Zero-Trust Agent Safety, Permissions & Attribution Audit
+status: complete
+stopped_at: Phase 13 Complete (All 4 Plans Executed & Verified with 67 tests, 20-Vector Adversarial Pass)
+last_updated: "2026-10-01T02:00:00.000Z"
+last_activity: 2026-10-01
+last_activity_desc: Phase 13 implementation complete with 4 plans executed, 67 tests passing (20-vector adversarial suite), forward migration 0027 applied cleanly, full 122 test files (1519 tests) passing regression-free, and clean Next.js production build
+state_head: 95ddd1ac5ed95a17ceada832562e46d816b245c4
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 4
   total_plans: 20
-  completed_plans: 0
-  percent: 0
+  completed_plans: 14
+milestone_name: Autonomous Intelligence & Agent Interface
 ---
 
 # Project State
@@ -20,21 +24,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-30)
 
 **Core value:** Transform LifeOS into an agent-accessible operating system by building a provider-agnostic intelligence and execution layer (MCP Server, Headless CLI, Curated Skills, Controlled Project Execution, Agent Permissions & Attribution Audit) while maintaining a strict zero-trust boundary, domain service invariants, and zero data loss.
-**Current focus:** Milestone 2.0 Planning Complete — Phase 10 Ready to Plan
+**Current focus:** Phase 13 — Zero-Trust Agent Safety, Permissions & Attribution Audit (Complete & Verified)
 
 ## Current Position
 
-Phase: Phase 10: Shared Application Services & Headless CLI (ready to plan)
-Plan: —
-Status: Planning complete (Roadmap & Requirements defined)
-Last activity: 2026-09-30 — Milestone v2.0 roadmap defined (6 phases, 20 plans, 27 requirements)
-Next actionable work: /gsd-plan-phase 10
+Phase: 13 (Zero-Trust Agent Safety, Permissions & Attribution Audit) — COMPLETE & VERIFIED
+Plan: 4 of 4 completed (13-01, 13-02, 13-03, 13-04 completed)
+Status: Phase 13 Complete & Verified (Ready for Phase 14)
+Last activity: 2026-10-01 — Phase 13 execution complete with 67 tests passing, all 20 adversarial security vectors verified, forward migration 0027 verified, full 1519 regression tests passing, and clean Next.js production build
+Next actionable work: Phase 14: Controlled Project Workspace & Development Execution Harness
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 41
+- Total plans completed: 52
 - Average duration: - min
 - Total execution time: 0.0 hours
 
@@ -51,10 +55,14 @@ Next actionable work: /gsd-plan-phase 10
 | 7. Automations & Event Engine | 5/5 (Complete & Verified) | - | - |
 | 8. External Integrations | 2/2 (Complete & Verified) | - | - |
 | 9. Intelligence & Predictive Analytics | 2/2 (Complete & Verified) | - | - |
+| 10. Shared Services & Headless CLI | 3/3 (Complete & Verified) | - | - |
+| 11. LifeOS Model Context Protocol (MCP) Server | 4/4 (Complete & Verified) | - | - |
+| 12. Skills Engine & Contextual Documentation Retrieval | 3/3 (Complete & Verified) | - | - |
+| 13. Zero-Trust Agent Safety, Permissions & Attribution Audit | 4/4 (Complete & Verified) | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: 07-05, 08-01, 08-02, 09-01, 09-02
+- Last 5 plans: 11-03, 11-04, 12-01, 12-02, 12-03
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -115,6 +123,12 @@ Recent decisions affecting current work:
 - [Plan 09-02 Decision]: pgvector HNSW Semantic Search (INTEL-03): Migration 0026 adds 768-dim vector column with HNSW cosine index (`vector_cosine_ops`). Multi-provider embedding generator with deterministic fallback when API keys are unconfigured. Graceful degradation when PostgreSQL/pgvector extension is offline.
 - [Milestone 1.0 Reconciliation]: Next.js Route Export Fix: Relocated `resetRateLimitForTesting` from `src/app/api/ai/chat/route.ts` to dedicated server helper `src/server/ai/rate-limiter.ts`, restoring Next.js 15 App Router route type compliance and enabling clean `next build` production compilation. Added Suspense boundaries to `/automations` and `/content` for static page prerendering.
 - [Milestone 1.0 Reconciliation]: Requirements & Roadmap Reconciliation: Updated SEC-03 to Satisfied backed by Phase 8 Plan 08-02 `BackupExporter`. Reconciled total requirement count to 82/82 satisfied across all 9 capability phases.
+- [Phase 11 Decision]: MCP Protocol Separation: Model Context Protocol (MCP) server runs as an adapter over stdio transport delegating strictly to canonical domain services. Zero raw SQL allowed in MCP tools.
+- [Phase 11 Decision]: Dual-Layer Auth & Caller Spoofing Defense: MCP requests require valid active Better Auth sessions and explicitly reject caller identity parameters (`userId`, `user_id`, `user-id`) fail-closed.
+- [Phase 12 Decision]: Zero-Migration Filesystem-Backed Engine: Skills registry and documentation retrieval are strictly filesystem-backed with in-memory caching and mtime invalidation, introducing zero raw SQL and preserving the migration count at exactly 27.
+- [Phase 12 Decision]: Strict Path Traversal & Symlink Sandboxing: Document retrieval path safety normalizes, canonicalizes via `fs.realpath`, and enforces fail-closed containment within `docs/`, `.planning/`, and `skills/`, rejecting relative traversal, URL-encoding, null bytes, absolute paths, and external symlinks.
+- [Phase 12 Decision]: MCP Adapter Protocol Delegation: MCP skill and doc tools/resources delegate directly to canonical server services (`src/server/skills/registry.ts`, `src/server/docs/search-service.ts`, `src/server/docs/planning-inspector.ts`), strictly preserving MCP as a protocol adapter without independent domain logic.
+- [Phase 12 Decision]: Read-Only Financial Shield Preservation: Zero financial mutation tools or skill procedures are permitted; financial operations remain strictly read-only summaries.
 
 ### Pending Todos
 

@@ -20,6 +20,7 @@ import {
   type UpdateNoteSchemaInput,
   type ListNotesQueryParams,
 } from "./validation";
+export { createNoteSchema, updateNoteSchema };
 import {
   parseWikilinks,
   slugifyTitle,

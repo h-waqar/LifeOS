@@ -24,6 +24,7 @@ import {
   type ListTransactionsQuery,
 } from "./validation";
 import { NotFoundError, InvariantViolationError } from "./errors";
+import { guardFinancialMutation } from "@/server/agents/finance-shield";
 
 // Server-only runtime protection
 if (typeof window !== "undefined" && !process.env.VITEST) {
@@ -266,6 +267,7 @@ export async function createTransaction(
   userId: string,
   input: CreateTransactionInput
 ): Promise<FinanceTransaction> {
+  guardFinancialMutation("createTransaction");
   const validated = createTransactionSchema.parse(input);
 
   const pendingEvents: AnyDomainEvent[] = [];
@@ -588,6 +590,7 @@ export async function updateTransaction(
   transactionId: string,
   input: UpdateTransactionInput
 ): Promise<FinanceTransaction> {
+  guardFinancialMutation("updateTransaction");
   const validated = updateTransactionSchema.parse(input);
 
   return await db.transaction(async (tx) => {
@@ -837,6 +840,7 @@ export async function deleteTransaction(
   userId: string,
   transactionId: string
 ): Promise<void> {
+  guardFinancialMutation("deleteTransaction");
   await db.transaction(async (tx) => {
     // 1. Lock transaction row FOR UPDATE to prevent double-deletion/reversal
     const [existing] = await tx

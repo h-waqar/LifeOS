@@ -22,6 +22,7 @@ import {
   updateHabitSchema,
   logHabitEntrySchema,
 } from "./validation";
+export { createHabitSchema, updateHabitSchema, logHabitEntrySchema };
 import type {
   HabitDTO,
   HabitEntryDTO,
