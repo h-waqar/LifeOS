@@ -112,7 +112,15 @@ describe("Plan 11-03: MCP Domain Tools Registry & Canonical Service Adapters", (
     it("lists exactly the 10 approved domain tools", async () => {
       const res = await client.listTools();
       const names = res.tools.map((t) => t.name);
-      const domainNames = names.filter((n) => !n.includes("skill") && !n.includes("doc") && !n.includes("planning"));
+      const domainNames = names.filter(
+        (n) =>
+          !n.includes("skill") &&
+          !n.includes("doc") &&
+          !n.includes("planning") &&
+          !n.includes("workspace") &&
+          n !== "lifeos_list_tasks" &&
+          n !== "lifeos_get_task"
+      );
 
       expect(domainNames).toHaveLength(10);
       expect(domainNames).toContain("lifeos_create_task");

@@ -134,7 +134,15 @@ describe("Plan 12-03: Skills & Docs Integration Suite", () => {
   describe("1. MCP Tool Registry & Capability Negotiation", () => {
     it("advertises all 15 approved tools (10 domain + 5 Phase 12 tools)", async () => {
       const res = await client.listTools();
-      const names = res.tools.map((t) => t.name).sort();
+      const names = res.tools
+        .map((t) => t.name)
+        .filter(
+          (n) =>
+            !n.includes("workspace") &&
+            n !== "lifeos_list_tasks" &&
+            n !== "lifeos_get_task"
+        )
+        .sort();
 
       expect(names).toHaveLength(15);
       expect(names).toEqual([

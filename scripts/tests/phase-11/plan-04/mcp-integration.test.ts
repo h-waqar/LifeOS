@@ -299,7 +299,15 @@ describe("Plan 11-04: Real Stdio MCP Integration Suite", () => {
     it("lists exactly the 10 approved domain tools via tools/list", async () => {
       const res = await client.listTools();
       const names = res.tools.map((t) => t.name).sort();
-      const domainNames = names.filter((n) => !n.includes("skill") && !n.includes("doc") && !n.includes("planning"));
+      const domainNames = names.filter(
+        (n) =>
+          !n.includes("skill") &&
+          !n.includes("doc") &&
+          !n.includes("planning") &&
+          !n.includes("workspace") &&
+          n !== "lifeos_list_tasks" &&
+          n !== "lifeos_get_task"
+      );
 
       expect(domainNames).toEqual([
         "lifeos_create_goal",

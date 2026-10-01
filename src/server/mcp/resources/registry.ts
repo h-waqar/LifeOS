@@ -18,6 +18,7 @@ import {
 } from "./entities";
 import { registerSkillResources } from "./skills";
 import { registerPlanningResources } from "./planning";
+import { registerWorkspaceResources } from "./workspace";
 
 export function registerResources(server: McpServer, context: McpContext): void {
   // 1. Context Overview & Dashboard
@@ -172,4 +173,7 @@ export function registerResources(server: McpServer, context: McpContext): void 
 
   // 9. Planning Graph State & Decisions Resources
   registerPlanningResources(server, context);
+
+  // 10. Workspace Plan State Resources
+  registerWorkspaceResources(server, context);
 }
