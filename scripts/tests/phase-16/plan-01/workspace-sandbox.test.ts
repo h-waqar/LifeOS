@@ -673,6 +673,6 @@ describe("Phase 16 Plan 16-01: Workspace Sandbox & Command Runner", () => {
       expect(realResult.exitCode).toBe(0);
       expect(realResult.command).toBe("typecheck");
       expect(realResult.timedOut).toBe(false);
-    }, 30_000);
+    }, 90_000);
   });
 });

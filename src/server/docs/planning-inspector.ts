@@ -151,10 +151,20 @@ export class PlanningInspector {
     const cleanId = phaseIdentifier.trim().toLowerCase().replace(/^phase-?/i, "");
     const paddedId = cleanId.padStart(2, "0");
 
-    const searchDirs = [
-      path.join(this.projectRoot, ".planning/phases"),
-      path.join(this.projectRoot, ".planning/milestones/v1.0-phases"),
-    ];
+    const searchDirs = [path.join(this.projectRoot, ".planning/phases")];
+    const milestonesDir = path.join(this.projectRoot, ".planning/milestones");
+    if (fs.existsSync(milestonesDir)) {
+      try {
+        const milestoneEntries = fs.readdirSync(milestonesDir, { withFileTypes: true });
+        for (const mEntry of milestoneEntries) {
+          if (mEntry.isDirectory() && mEntry.name.endsWith("-phases")) {
+            searchDirs.push(path.join(milestonesDir, mEntry.name));
+          }
+        }
+      } catch {
+        // Fallback
+      }
+    }
 
     let matchedFile: string | null = null;
     let phaseName = "";
@@ -238,8 +248,11 @@ export class PlanningInspector {
 
       for (const line of lines) {
         // e.g. - [x] **Phase 10: Shared Application Services & Headless CLI** - description
+        // e.g. - [x] Phase 10: Shared Application Services & Headless CLI (3/3 plans) — completed 2026-10-02
         // e.g. - [ ] **Phase 12: Skills Engine & Contextual Documentation Retrieval** - description
-        const match = line.match(/^\s*-\s*\[([ xX])\]\s*\*\*Phase\s*(\d+):\s*([^*]+)\*\*(?:\s*-\s*(.*))?$/);
+        const match = line.match(
+          /^\s*-\s*\[([ xX])\]\s*(?:\*\*)?Phase\s*(\d+)(?:\s*\([^)]*\))?:\s*([^*—\n]+?)(?:\*\*)?(?:\s*(?:-|—)\s*(.*))?$/
+        );
         if (match) {
           const isDone = match[1].toLowerCase() === "x";
           phases.push({
