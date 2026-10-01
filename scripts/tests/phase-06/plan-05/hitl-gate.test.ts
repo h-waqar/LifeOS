@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
+// @vitest-environment node
+import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import {
   ActionNotFoundError,
   ActionForbiddenError,
@@ -8,8 +9,33 @@ import {
 import { ACTION_TTL_MS, mapActionToDTO } from "@/server/ai/hitl/gate-service";
 import { requiresConfirmation, type LifeOSTool, type ToolContext } from "@/server/ai/tools/types";
 import { interceptToolCall } from "@/server/ai/hitl/gate-service";
+import { db } from "@/server/db";
+import { user } from "@/server/db/schema/auth";
+import { eq } from "drizzle-orm";
 
 describe("Phase 6 Plan 06-05: HITL Confirmation Gate (Unit)", () => {
+  let testUserId: string = "user-123";
+
+  beforeAll(async () => {
+    const [existing] = await db.select({ id: user.id }).from(user).limit(1);
+    if (existing) {
+      testUserId = existing.id;
+    } else {
+      const [inserted] = await db
+        .insert(user)
+        .values({
+          id: "user-123",
+          name: "Test User 123",
+          email: "user123_hitl@example.com",
+          emailVerified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+      testUserId = inserted.id;
+    }
+  });
+
   it("defines standard error classes with appropriate HTTP statuses and codes", () => {
     const notFound = new ActionNotFoundError();
     expect(notFound.status).toBe(404);
@@ -46,7 +72,7 @@ describe("Phase 6 Plan 06-05: HITL Confirmation Gate (Unit)", () => {
     };
 
     const ctx: ToolContext = {
-      userId: "user-123",
+      userId: testUserId,
     };
 
     const res = await interceptToolCall(ctx, readOnlyTool, { query: "test" });
@@ -70,7 +96,7 @@ describe("Phase 6 Plan 06-05: HITL Confirmation Gate (Unit)", () => {
     };
 
     const ctx: ToolContext = {
-      userId: "user-123",
+      userId: testUserId,
       skipHITL: true,
     };
 

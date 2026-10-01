@@ -15,12 +15,16 @@ export async function POST(req: Request) {
       payload = {};
     }
 
+    const url = new URL(req.url);
+    const userId = url.searchParams.get("userId") || url.searchParams.get("user") || undefined;
+
     const result = await webhookHandler.handleGitHubWebhook({
       rawBody,
       payload,
       eventType,
       deliveryId,
       signatureHeader,
+      userId,
     });
 
     return NextResponse.json(result);

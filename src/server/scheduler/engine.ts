@@ -9,6 +9,7 @@ import { stagnantGoalsSweeper } from "./jobs/stagnant-goals";
 import { googleCalendarSyncSweeper } from "./jobs/google-calendar-sync";
 import { githubActivitySweeper } from "./jobs/github-activity-sync";
 import { cloudBackupSweeper } from "./jobs/cloud-backup";
+import { challengeTtlSweeper } from "./jobs/challenge-ttl";
 import {
   acquireJobLock,
   completeJobLock,
@@ -51,6 +52,7 @@ export class SchedulerEngine {
     this.registerSweeper(googleCalendarSyncSweeper);
     this.registerSweeper(githubActivitySweeper);
     this.registerSweeper(cloudBackupSweeper);
+    this.registerSweeper(challengeTtlSweeper);
   }
 
   /**

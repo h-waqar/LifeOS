@@ -11,6 +11,9 @@ import {
   ActionExpiredError,
 } from "./types";
 import { eventBus, createDomainEvent, type AnyDomainEvent } from "@/server/events";
+import { isFinancialMutation, assertFinancialShield } from "@/server/agents/finance-shield";
+import { executeAgentOperation } from "@/server/agents/safety-boundary";
+import type { AgentSafetyContext } from "@/server/agents/permissions/types";
 
 export const ACTION_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -42,19 +45,51 @@ export interface InterceptResult {
 
 /**
  * Intercepts tool calls. Consequential and destructive tools generate a pending ai_actions record
- * with a 5-minute TTL. Read-only and draft tools execute immediately.
+ * with a 5-minute TTL. Read-only and draft tools execute immediately via canonical executeAgentOperation.
  */
 export async function interceptToolCall(
   ctx: ToolContext,
   tool: LifeOSTool,
   args: unknown
 ): Promise<InterceptResult> {
+  const agentContext: AgentSafetyContext = {
+    isAgent: true,
+    user: {
+      id: ctx.userId,
+    },
+    agent: {
+      id: `ai-assistant-${ctx.userId}`,
+      userId: ctx.userId,
+      name: "AI Assistant",
+      tokenPrefix: "ai_assistant...",
+      provider: "ai_assistant",
+      status: "active",
+      expiresAt: null,
+      capabilities: new Set(["READ", "WRITE", "EXECUTE"]),
+      permissions: [],
+    },
+    provider: "ai_assistant",
+    sessionId: ctx.conversationId,
+  };
+
+  // Immediate fail-closed financial shield check
+  if (isFinancialMutation(tool.id) || tool.id === "finance_create_transaction") {
+    assertFinancialShield(agentContext, tool.id);
+  }
+
   // If tool does not require confirmation or explicit skipHITL is provided
   if (!requiresConfirmation(tool.riskTier) || ctx.skipHITL) {
-    const result = await tool.execute(ctx, args);
+    const opResult = await executeAgentOperation({
+      context: agentContext,
+      toolName: tool.id,
+      arguments: (args as Record<string, unknown>) ?? {},
+      targetUserId: ctx.userId,
+      executor: () => tool.execute(ctx, args),
+    });
+
     return {
       isPending: false,
-      result,
+      result: opResult.status === "EXECUTED" ? opResult.data : opResult,
     };
   }
 

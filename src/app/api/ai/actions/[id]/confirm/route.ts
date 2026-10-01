@@ -11,6 +11,7 @@ import {
   ActionConflictError,
   ActionExpiredError,
 } from "@/server/ai/hitl/types";
+import { FinancialShieldViolationError } from "@/server/agents/finance-shield";
 
 export const dynamic = "force-dynamic";
 
@@ -52,9 +53,19 @@ export async function POST(
         { status: 401, headers: SECURITY_CACHE_HEADERS }
       );
     }
-    if (error instanceof ActionForbiddenError || error instanceof AuthorizationError) {
+    if (
+      error instanceof ActionForbiddenError ||
+      error instanceof AuthorizationError ||
+      error instanceof FinancialShieldViolationError
+    ) {
       return NextResponse.json(
-        { error: error.message, code: "ACTION_FORBIDDEN" },
+        {
+          error: error.message,
+          code:
+            error instanceof FinancialShieldViolationError
+              ? error.code
+              : "ACTION_FORBIDDEN",
+        },
         { status: 403, headers: SECURITY_CACHE_HEADERS }
       );
     }

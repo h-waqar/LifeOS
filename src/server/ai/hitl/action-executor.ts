@@ -12,6 +12,9 @@ import {
   ActionExpiredError,
 } from "./types";
 import { eventBus, createDomainEvent, type AnyDomainEvent } from "@/server/events";
+import { isFinancialMutation, FinancialShieldViolationError } from "@/server/agents/finance-shield";
+import { executeAgentOperation } from "@/server/agents/safety-boundary";
+import type { AgentSafetyContext } from "@/server/agents/permissions/types";
 
 export interface ConfirmExecutionResult {
   action: PendingActionDTO;
@@ -77,17 +80,68 @@ export async function confirmAndExecuteAction(
       throw new Error(`Tool "${actionRow.toolName}" is not registered in LifeOS`);
     }
 
-    // 6. Execute domain tool with original database parameters (tamper-proof)
+    // 5b. Strict Phase 13 Financial Shield Enforcement
+    if (isFinancialMutation(actionRow.toolName) || actionRow.toolName === "finance_create_transaction") {
+      await tx
+        .update(aiActions)
+        .set({
+          status: "failed",
+          errorMessage:
+            "Financial shield violation: autonomous agent-originated mutations to financial ledgers, accounts, or transactions are strictly prohibited.",
+        })
+        .where(eq(aiActions.id, actionId));
+
+      throw new FinancialShieldViolationError(
+        `Financial shield violation: AI action attempted prohibited financial mutation '${actionRow.toolName}'. All agent mutations to financial ledgers are blocked.`,
+        actionRow.toolName
+      );
+    }
+
+    // 6. Execute domain tool with original database parameters through canonical executeAgentOperation
+    const agentContext: AgentSafetyContext = {
+      isAgent: true,
+      user: {
+        id: userId,
+      },
+      agent: {
+        id: `ai-assistant-${userId}`,
+        userId,
+        name: "AI Assistant",
+        tokenPrefix: "ai_assistant...",
+        provider: "ai_assistant",
+        status: "active",
+        expiresAt: null,
+        capabilities: new Set(["READ", "WRITE", "EXECUTE", "DESTRUCTIVE"]),
+        permissions: [],
+      },
+      provider: "ai_assistant",
+      sessionId: actionRow.conversationId,
+    };
+
     let executionResult: unknown;
     try {
-      executionResult = await tool.execute(
-        {
-          userId,
-          conversationId: actionRow.conversationId,
-          skipHITL: true,
-        },
-        actionRow.parameters
-      );
+      const opResult = await executeAgentOperation({
+        context: agentContext,
+        toolName: actionRow.toolName,
+        arguments: (actionRow.parameters as Record<string, unknown>) ?? {},
+        targetUserId: userId,
+        dbClient: tx,
+        executor: () =>
+          tool.execute(
+            {
+              userId,
+              conversationId: actionRow.conversationId,
+              skipHITL: true,
+            },
+            actionRow.parameters
+          ),
+      });
+
+      if (opResult.status === "CHALLENGE_REQUIRED") {
+        executionResult = { challengeId: opResult.challengeId, message: opResult.message };
+      } else {
+        executionResult = opResult.data;
+      }
     } catch (err: any) {
       const errorMsg = err?.message ?? String(err);
       await tx

@@ -18,12 +18,32 @@ export interface SweeperStats {
 }
 
 /**
- * Sweeps all pending challenges whose TTL has elapsed and transitions them to EXPIRED.
+ * Sweeps pending challenges whose TTL has elapsed and transitions them to EXPIRED.
+ * Supports optional tenant filtering (userId) and custom dbClient.
  */
 export async function sweepExpiredChallenges(
-  dbClient = defaultDb
+  userIdOrDbClient?: string | any,
+  maybeDbClient?: any
 ): Promise<SweeperStats> {
   const now = new Date();
+  let userId: string | undefined;
+  let dbClient = defaultDb;
+
+  if (typeof userIdOrDbClient === "string") {
+    userId = userIdOrDbClient;
+    dbClient = maybeDbClient ?? defaultDb;
+  } else if (userIdOrDbClient) {
+    dbClient = userIdOrDbClient;
+  }
+
+  const conditions = [
+    eq(agentChallenges.status, "PENDING"),
+    lte(agentChallenges.expiresAt, now),
+  ];
+
+  if (userId) {
+    conditions.push(eq(agentChallenges.userId, userId));
+  }
 
   const expiredRows = await dbClient
     .update(agentChallenges)
@@ -31,12 +51,7 @@ export async function sweepExpiredChallenges(
       status: "EXPIRED",
       updatedAt: now,
     })
-    .where(
-      and(
-        eq(agentChallenges.status, "PENDING"),
-        lte(agentChallenges.expiresAt, now)
-      )
-    )
+    .where(and(...conditions))
     .returning({ id: agentChallenges.id });
 
   return {

@@ -89,6 +89,19 @@ const KNOWN_OPERATIONS: Record<string, Omit<OperationClassification, "toolOrActi
   "finance.listTransactions": { capability: "READ", domain: "finance", isFinancialMutation: false, isDestructive: false, isSensitive: false },
   "finance.getBudget": { capability: "READ", domain: "finance", isFinancialMutation: false, isDestructive: false, isSensitive: false },
 
+  // AI SDK Read Tools
+  "tasks_search": { capability: "READ", domain: "tasks", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "calendar_list": { capability: "READ", domain: "calendar", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "goals_list": { capability: "READ", domain: "goals", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "projects_list": { capability: "READ", domain: "projects", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "habits_list": { capability: "READ", domain: "habits", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "notes_search": { capability: "READ", domain: "notes", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "people_search": { capability: "READ", domain: "people", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "finance_get_summary": { capability: "READ", domain: "finance", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "content_list": { capability: "READ", domain: "content", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "test_readonly": { capability: "READ", domain: "test", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "test_consequential": { capability: "WRITE", domain: "test", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+
   // --- WRITE Operations ---
   "lifeos_create_task": { capability: "WRITE", domain: "tasks", isFinancialMutation: false, isDestructive: false, isSensitive: false },
   "lifeos_update_task": { capability: "WRITE", domain: "tasks", isFinancialMutation: false, isDestructive: false, isSensitive: false },
@@ -128,6 +141,15 @@ const KNOWN_OPERATIONS: Record<string, Omit<OperationClassification, "toolOrActi
   "updateHabit": { capability: "WRITE", domain: "habits", isFinancialMutation: false, isDestructive: false, isSensitive: false },
   "logHabit": { capability: "WRITE", domain: "habits", isFinancialMutation: false, isDestructive: false, isSensitive: false },
 
+  // AI SDK Mutating Tools
+  "tasks_create": { capability: "WRITE", domain: "tasks", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "tasks_complete": { capability: "WRITE", domain: "tasks", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "calendar_schedule": { capability: "WRITE", domain: "calendar", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "habits_log": { capability: "WRITE", domain: "habits", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "notes_create": { capability: "WRITE", domain: "notes", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "people_log_interaction": { capability: "WRITE", domain: "people", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+  "content_create_idea": { capability: "WRITE", domain: "content", isFinancialMutation: false, isDestructive: false, isSensitive: false },
+
   "plan.morning": { capability: "WRITE", domain: "planning", isFinancialMutation: false, isDestructive: false, isSensitive: false },
   "plan.evening": { capability: "WRITE", domain: "planning", isFinancialMutation: false, isDestructive: false, isSensitive: false },
 
@@ -164,6 +186,7 @@ const KNOWN_OPERATIONS: Record<string, Omit<OperationClassification, "toolOrActi
   "system.purgeAudit": { capability: "SENSITIVE", domain: "security", isFinancialMutation: false, isDestructive: true, isSensitive: true },
 
   // --- Financial Mutations (Prohibited for Agents) ---
+  "finance_create_transaction": { capability: "WRITE", domain: "finance", isFinancialMutation: true, isDestructive: false, isSensitive: true },
   "finance.createTransaction": { capability: "WRITE", domain: "finance", isFinancialMutation: true, isDestructive: false, isSensitive: true },
   "finance.updateTransaction": { capability: "WRITE", domain: "finance", isFinancialMutation: true, isDestructive: false, isSensitive: true },
   "finance.deleteTransaction": { capability: "DESTRUCTIVE", domain: "finance", isFinancialMutation: true, isDestructive: true, isSensitive: true },

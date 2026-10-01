@@ -14,6 +14,7 @@
  * 7. Canonical domain delegation
  */
 
+import { db as defaultDb } from "@/server/db";
 import { assertNoCallerSpoofing } from "@/cli/auth";
 import { classifyOperation, evaluateAgentPermission } from "./permissions/evaluator";
 import { assertFinancialShield, withAgentSafetyContext } from "./finance-shield";
@@ -29,7 +30,7 @@ export interface AgentOperationOptions<TInput extends Record<string, unknown>, T
   challengeId?: string;
   targetUserId: string;
   getBeforeState?: () => Promise<Record<string, unknown> | null>;
-  executor: () => Promise<TOutput>;
+  executor: (tx?: any) => Promise<TOutput>;
   getAfterState?: (result: TOutput) => Promise<Record<string, unknown> | null>;
   dbClient?: any;
 }
@@ -51,6 +52,52 @@ export type AgentOperationResult<TOutput> =
  * Centrally intercepts, authorizes, gates, and audits an operation.
  */
 export async function executeAgentOperation<
+  TInput extends Record<string, unknown>,
+  TOutput
+>(options: AgentOperationOptions<TInput, TOutput>): Promise<AgentOperationResult<TOutput>> {
+  const { context, toolName, dbClient } = options;
+  const operation = options.operation ?? toolName;
+  const classification = classifyOperation(operation);
+
+  const isMutating =
+    classification.capability === "WRITE" ||
+    classification.capability === "DESTRUCTIVE" ||
+    classification.capability === "SENSITIVE";
+
+  // If operation is an agent mutation and an outer transaction is not active,
+  // enforce an atomic transaction boundary so mutation and audit write commit or rollback together.
+  if (
+    context.isAgent &&
+    isMutating &&
+    dbClient &&
+    typeof dbClient.transaction === "function"
+  ) {
+    return await dbClient.transaction(async (tx: any) => {
+      return await executeAgentOperationInternal({
+        ...options,
+        dbClient: tx,
+      });
+    });
+  }
+
+  if (
+    context.isAgent &&
+    isMutating &&
+    !dbClient &&
+    typeof defaultDb.transaction === "function"
+  ) {
+    return await defaultDb.transaction(async (tx: any) => {
+      return await executeAgentOperationInternal({
+        ...options,
+        dbClient: tx,
+      });
+    });
+  }
+
+  return await executeAgentOperationInternal(options);
+}
+
+async function executeAgentOperationInternal<
   TInput extends Record<string, unknown>,
   TOutput
 >(options: AgentOperationOptions<TInput, TOutput>): Promise<AgentOperationResult<TOutput>> {
@@ -198,7 +245,7 @@ export async function executeAgentOperation<
             agentTokenId: context.agent.id,
             operation,
             arguments: args,
-            executor: () => withAgentSafetyContext(context, executor),
+            executor: () => withAgentSafetyContext(context, () => executor(dbClient)),
           },
           dbClient
         );
@@ -231,7 +278,7 @@ export async function executeAgentOperation<
             durationMs: Date.now() - startTime,
           },
           dbClient
-        ).catch(() => {});
+        );
 
         return {
           status: "EXECUTED",
@@ -272,7 +319,7 @@ export async function executeAgentOperation<
   } catch {}
 
   try {
-    const result = await withAgentSafetyContext(context, executor);
+    const result = await withAgentSafetyContext(context, () => executor(dbClient));
 
     let afterState: Record<string, unknown> | null = null;
     try {
@@ -301,7 +348,7 @@ export async function executeAgentOperation<
           durationMs: Date.now() - startTime,
         },
         dbClient
-      ).catch(() => {});
+      );
     }
 
     return {

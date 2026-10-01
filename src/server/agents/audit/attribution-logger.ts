@@ -10,7 +10,7 @@
 
 import { desc, eq, and } from "drizzle-orm";
 import { db as defaultDb } from "@/server/db";
-import { agentAuditLog, type AgentAuditLog } from "@/server/db/schema/agents";
+import { agentAuditLog, agentTokens, type AgentAuditLog } from "@/server/db/schema/agents";
 import { computeArgumentsHash } from "../challenges/challenge-service";
 import type { AgentAuditLogEntry } from "./types";
 
@@ -21,15 +21,16 @@ const SENSITIVE_KEYS_REGEX =
  * Redacts embedded secret patterns within string values.
  */
 export function scrubString(str: string): string {
+  // Strip null bytes and non-printable control characters that crash PostgreSQL JSONB or TEXT
+  let result = str.replace(/\0/g, "").replace(/\\u0000/g, "");
+
   if (
-    str.startsWith("v1:") ||
-    str.startsWith("lifeos_ag_") ||
-    str.startsWith("sk-")
+    result.startsWith("v1:") ||
+    result.startsWith("lifeos_ag_") ||
+    result.startsWith("sk-")
   ) {
     return "***REDACTED***";
   }
-
-  let result = str;
 
   // Redact Bearer tokens: "Bearer <token>" -> "Bearer ***REDACTED***"
   result = result.replace(/Bearer\s+[a-zA-Z0-9_\-\.]+/gi, "Bearer ***REDACTED***");
@@ -145,11 +146,27 @@ export async function logAgentAudit(
       ? computeStateDiff(cleanBeforeState, cleanAfterState)
       : null);
 
+  let validAgentTokenId: string | null = null;
+  if (entry.agentTokenId) {
+    try {
+      const [tokenRecord] = await dbClient
+        .select({ id: agentTokens.id })
+        .from(agentTokens)
+        .where(eq(agentTokens.id, entry.agentTokenId))
+        .limit(1);
+      if (tokenRecord) {
+        validAgentTokenId = tokenRecord.id;
+      }
+    } catch {
+      validAgentTokenId = null;
+    }
+  }
+
   const [row] = await dbClient
     .insert(agentAuditLog)
     .values({
       userId: entry.userId,
-      agentTokenId: entry.agentTokenId ?? null,
+      agentTokenId: validAgentTokenId,
       agentName: entry.agentName ?? null,
       provider: entry.provider ?? null,
       sessionId: entry.sessionId ?? null,

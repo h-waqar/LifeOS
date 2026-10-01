@@ -2,6 +2,7 @@ import { z } from "zod";
 import { type LifeOSTool } from "./types";
 import { getFinanceSummary } from "@/server/finance/reports-service";
 import { createTransaction } from "@/server/finance/transaction-service";
+import { assertFinancialShield } from "@/server/agents/finance-shield";
 
 export const financeGetSummaryTool: LifeOSTool = {
   id: "finance_get_summary",
@@ -64,6 +65,30 @@ export const financeCreateTransactionTool: LifeOSTool = {
       "This financial transaction directly affects account balances, budget calculations, and net worth reports.",
   }),
   execute: async (ctx, args) => {
+    // Universal Zero-Trust Financial Shield: AI-originated mutations are strictly blocked
+    assertFinancialShield(
+      {
+        isAgent: true,
+        user: {
+          id: ctx.userId,
+        },
+        agent: {
+          id: `ai-assistant-${ctx.userId}`,
+          userId: ctx.userId,
+          name: "AI Assistant",
+          tokenPrefix: "ai_assistant...",
+          provider: "ai_assistant",
+          status: "active",
+          expiresAt: null,
+          capabilities: new Set(["READ"]),
+          permissions: [],
+        },
+        provider: "ai_assistant",
+        sessionId: ctx.conversationId,
+      },
+      "finance.createTransaction"
+    );
+
     return await createTransaction(ctx.userId, {
       accountId: args.accountId,
       toAccountId: args.toAccountId,

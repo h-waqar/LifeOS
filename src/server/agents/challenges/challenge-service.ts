@@ -29,6 +29,18 @@ import {
 
 export const DEFAULT_CHALLENGE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
+const EXCLUDED_CANONICAL_KEYS = new Set([
+  "challengeId",
+  "challenge_id",
+  "challenge-id",
+  "challenge",
+  "token",
+  "json",
+  "config",
+  "help",
+  "version",
+]);
+
 /**
  * Deterministically canonicalizes arguments into a stable JSON string.
  * Recursively sorts keys of objects.
@@ -51,7 +63,7 @@ export function canonicalizeArguments(args: unknown): string {
   const entries: string[] = [];
 
   for (const key of sortedKeys) {
-    if (key === "challengeId" || key === "challenge_id" || key === "challenge") {
+    if (EXCLUDED_CANONICAL_KEYS.has(key)) {
       continue;
     }
     if (record[key] !== undefined) {
