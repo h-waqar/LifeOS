@@ -14,14 +14,18 @@ import {
 import { Badge, EnergyBadge, PriorityBadge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { VoiceDictationButton } from "@/components/voice/voice-dictation-button";
+import { enqueueOfflineItem } from "@/lib/pwa/offline-store";
+import { useSession } from "@/lib/auth-client";
 
-interface QuickCaptureModalProps {
+export interface QuickCaptureModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTaskCreated?: (task: any) => void;
+  userId?: string;
 }
 
-interface ParsedTokens {
+export interface ParsedTokens {
   title: string;
   priority?: "critical" | "high" | "medium" | "low";
   dueDate?: string;
@@ -32,7 +36,7 @@ interface ParsedTokens {
   tags: string[];
 }
 
-function parseTokensClient(text: string): ParsedTokens {
+export function parseTokensClient(text: string): ParsedTokens {
   let clean = text.trim();
   const tags: string[] = [];
   let priority: "critical" | "high" | "medium" | "low" | undefined;
@@ -42,11 +46,13 @@ function parseTokensClient(text: string): ParsedTokens {
   let projectName: string | undefined;
   let duration: number | undefined;
 
+  // 1. Explicit syntax: +tag
   clean = clean.replace(/(?:^|\s)\+([a-zA-Z0-9_-]+)/g, (_, t) => {
     tags.push(t.toLowerCase());
     return "";
   });
 
+  // 2. Explicit syntax: !priority
   clean = clean.replace(/(?:^|\s)!(p[0-3]|critical|high|medium|low)\b/gi, (_, t) => {
     const low = t.toLowerCase();
     if (low === "p0" || low === "critical") priority = "critical";
@@ -56,32 +62,63 @@ function parseTokensClient(text: string): ParsedTokens {
     return "";
   });
 
+  // 3. Explicit syntax: ^dueDate
   clean = clean.replace(/(?:^|\s)\^([a-zA-Z]+|\d{4}-\d{2}-\d{2})\b/g, (_, t) => {
     dueDate = t;
     return "";
   });
 
+  // 4. Explicit syntax: *scheduledDate
   clean = clean.replace(/(?:^|\s)\*([a-zA-Z]+|\d{4}-\d{2}-\d{2})\b/g, (_, t) => {
     scheduledDate = t;
     return "";
   });
 
+  // 5. Explicit syntax: @energy
   clean = clean.replace(/(?:^|\s)@(?:energy:)?(low|medium|high)\b/gi, (_, t) => {
     const low = t.toLowerCase();
     if (low === "low" || low === "medium" || low === "high") energyLevel = low;
     return "";
   });
 
+  // 6. Explicit syntax: #project
   clean = clean.replace(/(?:^|\s)#(?:project:)?([a-zA-Z0-9_-]+)\b/g, (_, t) => {
     projectName = t;
     return "";
   });
 
+  // 7. Explicit syntax: ~duration
   clean = clean.replace(/(?:^|\s)~(\d+)(m|h)?\b/gi, (_, amt, unit) => {
     const n = parseInt(amt, 10);
     if (!isNaN(n)) duration = unit?.toLowerCase() === "h" ? n * 60 : n;
     return "";
   });
+
+  // 8. Conversational NLP extraction (voice dictation & natural speech)
+  if (!priority) {
+    if (/\b(urgent|asap|critical)\b/i.test(clean)) {
+      priority = "critical";
+      clean = clean.replace(/\b(urgent|asap|critical)\b/gi, "");
+    } else if (/\b(high priority|important)\b/i.test(clean)) {
+      priority = "high";
+      clean = clean.replace(/\b(high priority|important)\b/gi, "");
+    } else if (/\blow priority\b/i.test(clean)) {
+      priority = "low";
+      clean = clean.replace(/\blow priority\b/gi, "");
+    }
+  }
+
+  if (!scheduledDate && !dueDate) {
+    const tomorrowTimeMatch = clean.match(/\btomorrow\s+at\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\b/i);
+    if (tomorrowTimeMatch) {
+      scheduledDate = `tomorrow at ${tomorrowTimeMatch[1]}`;
+      dueDate = "tomorrow";
+      clean = clean.replace(tomorrowTimeMatch[0], "");
+    } else if (/\btomorrow\b/i.test(clean)) {
+      dueDate = "tomorrow";
+      clean = clean.replace(/\btomorrow\b/gi, "");
+    }
+  }
 
   return {
     title: clean.replace(/\s+/g, " ").trim(),
@@ -99,7 +136,11 @@ export function QuickCaptureModal({
   isOpen,
   onClose,
   onTaskCreated,
+  userId: propUserId,
 }: QuickCaptureModalProps) {
+  const { data: session } = useSession();
+  const effectiveUserId = propUserId || session?.user?.id || "anonymous_user";
+
   const [input, setInput] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [aiMode, setAiMode] = React.useState(false);
@@ -138,6 +179,30 @@ export function QuickCaptureModal({
 
     setIsSubmitting(true);
     setError(null);
+
+    // Check offline status
+    const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+
+    if (isOffline) {
+      try {
+        const queued = await enqueueOfflineItem({
+          userId: effectiveUserId,
+          type: "task",
+          payload: { raw: input.trim(), ...tokens },
+        });
+        toast.info("Offline: Task saved to local queue", {
+          description: queued.payload.raw || input.trim(),
+        });
+        setInput("");
+        if (onTaskCreated) onTaskCreated(queued);
+        onClose();
+      } catch (err: any) {
+        setError(err.message || "Failed to save offline task");
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
 
     try {
       if (aiMode) {
@@ -202,6 +267,30 @@ export function QuickCaptureModal({
       if (onTaskCreated) onTaskCreated(data.task);
       onClose();
     } catch (err: any) {
+      // If network error while attempting fetch, fallback to offline queue
+      if (
+        err?.name === "TypeError" ||
+        (err?.message && err.message.toLowerCase().includes("fetch")) ||
+        (typeof navigator !== "undefined" && !navigator.onLine)
+      ) {
+        try {
+          const queued = await enqueueOfflineItem({
+            userId: effectiveUserId,
+            type: "task",
+            payload: { raw: input.trim(), ...tokens },
+          });
+          toast.info("Offline: Task saved to local queue", {
+            description: queued.payload.raw || input.trim(),
+          });
+          setInput("");
+          if (onTaskCreated) onTaskCreated(queued);
+          onClose();
+          return;
+        } catch (queueErr: any) {
+          setError(queueErr.message || "Failed to save offline");
+          return;
+        }
+      }
       setError(err.message || "Failed to capture task");
     } finally {
       setIsSubmitting(false);
@@ -262,16 +351,27 @@ export function QuickCaptureModal({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div className="relative">
+          <div className="relative flex items-center">
             <input
               ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="e.g. Write architecture brief !critical ^tomorrow @high #Core ~45m +spec"
-              className="w-full rounded-lg border bg-background px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full rounded-lg border bg-background pl-4 pr-12 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               disabled={isSubmitting}
             />
+            <div className="absolute right-2 flex items-center">
+              <VoiceDictationButton
+                onTranscriptUpdate={(transcript) => {
+                  setInput(transcript);
+                }}
+                onError={(err) => {
+                  setError(err);
+                }}
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
 
           {error && (
