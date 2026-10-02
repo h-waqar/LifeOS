@@ -25,3 +25,6 @@ next-env.d.ts
 *.njsproj
 *.sln
 *.sw?
+
+# Desktop clipboard/notification watcher drops into the cwd
+watch_[0-9]*
