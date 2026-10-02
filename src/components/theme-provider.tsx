@@ -13,6 +13,27 @@ interface ThemeContextType {
 
 const ThemeContext = React.createContext<ThemeContextType | undefined>(undefined);
 
+function safeStorageGet(key: string): string | null {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      return window.localStorage.getItem(key);
+    }
+  } catch {
+    // Safari Private Browsing or Firefox strict storage restriction fallback
+  }
+  return null;
+}
+
+function safeStorageSet(key: string, value: string): void {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem(key, value);
+    }
+  } catch {
+    // Safari Private Browsing or quota exceeded fallback
+  }
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = React.useState<Theme>("dark");
   const [resolvedTheme, setResolvedTheme] = React.useState<"dark" | "light">("dark");
@@ -42,7 +63,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Initialize theme on client mount
   React.useEffect(() => {
     setMounted(true);
-    const stored = (localStorage.getItem("lifeos-theme") as Theme) || "dark";
+    const stored = (safeStorageGet("lifeos-theme") as Theme) || "dark";
     setThemeState(stored);
     applyTheme(stored);
 
@@ -53,7 +74,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (data?.preferences?.theme) {
           const prefTheme = data.preferences.theme as Theme;
           setThemeState(prefTheme);
-          localStorage.setItem("lifeos-theme", prefTheme);
+          safeStorageSet("lifeos-theme", prefTheme);
           applyTheme(prefTheme);
         }
       })
@@ -65,7 +86,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setTheme = React.useCallback(
     (newTheme: Theme) => {
       setThemeState(newTheme);
-      localStorage.setItem("lifeos-theme", newTheme);
+      safeStorageSet("lifeos-theme", newTheme);
       applyTheme(newTheme);
 
       // Persist to preferences API

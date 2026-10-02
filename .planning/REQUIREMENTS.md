@@ -21,9 +21,9 @@ Requirements for Milestone v2.1, executing the authoritative Deferred Independen
 
 ### Cross-Browser Engines & Journey Regression
 
-- [ ] **QA-05**: Cross-Browser Engine Compatibility — verification across major non-Chromium desktop browser rendering engines: Mozilla Firefox (Gecko), Apple Safari (WebKit), and Microsoft Edge.
-- [ ] **QA-06**: Independent Tester Challenge of H01–H12 Scenarios — adversarial re-testing of core productivity scenarios H01 through H12 by an external tester probing edge cases, rapid double-submissions, and boundary conditions.
-- [ ] **QA-07**: Holistic Project-Wide Regression — complete end-to-end integration regression spanning Core OS (Phases 1–9) and Agent Platform (Phases 10–18) confirming overall system stability.
+- [x] **QA-05**: Cross-Browser Engine Compatibility — verification across major non-Chromium desktop browser rendering engines: Mozilla Firefox (Gecko), Apple Safari (WebKit), and Microsoft Edge.
+- [x] **QA-06**: Independent Tester Challenge of H01–H12 Scenarios — adversarial re-testing of core productivity scenarios H01 through H12 by an external tester probing edge cases, rapid double-submissions, and boundary conditions.
+- [x] **QA-07**: Holistic Project-Wide Regression — complete end-to-end integration regression spanning Core OS (Phases 1–9) and Agent Platform (Phases 10–18) confirming overall system stability.
 
 ### Production Infrastructure & Schema Alignment
 
@@ -31,8 +31,6 @@ Requirements for Milestone v2.1, executing the authoritative Deferred Independen
 - [ ] **PROD-03**: Drizzle Kit Migration Snapshot Baseline Alignment — reconcile historical snapshot gap for migrations 0012–0026, establishing a verified introspection baseline without modifying existing journal or data integrity.
 
 ## Future Requirements (v3.0+)
-
-Deferred to future major milestone. Sourced from PRD Sections 99 & 100 ("Future Vision" & "Long-Term AI Vision") and PRD Section 18 ("Social Media System").
 
 ### Proactive Personal OS Orchestration
 
@@ -68,8 +66,8 @@ Which phases cover which requirements.
 | QA-03 | Phase 19 | Satisfied |
 | QA-04 | Phase 19 | Satisfied |
 | PROD-02 | Phase 19 | Satisfied |
-| QA-05 | Phase 20 | Pending |
-| QA-06 | Phase 20 | Pending |
-| QA-07 | Phase 20 | Pending |
+| QA-05 | Phase 20 | Satisfied |
+| QA-06 | Phase 20 | Satisfied |
+| QA-07 | Phase 20 | Satisfied |
 | PROD-01 | Phase 21 | Pending |
 | PROD-03 | Phase 21 | Pending |

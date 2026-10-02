@@ -45,7 +45,7 @@ See: [.planning/milestones/v2.0-ROADMAP.md](milestones/v2.0-ROADMAP.md)
 ## Phases
 
 - [x] **Phase 19: External Platform, Mobile Hardware & Assistive Device Validation** (3/3 plans) — completed 2026-10-02
-- [ ] **Phase 20: Cross-Browser Engine & Adversarial Journey Regression** - Mozilla Firefox (Gecko), Apple Safari (WebKit), Microsoft Edge, external tester challenge of H01–H12 scenarios, and full project-wide regression.
+- [x] **Phase 20: Cross-Browser Engine & Adversarial Journey Regression** (2/2 plans) — completed 2026-10-02
 - [ ] **Phase 21: Production Infrastructure Hardening & Migration Baseline Alignment** - TLS reverse proxy headers, HTTP/2/3 caching, latency resilience, and Drizzle Kit migration snapshot baseline reconciliation for historical migrations 0012–0026.
 
 ## Phase Details
@@ -72,7 +72,8 @@ See: [.planning/milestones/v2.0-ROADMAP.md](milestones/v2.0-ROADMAP.md)
   1. Desktop Firefox (Gecko) and Apple Safari (WebKit) render all views and execute all interactions identically to Chromium.
   2. Independent adversarial challenge of H01–H12 scenarios validates edge cases, input validation, and boundary conditions.
   3. Holistic integration regression across Core OS (Phases 1–9) and Agent Platform (Phases 10–18) demonstrates zero system regressions.
-**Plans**: 2 plans
+**Plans**: 2 plans (2/2 completed)
+**Status**: completed 2026-10-02
 **UI hint**: yes
 
 ### Phase 21: Production Infrastructure Hardening & Migration Baseline Alignment

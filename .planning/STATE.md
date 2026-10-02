@@ -3,14 +3,14 @@ gsd_state_version: "1.0"
 milestone: v2.1
 milestone_name: Production Hardening & External Quality Assurance
 status: in_progress
-last_updated: "2026-10-02T04:26:00.000Z"
+last_updated: "2026-10-02T05:00:00.000Z"
 last_activity: 2026-10-02
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 3
-  percent: 43
+  completed_plans: 5
+  percent: 71
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-10-02)
 
 ## Current Position
 
-Phase: Phase 19 Complete & Verified (Phase 20 next)
-Plan: 19-03 Complete
-Status: Phase 19 Complete & Verified; ready for Phase 20
-Last activity: 2026-10-02 — Phase 19 External Platform, Mobile Hardware & Assistive Device Validation completed
+Phase: Phase 20 Complete & Verified (Phase 21 next)
+Plan: 20-02 Complete
+Status: Phase 20 Complete & Verified; ready for Phase 21
+Last activity: 2026-10-02 — Phase 20 Cross-Browser Engine & Adversarial Journey Regression completed
 
 ## Performance Metrics
 
@@ -60,10 +60,11 @@ Last activity: 2026-10-02 — Phase 19 External Platform, Mobile Hardware & Assi
 | 17. Workspace Agent Surface & Development Workflow Integration | 1/1 (Complete & Verified) | - | - |
 | 18. Closed-Loop Autonomous Agent Execution & Verified Commit Engine | 2/2 (Complete & Verified) | - | - |
 | 19. External Platform, Mobile Hardware & Assistive Device Validation | 3/3 (Complete & Verified) | - | - |
+| 20. Cross-Browser Engine & Adversarial Journey Regression | 2/2 (Complete & Verified) | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: 18-01, 18-02, 19-01, 19-02, 19-03
+- Last 5 plans: 19-02, 19-03, 20-01, 20-02
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -130,6 +131,10 @@ Recent decisions affecting current work:
 - [Phase 12 Decision]: Strict Path Traversal & Symlink Sandboxing: Document retrieval path safety normalizes, canonicalizes via `fs.realpath`, and enforces fail-closed containment within `docs/`, `.planning/`, and `skills/`, rejecting relative traversal, URL-encoding, null bytes, absolute paths, and external symlinks.
 - [Phase 12 Decision]: MCP Adapter Protocol Delegation: MCP skill and doc tools/resources delegate directly to canonical server services (`src/server/skills/registry.ts`, `src/server/docs/search-service.ts`, `src/server/docs/planning-inspector.ts`), strictly preserving MCP as a protocol adapter without independent domain logic.
 - [Phase 12 Decision]: Read-Only Financial Shield Preservation: Zero financial mutation tools or skill procedures are permitted; financial operations remain strictly read-only summaries.
+- [Phase 20 Decision]: Cross-Browser Scrollbar & Backdrop Fallback: Declared standard Firefox scrollbar properties (`scrollbar-width: thin; scrollbar-color: ...`) alongside WebKit/Blink scrollbars in `globals.css`, plus `@supports not` fallback for `backdrop-filter`.
+- [Phase 20 Decision]: Safari Private Mode Safe Storage Accessors: Wrapped localStorage accesses in try/catch accessors inside `ThemeProvider` to prevent fatal `SecurityError` or `QuotaExceededError` crashes in Safari Private Browsing mode and strict privacy browsers.
+- [Phase 20 Decision]: Adversarial H01-H12 Journey Probe: Exhaustively validated failure paths including tampered session tokens, multi-tab single-user registration bypass, circular task dependencies, XSS query sanitization, and secret-scrubbed operational health checks.
+- [Phase 20 Decision]: Holistic Platform Regression: Verified zero regressions across 19 phases spanning Core OS calculations, AI HITL gate, automations quiet hours, encryption, MCP server caller identity defense, documentation path sandboxing, and assistive mobile hardware.
 
 ### Pending Todos
 
@@ -160,19 +165,19 @@ Items acknowledged and deferred at milestone close, most recent first (see [Defe
 | Independent QA | Physical tablet testing (real iPad & Android tablets) | RESOLVED (Phase 19) | Plan 01-09 Close | Final Pre-Release QA |
 | Independent QA | Real-world touch/tactile usability (thumb zones, gesture ergonomics) | RESOLVED (Phase 19) | Plan 01-09 Close | Final Pre-Release QA |
 | Independent QA | Native screen-reader testing (NVDA, JAWS, VoiceOver, TalkBack) | RESOLVED (Phase 19) | Plan 01-09 Close | Final Pre-Release QA |
-| Independent QA | Independent end-to-end regression testing (unbiased third-party tester) | DEFERRED | Plan 01-09 Close | Final Pre-Release QA |
-| Independent QA | Cross-browser testing (desktop Firefox, Safari, Edge) | DEFERRED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
+| Independent QA | Independent end-to-end regression testing (unbiased third-party tester) | RESOLVED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
+| Independent QA | Cross-browser testing (desktop Firefox, Safari, Edge) | RESOLVED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
 | Independent QA | Final production-environment verification (TLS, reverse proxy, CDN, latency) | DEFERRED (Phase 21) | Plan 01-09 Close | Final Pre-Release QA |
-| Independent QA | Independent tester challenge of previously passing H01–H12 scenarios | DEFERRED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
-| Independent QA | Full project-wide regression across all 9 implemented phases | DEFERRED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
+| Independent QA | Independent tester challenge of previously passing H01–H12 scenarios | RESOLVED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
+| Independent QA | Full project-wide regression across all 9 implemented phases | RESOLVED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
 
 ## Session Continuity
  
-Last session: 2026-10-02T04:26:00.000Z
-Stopped at: Phase 19 Complete & Verified (Phase 20 next: Cross-Browser Engine & Adversarial Journey Regression)
-Next actionable work: Plan and execute Phase 20
+Last session: 2026-10-02T05:00:00.000Z
+Stopped at: Phase 20 Complete & Verified (Phase 21 next: Production Infrastructure Hardening & Migration Baseline Alignment)
+Next actionable work: Plan and execute Phase 21
 Resume file: .planning/ROADMAP.md
 
 ## Operator Next Steps
 
-- Execute Phase 20 with /gsd-execute-phase 20 or plan-phase 20
+- Execute Phase 21 with /gsd-execute-phase 21 or plan-phase 21
