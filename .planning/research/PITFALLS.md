@@ -1,36 +1,65 @@
-# Pitfalls & Mitigations: LifeOS
+# Pitfalls Research: Milestone v3.0
 
-**Domain:** Personal Operating System
+**Domain:** Proactive Personal OS Orchestration & External Social Ecosystem
+**Researched:** 2026-10-02
 **Confidence:** HIGH
 
-## Critical Pitfalls
+## Critical Pitfalls & Mitigation Strategies
 
-### 1. Specification Drift Between PRD and Code
-- **Warning Signs:** Unspecified API routes or schema columns appearing in commits without corresponding PRD updates.
-- **Prevention Strategy:** Treat `prd.md` as the authoritative contract. Any schema addition or architectural deviation must be recorded in `.planning/PROJECT.md` Key Decisions and traced to a requirement ID.
-- **Addressed in:** All Phases (enforced via GSD workflow gates).
+### 1. External Social API Rate Limits & Token Invalidation
 
-### 2. Uncontrolled AI Side Effects
-- **Warning Signs:** AI assistant directly creating, modifying, or deleting records in the database without user review.
-- **Prevention Strategy:** Two-phase execution for AI tools. Queries (read-only) execute immediately; mutations (write/delete) return structured action proposals requiring explicit user confirmation.
-- **Addressed in:** Phase 1 (Foundation Security) & Phase 6 (AI Layer).
+- **Pitfall**: Twitter/X and LinkedIn enforce aggressive rate limits (e.g., 50–100 requests per 15-minute window for Free/Basic tiers). Polling analytics frequently or retrying failed posts indiscriminately will result in HTTP 429 errors or account suspension.
+- **Warning Signs**: Repetitive `429 Too Many Requests` or `invalid_grant` errors in integration sync logs.
+- **Mitigation Strategy**:
+  1. Strict rate limit trackers per platform parsing `x-rate-limit-remaining` and `x-rate-limit-reset` response headers.
+  2. Analytics polling restricted to low-frequency background crons (every 6–12 hours).
+  3. Automatic token refresh before expiration (`tokenExpiresAt - 5m`) with backoff.
+  4. Mocked HTTP test suites asserting that requests halt when rate limit budget reaches zero.
 
-### 3. Database De-normalization & JSON Sprawl
-- **Warning Signs:** Storing task metadata, subtasks, or financial details in generic JSONB columns without relational constraints.
-- **Prevention Strategy:** Explicit relational tables with foreign keys, unique constraints, check constraints, and typed Drizzle ORM schemas as mandated by PRD Section 43.
-- **Addressed in:** Phase 1 (Foundation) & Phase 2 (Core Productivity).
+### 2. Accidental / Hallucinatory Public Broadcasting
 
-### 4. Premature External API Integrations
-- **Warning Signs:** Attempting to build Google Calendar or Twitter/LinkedIn OAuth sync before the internal calendar and content data models are rock solid.
-- **Prevention Strategy:** Strictly adhere to the PRD phase order: Phase 2 builds internal calendar; Phase 5 builds internal content calendar; Phase 8 integrates external third-party APIs.
-- **Addressed in:** Phase 2, Phase 5, Phase 8.
+- **Pitfall**: An AI agent generating a draft and publishing it directly to external social media without human oversight could post inappropriate, unverified, or hallucinatory content to public networks.
+- **Warning Signs**: Any code path where `SocialPlatformAdapter.publishPost` can be invoked without a valid, approved `challengeId`.
+- **Mitigation Strategy**:
+  1. Enforce Zero-Trust HITL gate: `publishPost` requires an approved `agentChallenge` with cryptographic token verification.
+  2. Server action checks that the current user explicitly confirmed the challenge within the 5-minute TTL.
+  3. Prohibit direct agent `EXECUTE` tier on social publishing without user challenge creation.
 
-### 5. Over-engineering with Microservices
-- **Warning Signs:** Spawning separate backend servers, microservices, or complex message queues for a single-user system.
-- **Prevention Strategy:** Keep LifeOS as a clean modular monolith deployable in a single Docker container with PostgreSQL.
-- **Addressed in:** Phase 1 (Foundation Architecture).
+### 3. Cognitive Overload & Notification Fatigue from Proactive Interventions
 
-### 6. Upfront Monolithic Schema Creation
-- **Warning Signs:** Defining domain tables (Tasks, Projects, Goals, Habits, Notes, People, Finance, Content, AI) during Phase 1 before their features are built.
-- **Prevention Strategy:** Strictly enforce the vertical-slice rule. Phase 1 database work is limited to foundational/authentication tables (`users`, `sessions` / Better Auth required tables, `preferences`, `audit_log`). Domain tables are strictly introduced in the phases that implement them.
-- **Addressed in:** Phase 1 (Foundation) and all subsequent phases.
+- **Pitfall**: Proactive agents that interrupt the user for every minor 5-minute schedule deviation or habit slip create irritation and cognitive friction, prompting the user to disable the feature entirely.
+- **Warning Signs**: More than 2–3 proactive rebalance prompts per day.
+- **Mitigation Strategy**:
+  1. Dampening threshold: Minimum 30-minute schedule slip before any rebalancing intervention is triggered.
+  2. Daily intervention ceiling: Maximum 2 proactive prompts per day unless explicitly requested by the user.
+  3. Strict adherence to user preferences for quiet hours and focus blocks.
+
+### 4. Multi-Agent Infinite Deliberation Loops & Token Burn
+
+- **Pitfall**: Sub-agents (Planner, Analyst, Creator) passing messages back and forth in open-ended conversations without strict stop conditions, burning tokens and causing high API latency.
+- **Warning Signs**: Inter-agent turn count exceeding 3 or execution time exceeding 15 seconds.
+- **Mitigation Strategy**:
+  1. Depth-bounded orchestration: Maximum 2 hops (e.g. Orchestrator -> Sub-agent -> Orchestrator).
+  2. Bounded schemas: Every inter-agent message must adhere to a strict Zod schema with no conversational chit-chat.
+  3. Timeout boundaries: 10-second timeout on all agent completions with deterministic fallback.
+
+### 5. Calendar Race Conditions & Overwrites During Rebalancing
+
+- **Pitfall**: Rebalancing engine moves a block while the user is editing it in the UI or Google Calendar is synchronizing an external meeting, resulting in duplicate or lost time blocks.
+- **Warning Signs**: Overlapping time blocks in `time_blocks` table with `google_calendar` sync errors.
+- **Mitigation Strategy**:
+  1. Concurrency locks: Use PostgreSQL `SELECT ... FOR UPDATE` on `time_blocks` during rebalance materialization.
+  2. Last-Write-Wins with version hashing: Verify that time block state hasn't changed between proposal generation and user acceptance.
+  3. Propose diffs: User is shown the exact proposed shifts before any database rows are modified.
+
+### 6. Drizzle Kit Snapshot Chain Disruption
+
+- **Pitfall**: Adding new columns or tables for social connections or orchestration without generating intermediate Drizzle Kit snapshots, breaking `drizzle-kit check` and `generate` (a recurring debt issue resolved in v2.1).
+- **Warning Signs**: Missing snapshot JSON files in `src/server/db/migrations/meta/`.
+- **Mitigation Strategy**:
+  1. Strictly follow linear migration authoring: every schema change accompanied by a valid snapshot with correct `prevId` linkage.
+  2. Verify with `npx drizzle-kit check` before committing any database changes.
+
+---
+*Pitfalls research for: LifeOS v3.0 Proactive Personal OS Orchestration & External Ecosystem*
+*Researched: 2026-10-02*

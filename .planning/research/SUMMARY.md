@@ -1,110 +1,72 @@
-# Project Research Summary
+# Project Research Summary: Milestone v3.0
 
-**Project:** LifeOS
-**Domain:** Greenfield Personal Operating System
-**Researched:** 2026-09-10
-**Confidence:** HIGH
+**Milestone:** v3.0 — Proactive Personal OS Orchestration & External Ecosystem
+**Researched:** 2026-10-02
+**Domain:** Multi-Agent Orchestration, Constraint-Based Scheduling, External Social Publishing & Analytics
 
 ## Executive Summary
 
-LifeOS is an ambitious, unified personal operating system specified in `prd.md` (v1.0 master specification). Unlike typical productivity apps that fragment life management into isolated silos (Todoist for tasks, Notion for notes, Google Calendar for time, YNAB for finance, Buffer for social), LifeOS builds an interconnected personal information graph and execution system with a single source of truth.
+Milestone v3.0 elevates LifeOS from a reactive execution assistant into a proactive life orchestrator. This milestone realizes the long-term vision established in PRD Sections 18–19, 60, and 99–100 by introducing:
+1. A multi-agent orchestration architecture featuring specialized Planner, Analyst, and Creator agents with strict inter-agent communication contracts and zero-trust permissions.
+2. A holistic "Plan My Week" synthesis engine and event-driven dynamic calendar rebalancer that proactively guards the user's focus and energy.
+3. An external social ecosystem integration connecting Twitter/X, LinkedIn, and personal blog webhooks with AES-256-GCM encrypted OAuth token lifecycles, scheduled publishing, and two-way engagement analytics synchronization.
 
-The recommended architectural approach is a full-stack modular monolith built with TypeScript, Next.js 15 (App Router), Tailwind CSS, shadcn/ui, and PostgreSQL 16+ managed via Drizzle ORM. This stack provides maximum velocity, end-to-end type safety, strict relational integrity, and effortless self-hosted Docker deployment on a single VPS or local machine.
-
-The critical risks are specification drift, premature third-party API integration, uncontrolled AI side effects, and relational schema degradation into unstructured JSON blobs. By adhering to the 9-phase roadmap defined in `prd.md` and enforcing strict confirmation gates for AI operations, LifeOS can be built systematically with robust quality.
+The existing LifeOS architecture (modular monolith, Drizzle ORM, Next.js 15, Vercel AI SDK, Better Auth, and PostgreSQL `SchedulerEngine`) provides 100% of the foundational infrastructure required. No external message queues (Redis/Kafka) or heavy multi-language runtimes (Python agent frameworks) are needed. All new capabilities will be implemented as type-safe TypeScript domain services governed by existing Zero-Trust safety boundaries and tested with deterministic offline mock fixtures.
 
 ## Key Findings
 
-### Recommended Stack
-- **Full-Stack Framework:** Next.js 15 (App Router, TypeScript, React 19)
-- **UI Components:** Tailwind CSS, shadcn/ui (Radix primitives), Lucide React
-- **Database & Persistence:** PostgreSQL 16+ with Drizzle ORM, strict relational schema, migrations, and ACID transactions; strictly follows vertical-slice schema evolution
-- **Authentication & Sessions:** Better Auth with HTTP-only cookies and CSRF protection; strict separation between authentication and resource ownership authorization via authenticated `user_id`
-- **AI Integration:** Vercel AI SDK with multi-provider abstraction (Gemini, Claude, OpenAI, Ollama)
-- **Deployment:** Containerized Docker Compose setup with volume persistence and automated backup scripts
+### 1. Technology Stack
+- **OAuth & Encryption**: Leverage native Node `crypto` AES-256-GCM authenticated encryption for all external social access/refresh tokens.
+- **Social Platform Connectors**: Implement direct REST adapters for Twitter/X (API v2) and LinkedIn (Community Management API), plus HMAC-SHA256 signed JSON webhooks for personal blogs.
+- **AI Multi-Agent Framework**: Utilize Vercel AI SDK (`ai`) with structured Zod schemas (`generateObject`) for reliable inter-agent message passing and persona specializations (Planner, Analyst, Creator).
+- **Optimization & Scheduling**: Implement a deterministic constraint-satisfaction algorithm in TypeScript for weekly time-block allocation, avoiding external solver dependencies.
+- **Zero Additional Infrastructure**: Reuse existing PostgreSQL `SchedulerEngine` with distributed locks (`scheduler_locks`) for scheduled publishing and periodic analytics ingestion.
 
-### Expected Features
-- **Table Stakes (MVP):** Authentication, Unified Dashboard ("What matters right now?"), Tasks, Projects, Goals, Calendar & Time Blocking, Daily Planning & Review, Habits, Notes with bi-directional links, Relationships / People CRM (Person & Interaction tracking), Basic Personal Finance, Content drafting & calendar, Global Command Palette, and Contextual AI Assistant.
-- **Differentiators:** Interconnected personal information graph, human-in-the-loop AI safety gates, cross-domain analytics, and friction-free universal capture.
-- **Anti-Features:** Multi-tenant SaaS, team collaboration, autonomous unconfirmed mutations, and microservices.
+### 2. Feature Table Stakes vs. Differentiators
+- **Table Stakes**:
+  - OAuth 2.0 PKCE token management with automatic refresh and revocation.
+  - Multi-platform post formatting and dispatch (Twitter, LinkedIn, Blog).
+  - Mandatory Zero-Trust HITL preview and approval gate for public broadcasts.
+  - Scheduled publishing daemon with automatic retry backoff.
+  - Periodic social engagement metrics ingestion into `content_metrics`.
+  - Planner, Analyst, and Creator agent personas with explicit tool permissions.
+  - "Plan My Week" natural language weekly schedule generation.
+  - Event-driven schedule drift and energy dip detection.
+- **Differentiators**:
+  - Proactive dynamic rebalance proposals with interactive user confirmation before calendar mutation.
+  - Cross-domain analytics feedback loop connecting social engagement back to content ideation and energy patterns.
+  - Holistic cognitive capacity and burnout warnings during weekly planning.
 
-### Architecture Approach
-A layered modular monolith structured into domain features (`src/features/*`), shared infrastructure (`src/lib/*`), and server contracts. Data flows cleanly from UI through validated server actions to relational PostgreSQL tables, with all significant actions logged to an audit trail. Authentication (Better Auth) is strictly separated from authorization (resource ownership validation via `user_id`). The database adheres strictly to the vertical-slice rule: Phase 1 introduces only foundational/auth tables (`users`, `sessions`, `preferences`, `audit_log`), while domain schemas are deferred to their respective feature phases.
+### 3. Architecture & Integration Points
+- **Connectors**: Placed in `src/server/integrations/social/` conforming to a unified `SocialPlatformAdapter` contract.
+- **Publishing Pipeline**: Placed in `src/server/content/publishing/`, transitioning items from `scheduled` to `published` via approved `agentChallenges`.
+- **Multi-Agent Orchestration**: Placed in `src/server/ai/orchestration/`, routing tasks to Planner, Analyst, and Creator personas while respecting Zero-Trust boundaries.
+- **Schedule Optimizer & Rebalancer**: Placed in `src/server/calendar/planner/` and `src/server/calendar/rebalancer/`, integrating with `time_blocks` and Google Calendar sync.
 
-### Critical Pitfalls
-1. **Specification Drift:** Mitigated by treating `prd.md` as the product contract and using GSD traceability.
-2. **Uncontrolled AI Actions:** Mitigated by mandatory user confirmation gates for all side-effecting tools.
-3. **Schema De-normalization:** Mitigated by strict relational tables and rejecting raw JSON blob shortcuts.
-4. **Premature External Integrations:** Mitigated by completing internal domain models in Phases 1-5 before external adapters in Phase 8.
-5. **Upfront Monolithic Schema Creation:** Mitigated by enforcing the vertical-slice rule and restricting Phase 1 DB work to foundational/auth infrastructure.
+### 4. Critical Pitfalls & Preventative Controls
+- **API Rate Limits**: Enforce strict per-platform rate limit trackers; bound analytics polling to >=6-hour intervals; mock all HTTP APIs in test suites.
+- **Accidental Public Posts**: Mandatory Zero-Trust HITL confirmation challenge with preview modal; direct agent `EXECUTE` permissions on publishing without user approval are prohibited.
+- **Intervention Fatigue**: Dampening threshold requiring >=30-minute schedule slip before proposing rebalance; maximum 2 proactive prompts per day; quiet hours enforcement.
+- **Agent Loops**: Strict depth bounds (maximum 2 deliberation hops) and typed Zod response schemas.
+- **Drizzle Kit Snapshots**: Maintain linear parent-child snapshot chain (`0027 -> 0028`) to guarantee zero schema drift.
 
 ## Implications for Roadmap
 
-Based on research and PRD Sections 71-80, the suggested 9-phase structure directly follows:
+The implementation should follow a 6-phase dependency-ordered progression across Phases 22–27:
 
-### Phase 1: Foundation
-**Rationale:** Establishes the core architecture, PostgreSQL database with Drizzle ORM, Better Auth authentication, design system, navigation, settings, and audit logging before any business logic is built. Database scope is strictly restricted to foundational/auth tables.
-**Delivers:** Running Next.js application, foundational DB migrations, secure auth & resource ownership guards, shell UI, settings, and automated testing baseline.
-**Avoids:** Tech stack confusion, schema instability, upfront domain bloat, and missing audit logging.
-
-### Phase 2: Core Productivity
-**Rationale:** Delivers the primary execution engine: Goals → Projects → Tasks → Calendar / Time Blocking → Habits → Dashboard.
-**Delivers:** Full productivity workflow allowing the user to set a goal, break it into projects/tasks, schedule them on the calendar, log habits, and view today's priorities.
-**Avoids:** Siloed productivity tools and duplicate data entry.
-
-### Phase 3: Knowledge, Learning & Relationships
-**Rationale:** Connects notes, learning items, and important relationships (People CRM) to existing tasks, projects, and goals.
-**Delivers:** Markdown note editor, bi-directional linking (`[[note]]`), tags, global search, learning system tracking, and People CRM (Person & Interaction management with follow-ups).
-**Avoids:** Disconnected notes, forgotten reading lists, and siloed relationship context.
-
-### Phase 4: Personal Finance
-**Rationale:** Self-contained financial ledger that connects financial activity to long-term goals.
-**Delivers:** Accounts, transactions, categories, budgets, and net worth reports.
-**Avoids:** Unverified financial calculations (requires 100% test coverage).
-
-### Phase 5: Content & Social Media
-**Rationale:** Internal content creation pipeline prior to any external publishing automation.
-**Delivers:** Content ideation, editor, multi-platform drafts, content calendar, and metrics data model.
-**Avoids:** Premature social media API dependency.
-
-### Phase 6: AI Layer & Assistant
-**Rationale:** Introduces intelligent assistant and natural language capture across the already-established personal graph.
-**Delivers:** Provider abstraction, personal graph RAG retrieval, structured tool execution with confirmation gates, and conversational assistant.
-**Avoids:** Hallucinations and unauthorized data modifications.
-
-### Phase 7: Automation & Event Bus
-**Rationale:** Automates recurring workflows, triggers, conditions, and background routines across all modules.
-**Delivers:** Event bus, workflow trigger-action rules, notifications, and scheduled background workers.
-**Avoids:** Manual repetitive tasks and missed reviews.
-
-### Phase 8: External Integrations
-**Rationale:** Connects LifeOS to external third-party services now that internal APIs are mature.
-**Delivers:** Google Calendar 2-way sync, GitHub activity ingestion, and cloud backup adapters.
-**Avoids:** External API rate limit and schema churn during early core development.
-
-### Phase 9: Intelligence & Predictive Analytics
-**Rationale:** Advanced personal analytics, predictive trends, and semantic search over historical data.
-**Delivers:** Predictive trend detection, goal risk assessment, time allocation insights, and semantic vector embeddings.
-**Avoids:** Premature machine learning before sufficient personal data exists.
-
-## Confidence Assessment
-
-| Area | Confidence | Notes |
-|------|------------|-------|
-| Stack | HIGH | Next.js + TypeScript + PostgreSQL + Tailwind is the gold standard for personal OS apps |
-| Features | HIGH | Exhaustively detailed in PRD v1.0 across 110 sections |
-| Architecture | HIGH | Modular monolith with clean domain boundaries fits all functional requirements |
-| Pitfalls | HIGH | Clear guardrails established in PRD sections 43, 59, 87, 107 |
-
-**Overall confidence:** HIGH
-
-## Sources
-
-### Primary (HIGH confidence)
-- prd.md — Master Product Requirements Document v1.0 (2,600+ lines)
-- Next.js Documentation & React 19 Specifications
-- PostgreSQL 16 Official Manual & Drizzle ORM Documentation
+1. **Phase 22: External Platform Connectors & OAuth Credential Lifecycle**
+   - Foundation for external ecosystem: schema forward migration (0028), AES-256-GCM token storage, token refresh lifecycle, rate-limit handlers, and isolated adapters for Twitter/X, LinkedIn, and Blog.
+2. **Phase 23: Autonomous Social Publishing & Gated Distribution Engine**
+   - Scheduled publishing daemon in `SchedulerEngine`, mandatory Zero-Trust HITL preview challenge, multi-platform dispatch, publication receipts, and dead-letter retry recovery.
+3. **Phase 24: Social Engagement Analytics Synchronization & Performance Feedback Loop**
+   - Periodic metrics polling daemon, `content_metrics` historical snapshots, engagement rate calculations, and cross-domain feedback engine.
+4. **Phase 25: Multi-Agent Orchestration Architecture (Planner, Analyst, Creator)**
+   - Specialized Planner, Analyst, and Creator agent personas, inter-agent coordination bus, typed Zod communication contracts, and provenance audit logging.
+5. **Phase 26: "Plan My Week" Synthesis & Strategic Schedule Optimization**
+   - Holistic multi-domain context assembly, constraint satisfaction scheduling algorithm, conversational weekly plan synthesis, and one-click calendar materialization.
+6. **Phase 27: Event-Driven Proactive Interventions & Dynamic Schedule Rebalancing**
+   - Typed event bus drift monitor, meeting overrun and energy dip detection, rebalancing proposal generator, and HITL approval challenge for calendar mutation.
 
 ---
-*Research completed: 2026-09-10*
-*Ready for roadmap: yes*
+*Research synthesized for: LifeOS v3.0 Proactive Personal OS Orchestration & External Ecosystem*
+*Completed: 2026-10-02*
