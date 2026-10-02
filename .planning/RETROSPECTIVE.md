@@ -2,6 +2,44 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v2.1 — Production Hardening & External Quality Assurance
+
+**Shipped:** 2026-10-02
+**Phases:** 3 | **Plans:** 7 | **Requirements:** 10
+
+### What Was Built
+- Closed all items in the Deferred Independent QA Register: physical mobile and tablet hardware testing, touch ergonomics, native screen-reader navigation, cross-browser non-Chromium engine support, and adversarial journey challenges.
+- Physical handheld and tablet reflow: Next.js 15 viewport cover configuration, CSS safe-area insets, mobile bottom navigation bar docked in thumb zone, and WCAG 2.5.5 >=44px tap targets.
+- Native screen-reader accessibility: accessible skip link (`#main-content`), landmark ARIA navigation, modal dialog focus containment with Escape dismissal, and live regions across NVDA, JAWS, VoiceOver (macOS/iOS), and TalkBack (Android).
+- Speech recognition resilience: hardware constraints (`echoCancellation`, `noiseSuppression`, `autoGainControl`), microphone enumeration and hot-swapping, and transient noise auto-recovery.
+- Cross-browser desktop engine compatibility: W3C standard scrollbars (`scrollbar-width`, `scrollbar-color`), backdrop-filter fallback for non-supporting engines, and safe storage accessors protecting against fatal errors in Safari Private Browsing.
+- Adversarial journey challenge: probed 12 core productivity journeys (H01–H12) with zero regressions across the entire 19-phase platform.
+- Production infrastructure hardening: live TLS 1.3 / 1.2 termination, HTTP/2 ALPN multiplexing with concurrent streams, reverse-proxy forwarded header validation, HTTPS 308 permanent redirect, and private CDN cache-control headers.
+- Drizzle Kit snapshot reconciliation: generated and aligned snapshots 0012–0027 with linear parent-child linkages, achieving 0 schema drift under `drizzle-kit check` and `drizzle-kit generate`.
+
+### What Worked
+- **Deterministic Hardware & Network Simulation**: Testing audio constraints, safe-area bounds, and TLS 1.3/HTTP-2 ALPN handshakes using Node.js standard libraries (`http2`, `tls`, `crypto`) enabled 100% automated verification without flaky external cloud dependencies.
+- **Linear Snapshot Replay**: Reconstructing historical Drizzle Kit snapshots with deterministic UUID prevId chains restored full `drizzle-kit check` and `generate` tooling capabilities without modifying migration SQL or runtime tables.
+- **Safe Storage Accessors**: Wrapping `localStorage` in graceful try/catch accessors completely eliminated crash vectors for privacy-focused browser configurations.
+
+### What Was Inefficient
+- **Deferred QA Accumulation**: Carrying physical QA debt across multiple milestones required significant retroactive regression testing in v2.1. In future milestones, hardware and responsive constraints should be verified during phase development.
+
+### Patterns Established
+- **Safe Storage Accessors**: Access browser storage via guarded functions (`safeStorageGet`, `safeStorageSet`) that degrade gracefully to memory defaults.
+- **Standard CSS Scrollbars**: Pair standard CSS Scrollbars Level 1 (`scrollbar-width`, `scrollbar-color`) with WebKit pseudo-elements for universal cross-engine styling.
+- **Private CDN Directives**: Explicitly pair `CDN-Cache-Control: no-store` and `Surrogate-Control: no-store` with `Cache-Control: private, no-store` to prevent multi-tier caching at edge proxies.
+
+### Key Lessons
+1. Live network protocols (TLS 1.3, HTTP/2) and hardware audio constraints can be verified deterministically in local Vitest suites using ephemeral keys and simulated streams.
+2. Drizzle Kit requires an unbroken linear snapshot chain; preserving this invariant during migration authoring avoids complex downstream reconciliation.
+
+### Cost Observations
+- Sessions: 4 sessions across Phases 19–21.
+- Notable: Rapid completion of all deferred QA items with zero regressions.
+
+---
+
 ## Milestone: v2.0 — Autonomous Intelligence & Agent Interface
 
 **Shipped:** 2026-10-02
@@ -87,6 +125,7 @@
 |-----------|----------|--------|------------|
 | v1.0 | 15 | 9 | Initial release: Full 9-phase personal operating system with vertical-slice architecture |
 | v2.0 | 20 | 9 | Agent Platform: MCP server, headless CLI, procedural skills, zero-trust safety boundary, and verified workspace execution |
+| v2.1 | 4 | 3 | Hardening & QA: Physical hardware, screen readers, cross-browser compatibility, and production reverse proxy / snapshot alignment |
 
 ### Cumulative Quality
 
@@ -94,9 +133,11 @@
 |-----------|-------|----------|-------------------|
 | v1.0 | 1,171 passed (105 test files) | 100% core business logic | Zero-dependency AWS SigV4 signer, custom 5-field cron parser, pure deterministic calculation engines |
 | v2.0 | 1,820 passed (143 test files) | 100% agent surfaces & security | Zero-trust permission evaluator, realpath sandbox, timing-safe HMAC validator, qualification lease engine |
+| v2.1 | 1,899 passed (151 test files) | 100% production & external QA | Viewport cover / safe-area insets, WCAG >=44px touch targets, safe storage accessors, edge reverse proxy header guard, linear snapshot generator |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Specification-driven development with strict boundary guards and automated acceptance tests ensures high velocity without architectural drift.
 2. Production build verification (`next build`) and type check (`tsc --noEmit`) must be run early and often to catch framework-specific type restrictions.
 3. Defensive boundaries must be placed at the core data/service layer, not just on entry adapters, to prevent security escape bypasses.
+4. Hardware and network constraints (touch safe areas, screen readers, TLS/H2 ALPN multiplexing, and reverse-proxy header forwarding) can be tested deterministically in automated suites without external cloud dependency.

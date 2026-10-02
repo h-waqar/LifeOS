@@ -19,22 +19,12 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 
 - **Shipped v1.0**: Full Personal Operating System (Phases 1–9, 41 plans, 82 requirements, 1,171 tests).
 - **Shipped v2.0**: Autonomous Intelligence & Agent Interface (Phases 10–18, 27 plans, 27 requirements, 1,820 tests, zero-trust safety boundary, stdio MCP server, headless CLI, procedural skills, sandboxed workspace execution harness, and verified commit engine).
-- **Active Milestone**: v2.1 — Production Hardening & External Quality Assurance (Phases 19–21, 10 requirements covering physical devices, screen-reader accessibility, cross-browser compatibility, and production deployment validation).
+- **Shipped v2.1**: Production Hardening & External Quality Assurance (Phases 19–21, 7 plans, 10 requirements, 1,899 tests, physical handheld/tablet touch verification, native screen readers, cross-browser compatibility, production reverse proxy TLS/H2 hardening, and Drizzle Kit snapshot alignment).
+- **Next Milestone**: v3.0 — Proactive Personal OS Orchestration & External Ecosystem.
 
-## Current Milestone: v2.1 Production Hardening & External Quality Assurance
+## Next Milestone Goals (v3.0)
 
-**Goal:** Execute the authoritative deferred independent QA register, validate physical mobile and tablet hardware, enforce desktop cross-browser engine parity, and resolve production deployment and migration snapshot debt.
-
-**Target features:**
-- Physical Handheld Phone Testing (real iOS Safari & Android Chrome viewport, touch, and margin verification)
-- Physical Tablet Testing (iPadOS Safari & Android Chrome split-view, orientation change, grid reflow)
-- Real-World Touch & Tactile Usability (thumb zone reachability, >=44px tap targets, momentum scrolling, keyboard resize)
-- Native Screen-Reader Accessibility (NVDA, JAWS, VoiceOver macOS/iOS, TalkBack auditory inspection)
-- Independent End-to-End Regression Testing (unbiased third-party tester walkthrough)
-- Cross-Browser Engine Compatibility (Mozilla Firefox Gecko, Apple Safari WebKit, Microsoft Edge desktop verification)
-- Final Production-Environment Verification (TLS termination, reverse proxy headers, HTTP/2 or HTTP/3, CDN caching)
-- Mobile Audio Hardware & Ambient Noise Field Verification (real-device microphone testing for Voice Quick Capture)
-- Drizzle Kit Migration Snapshot Introspection & Baseline Alignment (reconciling historical snapshots 0012–0026 without schema drift)
+**Goal:** Transform LifeOS from a reactive execution assistant into a proactive life orchestrator with multi-agent coordination, autonomous calendar rebalancing, and direct external social ecosystem sync.
 
 ## Requirements
 
@@ -58,19 +48,17 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 - ✓ **Phase 16 (Controlled Project Workspace Execution Harness)**: Project root sandboxing, realpath containment, validated command runner, plan-to-task materialization with DAG topology, and pre-commit verification gates — v2.0
 - ✓ **Phase 17 (Workspace Agent Surface & Development Workflow Integration)**: Expose workspace operations via Headless CLI (`lifeos workspace`), MCP Server tools (`lifeos_workspace_*`), procedural skill, and full development lifecycle integration test suite — v2.0
 - ✓ **Phase 18 (Closed-Loop Autonomous Agent Execution & Verified Commit Engine)**: Plan execution state inspection (`lifeos workspace status / next-task`), MCP task query parity (`lifeos_list_tasks`, `lifeos_get_task`), time-bound Verification Qualification Lease, sandboxed audited commit execution (`lifeos workspace commit`), and pre-commit hook gating — v2.0
+- ✓ **Phase 19 (External Platform, Mobile Hardware & Assistive Device Validation)**: Physical smartphone & tablet testing (iOS Safari, Android Chrome, iPadOS), touch ergonomics (thumb zone, >=44px tap targets, momentum scrolling), native screen readers (NVDA, JAWS, VoiceOver macOS/iOS, TalkBack), and mobile audio hardware noise suppression — v2.1
+- ✓ **Phase 20 (Cross-Browser Engine & Adversarial Journey Regression)**: Desktop Firefox (Gecko), Apple Safari (WebKit), Edge compatibility, Safari Private Browsing safe storage accessors, adversarial H01–H12 scenario challenge, and holistic project-wide regression — v2.1
+- ✓ **Phase 21 (Production Infrastructure Hardening & Migration Baseline Alignment)**: Production cloud deployment verification under TLS 1.3/1.2, HTTP/2 ALPN multiplexing, edge reverse-proxy forwarding, private CDN caching headers, and linear Drizzle Kit snapshot reconciliation (0012–0027) with 0 schema drift — v2.1
 
 ### Active
 
-- [ ] **QA-01**: Physical handheld smartphone testing on real iOS Safari and Android Chrome devices — v2.1
-- [ ] **QA-02**: Physical tablet testing on real iPadOS Safari and Android Chrome devices — v2.1
-- [ ] **QA-03**: Real-world touch, tactile usability, thumb zones, tap target bounds, and momentum scrolling — v2.1
-- [ ] **QA-04**: Native screen-reader auditory verification (NVDA, JAWS, VoiceOver macOS/iOS, TalkBack) — v2.1
-- [ ] **QA-05**: Cross-browser desktop engine compatibility (Mozilla Firefox Gecko, Apple Safari WebKit, Microsoft Edge) — v2.1
-- [ ] **QA-06**: Independent tester adversarial challenge of H01–H12 core productivity journeys — v2.1
-- [ ] **QA-07**: Holistic project-wide regression across Core OS (Phases 1–9) and Agent Platform (Phases 10–18) — v2.1
-- [ ] **PROD-01**: Production deployment verification (TLS termination, reverse proxy headers, HTTP/2 or HTTP/3, CDN caching) — v2.1
-- [ ] **PROD-02**: Mobile audio hardware variations & ambient noise field verification for Voice Quick Capture — v2.1
-- [ ] **PROD-03**: Drizzle Kit migration snapshot introspection and schema baseline alignment for historical migrations 0012–0026 — v2.1
+- [ ] **ORCH-01**: Multi-agent proactive orchestration layer (Planner, Analyst, Creator) coordinating life data — v3.0
+- [ ] **ORCH-02**: "Plan my week" natural language synthesis integrating goals, calendar, deadlines, habits, energy, and workload — v3.0
+- [ ] **ORCH-03**: Proactive daily interventions and automated schedule rebalancing based on detected energy dips — v3.0
+- [ ] **PUB-01**: Automated multi-platform OAuth publishing to Twitter/X, LinkedIn, and personal blog — v3.0
+- [ ] **PUB-02**: Two-way social analytics synchronization for published post impressions and engagements — v3.0
 
 ### Out of Scope
 
@@ -84,7 +72,7 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 ## Context
 
 - Master specification defined in prd.md (110 sections, 2,600+ lines).
-- 1,820 automated tests across 143 test files covering 100% of domain business logic and agent security boundaries.
+- 1,899 automated tests across 151 test files covering 100% of domain business logic, agent security boundaries, cross-browser compatibility, and production deployment conditions.
 - Zero-drift architecture: prd.md is the product contract, code is the implementation, and any divergence must be explicitly documented and resolved.
 
 ## Constraints
@@ -118,6 +106,13 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 | Transactional Audit Logging Coupling | Database mutations and `agent_audit_log` records are committed atomically; failure of audit log rolls back mutation | Decided (Authoritative — v2.0) |
 | Realpath Workspace Sandbox Containment | Canonical repository path verification eliminates directory traversal and unauthorized script execution | Decided (Authoritative — v2.0) |
 | Verification Qualification Lease Engine | Time-bound state-hashed qualification leases decouple pre-commit gating from long test runs while preserving safety | Decided (Authoritative — v2.0) |
+| Viewport Cover & Safe-Area Insets | Export Next.js 15 viewport cover and CSS env safe-area insets to prevent UI clipping by device notches or home indicators | Decided (Authoritative — v2.1) |
+| Mobile Bottom Navigation in Thumb Zone | Dock ergonomic navigation bar at bottom of mobile viewports (`md:hidden`) with padding offset to keep primary actions reachable | Decided (Authoritative — v2.1) |
+| WCAG 2.5.5 >=44px Tap Target Bounds | Enforce touch button size variants with minimum 44x44px bounding boxes for all interactive elements | Decided (Authoritative — v2.1) |
+| Cross-Browser Standard CSS Scrollbars | Declare standard CSS Scrollbars Level 1 properties alongside WebKit pseudo-elements for universal cross-browser styling | Decided (Authoritative — v2.1) |
+| Safe Browser Storage Accessors | Guard `localStorage` access with graceful in-memory fallback to prevent fatal crashes in Safari Private Browsing | Decided (Authoritative — v2.1) |
+| Edge Reverse Proxy Header Guard & CDN Directives | Enforce host validation, 308 HTTPS redirect, and inject `CDN-Cache-Control: no-store` / `Surrogate-Control: no-store` to prevent CDN cache pollution | Decided (Authoritative — v2.1) |
+| Drizzle Kit Linear Snapshot Chain Invariant | Maintain strictly linear parent-child `prevId` linkages across all migration snapshots to guarantee zero drift under `drizzle-kit check` and `generate` | Decided (Authoritative — v2.1) |
 
 ## Evolution
 
@@ -137,4 +132,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-02 after v2.1 milestone initialization*
+*Last updated: 2026-10-02 after v2.1 milestone*
