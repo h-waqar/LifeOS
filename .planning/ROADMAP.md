@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 Full Personal Operating System** — Phases 1–9 (shipped 2026-09-30)
 - ✅ **v2.0 Autonomous Intelligence & Agent Interface** — Phases 10–18 (shipped 2026-10-02)
-- 🟡 **v2.1 Production Hardening & External Quality Assurance** — Phases 19–21 (in progress)
+- ✅ **v2.1 Production Hardening & External Quality Assurance** — Phases 19–21 (completed 2026-10-02)
 
 ## Milestone Details
 
@@ -46,7 +46,7 @@ See: [.planning/milestones/v2.0-ROADMAP.md](milestones/v2.0-ROADMAP.md)
 
 - [x] **Phase 19: External Platform, Mobile Hardware & Assistive Device Validation** (3/3 plans) — completed 2026-10-02
 - [x] **Phase 20: Cross-Browser Engine & Adversarial Journey Regression** (2/2 plans) — completed 2026-10-02
-- [ ] **Phase 21: Production Infrastructure Hardening & Migration Baseline Alignment** - TLS reverse proxy headers, HTTP/2/3 caching, latency resilience, and Drizzle Kit migration snapshot baseline reconciliation for historical migrations 0012–0026.
+- [x] **Phase 21: Production Infrastructure Hardening & Migration Baseline Alignment** (2/2 plans) — completed 2026-10-02
 
 ## Phase Details
 
@@ -83,5 +83,6 @@ See: [.planning/milestones/v2.0-ROADMAP.md](milestones/v2.0-ROADMAP.md)
 **Success Criteria** (what must be TRUE):
   1. Production cloud deployment verifies TLS termination, reverse proxy header forwarding, HTTP/2 or HTTP/3, and CDN caching headers.
   2. Drizzle Kit schema snapshots for migrations 0012–0026 are generated and aligned without introducing schema or data drift.
-**Plans**: 2 plans
+**Plans**: 2 plans (2/2 completed)
+**Status**: completed 2026-10-02
 **UI hint**: no (Infrastructure / Database)

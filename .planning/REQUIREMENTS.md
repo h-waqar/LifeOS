@@ -27,8 +27,8 @@ Requirements for Milestone v2.1, executing the authoritative Deferred Independen
 
 ### Production Infrastructure & Schema Alignment
 
-- [ ] **PROD-01**: Production-Environment Verification — live testing under real production cloud constraints: TLS termination, reverse proxy header forwarding, HTTP/2 or HTTP/3, and private CDN cache-control headers.
-- [ ] **PROD-03**: Drizzle Kit Migration Snapshot Baseline Alignment — reconcile historical snapshot gap for migrations 0012–0026, establishing a verified introspection baseline without modifying existing journal or data integrity.
+- [x] **PROD-01**: Production-Environment Verification — live testing under real production cloud constraints: TLS termination, reverse proxy header forwarding, HTTP/2 or HTTP/3, and private CDN cache-control headers.
+- [x] **PROD-03**: Drizzle Kit Migration Snapshot Baseline Alignment — reconcile historical snapshot gap for migrations 0012–0026, establishing a verified introspection baseline without modifying existing journal or data integrity.
 
 ## Future Requirements (v3.0+)
 
@@ -69,5 +69,5 @@ Which phases cover which requirements.
 | QA-05 | Phase 20 | Satisfied |
 | QA-06 | Phase 20 | Satisfied |
 | QA-07 | Phase 20 | Satisfied |
-| PROD-01 | Phase 21 | Pending |
-| PROD-03 | Phase 21 | Pending |
+| PROD-01 | Phase 21 | Satisfied |
+| PROD-03 | Phase 21 | Satisfied |

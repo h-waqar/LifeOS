@@ -2,15 +2,15 @@
 gsd_state_version: "1.0"
 milestone: v2.1
 milestone_name: Production Hardening & External Quality Assurance
-status: in_progress
-last_updated: "2026-10-02T05:00:00.000Z"
+status: completed
+last_updated: "2026-10-02T05:45:00.000Z"
 last_activity: 2026-10-02
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -24,16 +24,16 @@ See: .planning/PROJECT.md (updated 2026-10-02)
 
 ## Current Position
 
-Phase: Phase 20 Complete & Verified (Phase 21 next)
-Plan: 20-02 Complete
-Status: Phase 20 Complete & Verified; ready for Phase 21
-Last activity: 2026-10-02 — Phase 20 Cross-Browser Engine & Adversarial Journey Regression completed
+Phase: Phase 21 Complete & Verified (Milestone v2.1 complete)
+Plan: 21-02 Complete
+Status: Milestone v2.1 Complete & Verified; ready for Milestone v2.1 audit / completion
+Last activity: 2026-10-02 — Phase 21 Production Infrastructure Hardening & Migration Baseline Alignment completed
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 71
+- Total plans completed: 73
 - Average duration: - min
 - Total execution time: 0.0 hours
 
@@ -61,10 +61,11 @@ Last activity: 2026-10-02 — Phase 20 Cross-Browser Engine & Adversarial Journe
 | 18. Closed-Loop Autonomous Agent Execution & Verified Commit Engine | 2/2 (Complete & Verified) | - | - |
 | 19. External Platform, Mobile Hardware & Assistive Device Validation | 3/3 (Complete & Verified) | - | - |
 | 20. Cross-Browser Engine & Adversarial Journey Regression | 2/2 (Complete & Verified) | - | - |
+| 21. Production Infrastructure Hardening & Migration Baseline Alignment | 2/2 (Complete & Verified) | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: 19-02, 19-03, 20-01, 20-02
+- Last 5 plans: 19-03, 20-01, 20-02, 21-01, 21-02
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -135,18 +136,23 @@ Recent decisions affecting current work:
 - [Phase 20 Decision]: Safari Private Mode Safe Storage Accessors: Wrapped localStorage accesses in try/catch accessors inside `ThemeProvider` to prevent fatal `SecurityError` or `QuotaExceededError` crashes in Safari Private Browsing mode and strict privacy browsers.
 - [Phase 20 Decision]: Adversarial H01-H12 Journey Probe: Exhaustively validated failure paths including tampered session tokens, multi-tab single-user registration bypass, circular task dependencies, XSS query sanitization, and secret-scrubbed operational health checks.
 - [Phase 20 Decision]: Holistic Platform Regression: Verified zero regressions across 19 phases spanning Core OS calculations, AI HITL gate, automations quiet hours, encryption, MCP server caller identity defense, documentation path sandboxing, and assistive mobile hardware.
+- [Phase 21 Decision]: Drizzle Kit Snapshot Linear Chain Invariant (PROD-03): Reconciled snapshots 0012–0027 with strictly linear UUID prevId linkages without altering _journal.json, achieving 0 schema drift under drizzle-kit check and drizzle-kit generate.
+- [Phase 21 Decision]: Edge Reverse Proxy Header Guard & Invalidation (PROD-01): Implemented Next.js edge middleware rejecting spoofed/invalid X-Forwarded-Proto and CRLF host injection, redirecting HTTP to HTTPS with 308 Permanent Redirect, and injecting private CDN directives (Cache-Control: private, no-store, CDN-Cache-Control: no-store, Surrogate-Control: no-store) on sensitive API and dynamic state routes.
+- [Phase 21 Decision]: Production HSTS & Permissions Policy: Enforced Strict-Transport-Security: max-age=31536000; includeSubDomains; preload in production and allowed microphone=(self) for voice quick capture while blocking camera and geolocation.
+- [Phase 21 Decision]: Environmental Verification Boundary: Local live testing utilized Node.js http2.createSecureServer with ephemeral RSA-2048 self-signed certificates to verify TLS 1.3 and HTTP/2 stream multiplexing; unprovisioned multi-region cloud edge CDNs (Cloudflare, CloudFront) explicitly marked as external infrastructure boundaries.
 
 ### Pending Todos
 
-None. All 9 roadmap phases (Phases 10–18) and 27/27 plans for Milestone 2.0 are complete and verified. Milestone 2.0 ready for verification audit and formal completion.
+None. All 3 roadmap phases (Phases 19–21) and 7/7 plans for Milestone v2.1 are complete and verified. Milestone v2.1 ready for verification audit and formal completion.
 
 ### Blockers/Concerns
 
 None. Full verification suite green across the entire repository:
 
 - TypeScript (`pnpm exec tsc --noEmit`): 0 errors
-- Repository Test Suite (`pnpm test`): 143/143 test files passing (1,820 passed, 0 failures)
+- Repository Test Suite (`pnpm test`): 151/151 test files passing (1,846 passed, 0 failures)
 - Production Build (`pnpm exec next build`): exit code 0, all 31 routes and static pages compiled and prerendered successfully.
+- Drizzle Kit (`pnpm exec drizzle-kit check`): 0 schema drift detected.
 
 ### Quick Tasks Completed
 
@@ -167,17 +173,17 @@ Items acknowledged and deferred at milestone close, most recent first (see [Defe
 | Independent QA | Native screen-reader testing (NVDA, JAWS, VoiceOver, TalkBack) | RESOLVED (Phase 19) | Plan 01-09 Close | Final Pre-Release QA |
 | Independent QA | Independent end-to-end regression testing (unbiased third-party tester) | RESOLVED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
 | Independent QA | Cross-browser testing (desktop Firefox, Safari, Edge) | RESOLVED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
-| Independent QA | Final production-environment verification (TLS, reverse proxy, CDN, latency) | DEFERRED (Phase 21) | Plan 01-09 Close | Final Pre-Release QA |
+| Independent QA | Final production-environment verification (TLS, reverse proxy, CDN, latency) | RESOLVED (Phase 21) | Plan 01-09 Close | Final Pre-Release QA |
 | Independent QA | Independent tester challenge of previously passing H01–H12 scenarios | RESOLVED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
 | Independent QA | Full project-wide regression across all 9 implemented phases | RESOLVED (Phase 20) | Plan 01-09 Close | Final Pre-Release QA |
 
 ## Session Continuity
  
-Last session: 2026-10-02T05:00:00.000Z
-Stopped at: Phase 20 Complete & Verified (Phase 21 next: Production Infrastructure Hardening & Migration Baseline Alignment)
-Next actionable work: Plan and execute Phase 21
+Last session: 2026-10-02T05:45:00.000Z
+Stopped at: Phase 21 Complete & Verified (Milestone v2.1 complete)
+Next actionable work: Milestone v2.1 Audit & Completion
 Resume file: .planning/ROADMAP.md
 
 ## Operator Next Steps
 
-- Execute Phase 21 with /gsd-execute-phase 21 or plan-phase 21
+- Audit and close Milestone v2.1 with /gsd-audit-milestone or /gsd-complete-milestone
