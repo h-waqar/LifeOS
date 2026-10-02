@@ -2,11 +2,42 @@
   "contract": "1.0.0",
   "flavor": "core",
   "milestone": "v3.0",
-  "phases": [],
+  "phases": [
+    {
+      "number": "22",
+      "name": "External Platform Connectors & OAuth Credential Lifecycle",
+      "status": "pending"
+    },
+    {
+      "number": "23",
+      "name": "Autonomous Social Publishing & Gated Distribution Engine",
+      "status": "pending"
+    },
+    {
+      "number": "24",
+      "name": "Social Engagement Analytics Synchronization & Performance Feedback Loop",
+      "status": "pending"
+    },
+    {
+      "number": "25",
+      "name": "Multi-Agent Orchestration Architecture (Planner, Analyst, Creator)",
+      "status": "pending"
+    },
+    {
+      "number": "26",
+      "name": "\"Plan My Week\" Synthesis & Strategic Schedule Optimization",
+      "status": "pending"
+    },
+    {
+      "number": "27",
+      "name": "Event-Driven Proactive Interventions & Dynamic Schedule Rebalancing",
+      "status": "pending"
+    }
+  ],
   "next": {
-    "command": "/gsd-discuss-phase",
-    "label": "Discuss the first phase",
-    "reason": "Project initialized — plan your first phase"
+    "command": "/gsd-discuss-phase 22",
+    "label": "Discuss Phase 22",
+    "reason": "Phase 22 ready for discussion and planning"
   },
-  "updated_at": "2026-10-02T01:33:32.796Z"
+  "updated_at": "2026-10-02T06:37:33.000Z"
 }
