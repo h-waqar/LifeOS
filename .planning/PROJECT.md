@@ -22,9 +22,17 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 - **Shipped v2.1**: Production Hardening & External Quality Assurance (Phases 19–21, 7 plans, 10 requirements, 1,899 tests, physical handheld/tablet touch verification, native screen readers, cross-browser compatibility, production reverse proxy TLS/H2 hardening, and Drizzle Kit snapshot alignment).
 - **Next Milestone**: v3.0 — Proactive Personal OS Orchestration & External Ecosystem.
 
-## Next Milestone Goals (v3.0)
+## Current Milestone: v3.0 Proactive Personal OS Orchestration & External Ecosystem
 
 **Goal:** Transform LifeOS from a reactive execution assistant into a proactive life orchestrator with multi-agent coordination, autonomous calendar rebalancing, and direct external social ecosystem sync.
+
+**Target features:**
+- External Platform Connectors & OAuth Credential Lifecycle (Twitter/X API v2, LinkedIn, Blog)
+- Automated Social Publishing & Execution Engine with HITL approval gates
+- Social Engagement Analytics Synchronization & Performance Feedback Loop
+- Multi-Agent Orchestration Architecture (Planner, Analyst, Creator)
+- "Plan My Week" Synthesis & Strategic Schedule Optimization
+- Event-Driven Proactive Interventions & Dynamic Schedule Rebalancing
 
 ## Requirements
 
@@ -54,18 +62,26 @@ A single source of truth connecting goals, projects, tasks, time, knowledge, mon
 
 ### Active
 
-- [ ] **ORCH-01**: Multi-agent proactive orchestration layer (Planner, Analyst, Creator) coordinating life data — v3.0
-- [ ] **ORCH-02**: "Plan my week" natural language synthesis integrating goals, calendar, deadlines, habits, energy, and workload — v3.0
-- [ ] **ORCH-03**: Proactive daily interventions and automated schedule rebalancing based on detected energy dips — v3.0
-- [ ] **PUB-01**: Automated multi-platform OAuth publishing to Twitter/X, LinkedIn, and personal blog — v3.0
-- [ ] **PUB-02**: Two-way social analytics synchronization for published post impressions and engagements — v3.0
+- [ ] **CONN-01**: Encrypted OAuth 2.0 connection lifecycle manager (AES-256-GCM) with token exchange, automatic refresh, and revocation for Twitter/X, LinkedIn, and Blog webhooks — v3.0
+- [ ] **CONN-02**: Standardized `SocialPlatformAdapter` contract isolating platform-specific rate limits, schema formats, and error codes — v3.0
+- [ ] **PUB-01**: Multi-platform post distribution engine publishing formatted variants to connected social networks — v3.0
+- [ ] **PUB-02**: Mandatory Zero-Trust HITL confirmation gate and preview approval challenge for external social broadcasts — v3.0
+- [ ] **PUB-03**: PostgreSQL-backed scheduled publishing daemon in `SchedulerEngine` with retry backoff and dead-letter failure handling — v3.0
+- [ ] **ANLT-01**: Automated social analytics synchronization polling impressions, engagements, likes, and clicks into `content_metrics` — v3.0
+- [ ] **ANLT-02**: Content performance analytics feedback engine calculating engagement benchmarks and surfacing top-performing themes to Creator and Analyst agents — v3.0
+- [ ] **ORCH-01**: Multi-agent orchestration engine coordinating specialized Planner, Analyst, and Creator agent personas with explicit tool permissions — v3.0
+- [ ] **ORCH-02**: Inter-agent context exchange and execution pipeline coordinating cross-domain life operations under zero-trust bounds — v3.0
+- [ ] **PLAN-01**: "Plan My Week" natural language synthesis integrating goals, active projects, deadlines, habits, energy profiles, and current workload — v3.0
+- [ ] **PLAN-02**: Constraint satisfaction calendar optimizer generating conflict-free time blocks for planned weekly focus areas — v3.0
+- [ ] **REBAL-01**: Event-driven proactive monitor detecting calendar meeting overruns, task slips, and energy dips from the typed event bus — v3.0
+- [ ] **REBAL-02**: Dynamic schedule rebalancer generating rebalancing proposals with interactive user confirmation before calendar mutation — v3.0
 
 ### Out of Scope
 
 - **Multi-tenant SaaS for teams**: LifeOS is designed as a single-user personal OS for the owner; team collaboration features, workspaces, and tenant billing are excluded.
 - **Unconstrained autonomous execution**: AI agents must never execute destructive actions, delete data, or publish externally without explicit human confirmation.
 - **Distributed microservices**: No Kubernetes or multi-repo microservice architecture; a modular monolith running in Docker on a single VPS or locally minimizes operational overhead.
-- **Direct automated social publishing**: Publishing integrations are deferred; content focuses on ideation, drafting, and scheduling.
+- **Direct un-gated automated social publishing**: Publishing to public social platforms must require explicit user review and confirmation (HITL gate); fully autonomous un-reviewed external broadcasting is prohibited.
 - **Replacing relational modeling with unstructured JSON blobs**: Core business entities must be strictly normalized with foreign keys and migrations in PostgreSQL.
 - **Upfront monolithic database schema**: Building the complete domain database schema upfront violates the vertical-slice rule.
 
@@ -132,4 +148,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-02 after v2.1 milestone*
+*Last updated: 2026-10-02 after starting v3.0 milestone*
