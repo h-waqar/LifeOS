@@ -4,11 +4,11 @@ milestone: v3.0
 milestone_name: Proactive Personal OS Orchestration & External Ecosystem
 current_phase: 22
 current_phase_name: external-platform-connectors-oauth-credential-lifecycle
-status: executing
-stopped_at: Phase 22 context gathered
-last_updated: "2026-10-02T05:30:50.609Z"
+status: paused
+stopped_at: Paused by owner before Phase 22 execution — plans complete, 0% implemented
+last_updated: "2026-10-02T07:00:00.000Z"
 last_activity: 2026-10-02
-last_activity_desc: Phase 22 planning complete
+last_activity_desc: Owner pause; main consolidated and pushed as source of truth
 state_head: 78968916af7e0794be3f7360b0062bd1af4dcda6
 progress:
   total_phases: 6
@@ -25,20 +25,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-02)
 
 **Core value:** A single source of truth connecting goals, projects, tasks, time, knowledge, money, learning, relationships, and content—powered by an AI layer that understands context and helps plan and execute without fragmented tools, duplicate entry, or siloed data.
-**Current focus:** Executing Phase 22 (External Platform Connectors & OAuth Credential Lifecycle)
+**Current focus:** PAUSED before Phase 22 (External Platform Connectors & OAuth Credential Lifecycle)
 
 ## Current Position
 
-Phase: 22 (external-platform-connectors-oauth-credential-lifecycle) — READY TO EXECUTE
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-10-02 — Phase 22 planning complete
+Phase: 22 (external-platform-connectors-oauth-credential-lifecycle) — PAUSED, NOT STARTED
+Plan: 22-01 and 22-02 fully designed (CONTEXT, RESEARCH, VALIDATION, threat model, 6 tasks); 0 tasks executed
+Status: Paused by owner 2026-10-02 after `main` was consolidated and pushed as source of truth
+Last activity: 2026-10-02 — unmerged Plan 01-09 palette a11y work ported to main; main pushed; branches cleaned
+
+**Nothing in Phase 22 exists in code yet.** No migration 0028, no `src/server/integrations/social/`, no
+`scripts/tests/phase-22/`. Resuming starts at task 22-01-01 in `22-01-PLAN.md`.
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 73
+- Total plans completed: 75 (v1.0 41 + v2.0 27 + v2.1 7; reconciled against ROADMAP.md 2026-10-02)
 - Average duration: - min
 - Total execution time: 0.0 hours
 
@@ -190,11 +193,16 @@ Items acknowledged and deferred at milestone close, most recent first (see [Defe
 
 ## Session Continuity
  
-Last session: 2026-10-02T01:50:11.735Z
-Stopped at: Phase 22 context gathered
-Next actionable work: Planning next milestone (v3.0)
-Resume file: .planning/phases/22-external-platform-connectors-oauth-credential-lifecycle/22-CONTEXT.md
+Last session: 2026-10-02 (consolidation + push, then deliberate pause)
+Stopped at: Paused before Phase 22 execution
+Next actionable work: `/gsd-execute-phase 22` — begins at task 22-01-01 (migration 0028)
+Resume file: .planning/phases/22-external-platform-connectors-oauth-credential-lifecycle/22-01-PLAN.md
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Resume with /gsd-execute-phase 22 when ready (Phase 22 plans are complete and reviewed)
+- Before resuming: stand up PostgreSQL — 72 integration tests are unverified in the consolidation
+  environment, and task 22-01-03 (SELECT ... FOR UPDATE token refresh) requires a live database
+- Consider /gsd-validate-phase 19, 20, 21 to close the last non-blocking Nyquist audit gap
+- Consolidating pushes: main is source of truth as of 2026-10-02; the v2.1 tag and the pre-consolidation
+  safety ref (branch backup/main-pre-consolidation, tag safety/pre-consolidation-2026-10-02) are on origin

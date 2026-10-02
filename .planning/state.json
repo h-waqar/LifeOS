@@ -1,8 +1,113 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v3.0",
+  "milestone": "v3.0 — Proactive Personal OS Orchestration & External Ecosystem",
   "phases": [
+    {
+      "number": "1",
+      "name": "Foundation",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Core Productivity",
+      "status": "complete"
+    },
+    {
+      "number": "3",
+      "name": "Knowledge, Learning & Relationships",
+      "status": "complete"
+    },
+    {
+      "number": "4",
+      "name": "Personal Finance",
+      "status": "complete"
+    },
+    {
+      "number": "5",
+      "name": "Content & Social Media",
+      "status": "complete"
+    },
+    {
+      "number": "6",
+      "name": "AI Layer & Assistant",
+      "status": "complete"
+    },
+    {
+      "number": "7",
+      "name": "Automation & Event Bus",
+      "status": "complete"
+    },
+    {
+      "number": "8",
+      "name": "External Integrations",
+      "status": "complete"
+    },
+    {
+      "number": "9",
+      "name": "Intelligence & Predictive Analytics",
+      "status": "complete"
+    },
+    {
+      "number": "10",
+      "name": "Shared Application Services & Headless CLI",
+      "status": "complete"
+    },
+    {
+      "number": "11",
+      "name": "LifeOS Model Context Protocol (MCP) Server",
+      "status": "complete"
+    },
+    {
+      "number": "12",
+      "name": "Skills Engine & Contextual Documentation Retrieval",
+      "status": "complete"
+    },
+    {
+      "number": "13",
+      "name": "Zero-Trust Agent Safety, Permissions & Attribution Audit",
+      "status": "complete"
+    },
+    {
+      "number": "14",
+      "name": "Security Boundary Escape Remediation & Zero-Trust Closure",
+      "status": "complete"
+    },
+    {
+      "number": "15",
+      "name": "Mobile PWA & Voice Dictation Quick Capture",
+      "status": "complete"
+    },
+    {
+      "number": "16",
+      "name": "Controlled Project Workspace & Execution Harness",
+      "status": "complete"
+    },
+    {
+      "number": "17",
+      "name": "Workspace Agent Surface & Development Workflow Integration",
+      "status": "complete"
+    },
+    {
+      "number": "18",
+      "name": "Closed-Loop Autonomous Agent Execution & Verified Commit Engine",
+      "status": "complete"
+    },
+    {
+      "number": "19",
+      "name": "External Platform, Mobile Hardware & Assistive Device Validation",
+      "status": "complete"
+    },
+    {
+      "number": "20",
+      "name": "Cross-Browser Engine & Adversarial Journey Regression",
+      "status": "complete"
+    },
+    {
+      "number": "21",
+      "name": "Production Infrastructure Hardening & Migration Baseline Alignment",
+      "status": "complete"
+    },
     {
       "number": "22",
       "name": "External Platform Connectors & OAuth Credential Lifecycle",
@@ -35,9 +140,15 @@
     }
   ],
   "next": {
-    "command": "/gsd-discuss-phase 22",
-    "label": "Discuss Phase 22",
-    "reason": "Phase 22 ready for discussion and planning"
+    "command": "/gsd-execute-phase 22",
+    "label": "Execute Phase 22 when work resumes",
+    "reason": "Paused by owner before Phase 22 execution · 0% implemented · plans 22-01 and 22-02 fully designed"
   },
-  "updated_at": "2026-10-02T06:37:33.000Z"
+  "paused": {
+    "paused_at": "2026-10-02",
+    "reason": "Owner pause to consolidate and push main as source of truth before Phase 22 execution",
+    "resume_with": "/gsd-execute-phase 22",
+    "resume_from": ".planning/phases/22-external-platform-connectors-oauth-credential-lifecycle/22-01-PLAN.md"
+  },
+  "updated_at": "2026-10-02T07:00:00.000Z"
 }
