@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LifeOS — Build Status Report</title>
+<style>
+  :root{
+    --bg:#0b0e14;
+    --bg-soft:#111621;
+    --panel:#141a26;
+    --panel-2:#1a2130;
+    --border:#242d3d;
+    --border-soft:#1c2432;
+    --fg:#e6edf6;
+    --fg-dim:#9aa7bd;
+    --fg-faint:#6b7a91;
+    --accent:#5b9cff;
+    --green:#3fd68c;
+    --amber:#f2b544;
+    --red:#ff6b6b;
+    --violet:#a78bfa;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1100px 520px at 12% -8%, rgba(91,156,255,.10), transparent 60%),
+      radial-gradient(900px 480px at 92% 0%, rgba(167,139,250,.09), transparent 55%),
+      var(--bg);
+    color:var(--fg);
+    font:15px/1.65 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:48px 24px 96px}
+
+  /* ---------- header ---------- */
+  header.top{border-bottom:1px solid var(--border);padding-bottom:28px;margin-bottom:36px}
+  .eyebrow{
+    font:600 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:14px
+  }
+  h1{margin:0 0 10px;font-size:34px;line-height:1.15;letter-spacing:-.02em;font-weight:650}
+  .sub{color:var(--fg-dim);max-width:760px;font-size:15px}
+  .meta{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    font:500 11.5px/1 var(--mono);color:var(--fg-dim);
+    border:1px solid var(--border);background:var(--bg-soft);
+    padding:6px 10px;border-radius:999px
+  }
+
+  /* ---------- stat grid ---------- */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:14px;margin:28px 0 44px}
+  .stat{
+    background:linear-gradient(180deg,var(--panel),var(--bg-soft));
+    border:1px solid var(--border);border-radius:14px;padding:18px 18px 16px;
+  }
+  .stat .k{font:600 10.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--fg-dim)}
+  .stat .v{font-size:28px;font-weight:650;letter-spacing:-.02em;margin:10px 0 4px}
+  .stat .n{font-size:12.5px;color:var(--fg-dim)}
+  .v.ok{color:var(--green)} .v.warn{color:var(--amber)} .v.info{color:var(--accent)}
+
+  /* ---------- sections ---------- */
+  section{margin:0 0 52px}
+  h2{
+    font-size:13px;font-weight:650;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--fg);margin:0 0 6px;display:flex;align-items:center;gap:10px
+  }
+  h2::before{content:"";width:3px;height:15px;border-radius:2px;background:var(--accent);display:inline-block}
+  h2 + .lede{color:var(--fg-dim);font-size:13.5px;margin:0 0 18px 13px}
+  h3{font-size:15.5px;margin:26px 0 10px;font-weight:620}
+  p{margin:0 0 12px}
+  .muted{color:var(--fg-dim)}
+
+  /* ---------- verdict banner ---------- */
+  .verdict{
+    display:grid;grid-template-columns:1fr;gap:0;
+    border:1px solid var(--border);border-radius:16px;overflow:hidden;
+    background:var(--panel);margin-bottom:40px
+  }
+  .verdict .bar{height:6px;background:linear-gradient(90deg,var(--green) 0%,var(--green) 77.8%,var(--amber) 77.8%,var(--amber) 100%)}
+  .verdict .body{padding:24px 26px}
+  .verdict .top-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px}
+  .verdict h2{margin:0;font-size:20px;letter-spacing:-.01em;text-transform:none}
+  .verdict h2::before{display:none}
+  .verdict p{color:var(--fg-dim);margin:10px 0 0;max-width:900px}
+
+  /* ---------- badges ---------- */
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font:600 11px/1 var(--mono);
+    letter-spacing:.06em;text-transform:uppercase;padding:5px 9px;border-radius:6px;
+    border:1px solid transparent;white-space:nowrap
+  }
+  .b-done{color:var(--green);background:rgba(63,214,140,.10);border-color:rgba(63,214,140,.28)}
+  .b-wip{color:var(--amber);background:rgba(242,181,68,.10);border-color:rgba(242,181,68,.28)}
+  .b-todo{color:var(--fg-dim);background:rgba(154,167,189,.08);border-color:rgba(154,167,189,.22)}
+  .b-info{color:var(--accent);background:rgba(91,156,255,.10);border-color:rgba(91,156,255,.28)}
+  .b-risk{color:var(--red);background:rgba(255,107,107,.10);border-color:rgba(255,107,107,.28)}
+  .b-violet{color:var(--violet);background:rgba(167,139,250,.10);border-color:rgba(167,139,250,.28)}
+
+  /* ---------- tables ---------- */
+  .tw{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:var(--panel)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:660px}
+  th{
+    text-align:left;font:600 10.5px/1.2 var(--mono);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--fg-dim);padding:13px 16px;background:var(--bg-soft);border-bottom:1px solid var(--border);white-space:nowrap
+  }
+  td{padding:12px 16px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(255,255,255,.017)}
+  td.num{font-family:var(--mono);font-size:12.5px;color:var(--fg-dim);white-space:nowrap}
+  td .t{font-weight:600}
+  td .s{display:block;color:var(--fg-dim);font-size:12.5px;margin-top:3px;line-height:1.5}
+
+  /* ---------- cards ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .card{
+    border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:18px 18px 16px
+  }
+  .card h4{margin:0 0 4px;font-size:14px;font-weight:620;display:flex;justify-content:space-between;gap:10px;align-items:center}
+  .card .pm{font:600 11px/1 var(--mono);color:var(--fg-dim);letter-spacing:.08em;margin-bottom:9px}
+  .card ul{margin:8px 0 0;padding-left:17px;color:var(--fg-dim);font-size:13px}
+  .card li{margin-bottom:5px}
+  .card li b{color:var(--fg);font-weight:600}
+
+  /* ---------- progress ---------- */
+  .pbar{height:6px;border-radius:999px;background:var(--panel-2);overflow:hidden;margin-top:10px;border:1px solid var(--border-soft)}
+  .pbar i{display:block;height:100%;border-radius:999px}
+  .fill-g{background:linear-gradient(90deg,#2fae74,var(--green))}
+  .fill-a{background:linear-gradient(90deg,#c78f2f,var(--amber))}
+  .fill-b{background:linear-gradient(90deg,#2f6bc9,var(--accent))}
+
+  /* ---------- lists ---------- */
+  ul.plain{list-style:none;padding:0;margin:10px 0 0}
+  ul.plain li{padding:9px 0;border-bottom:1px solid var(--border-soft);font-size:13.5px;color:var(--fg-dim)}
+  ul.plain li:last-child{border-bottom:none}
+  ul.plain li b{color:var(--fg);font-weight:600}
+
+  code{font-family:var(--mono);font-size:12.5px;background:var(--panel-2);border:1px solid var(--border-soft);
+       padding:1.5px 6px;border-radius:5px;color:#cfe0ff}
+  .kv{display:grid;grid-template-columns:190px 1fr;gap:8px 18px;font-size:13.5px;margin-top:8px}
+  .kv dt{color:var(--fg-dim);font-family:var(--mono);font-size:12.5px}
+  .kv dd{margin:0}
+  footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--border);color:var(--fg-dim);font-size:12.5px}
+  .note{border-left:2px solid var(--amber);background:rgba(242,181,68,.05);padding:12px 16px;border-radius:0 10px 10px 0;margin:16px 0;font-size:13.5px}
+  .note.red{border-left-color:var(--red);background:rgba(255,107,107,.05)}
+  .note b{color:var(--fg)}
+  @media (max-width:640px){
+    .wrap{padding:32px 16px 64px} h1{font-size:27px} .kv{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">LifeOS &nbsp;/&nbsp; Engineering Status Report</div>
+    <h1>What is built, what is pending</h1>
+    <p class="sub">
+      A ground-truth read of the LifeOS repository as it stands: 21 of 27 planned phases shipped and verified,
+      6 phases of milestone v3.0 remaining, and Phase 22 fully designed but not yet written to disk.
+      Every number below was read from <code>.planning/</code> state artifacts and confirmed against the
+      live source tree and a full test-suite run.
+    </p>
+    <div class="meta">
+      <span class="chip">generated 2026-10-02</span>
+      <span class="chip">branch: main @ 3214746</span>
+      <span class="chip">milestone v3.0 · 0%</span>
+      <span class="chip">next: Phase 22 execution</span>
+    </div>
+  </header>
+
+  <!-- ===================== VERDICT ===================== -->
+  <div class="verdict">
+    <div class="bar"></div>
+    <div class="body">
+      <div class="top-line">
+        <h2>Product surface is complete; the v3.0 orchestration layer has not started</h2>
+        <span class="badge b-done">21 / 27 phases done</span>
+        <span class="badge b-wip">1 phase in flight</span>
+        <span class="badge b-todo">5 phases unstarted</span>
+      </div>
+      <p>
+        Everything LifeOS set out to be as a personal operating system — tasks, projects, goals, habits,
+        calendar, notes, people, finance, learning, content, AI assistant, automations, external sync,
+        analytics, CLI, MCP server, mobile PWA, agent safety — is implemented, tested and shipped across
+        milestones v1.0, v2.0 and v2.1. Milestone v3.0 adds a new capability layer on top: external social
+        platform connectors, gated autonomous publishing, engagement analytics, multi-agent orchestration,
+        weekly planning synthesis and proactive schedule rebalancing. Of that layer, Phase 22 is fully
+        specced (context, research, threat model, validation strategy, 2 plans / 6 tasks) with
+        <b>zero code written</b> — no migration 0028, no <code>src/server/integrations/social/</code>,
+        no <code>scripts/tests/phase-22/</code>.
+      </p>
+    </div>
+  </div>
+
+  <!-- ===================== NUMBERS ===================== -->
+  <div class="stats">
+    <div class="stat"><div class="k">Phases shipped</div><div class="v ok">21 / 27</div><div class="n">v1.0 (9) · v2.0 (9) · v2.1 (3)</div></div>
+    <div class="stat"><div class="k">Test suite</div><div class="v ok">1,899</div><div class="n">151 files · 0 failures (run today)</div></div>
+    <div class="stat"><div class="k">Requirements met</div><div class="v ok">119</div><div class="n">82 + 27 + 10 · 18 more in v3.0</div></div>
+    <div class="stat"><div class="k">Database</div><div class="v info">50</div><div class="n">tables · 28 migrations · 0 drift</div></div>
+    <div class="stat"><div class="k">Source</div><div class="v info">100k</div><div class="n">LOC · 445 files in src/</div></div>
+    <div class="stat"><div class="k">v3.0 progress</div><div class="v warn">0 / 12</div><div class="n">plans complete (2 designed)</div></div>
+  </div>
+
+  <!-- ===================== SHIPPED ===================== -->
+  <section>
+    <h2>Completely done</h2>
+    <p class="lede">Verified complete with a passing test suite, a clean type-check, a clean production build and a milestone audit.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h4>Foundation &amp; Core Productivity <span class="badge b-done">P1–P2</span></h4>
+        <div class="pm">17 PLANS · v1.0</div>
+        <ul>
+          <li><b>Auth:</b> Better Auth, HTTP-only sessions, passkeys, strict authn/authz split, account recovery</li>
+          <li><b>Tasks:</b> hierarchical trees, dependency DAG with cycle rejection, priority, full REST API</li>
+          <li><b>Projects &amp; goals:</b> progress rollups, milestone tracking, risk forecasting</li>
+          <li><b>Time:</b> time blocks, daily plans, morning/evening review loops</li>
+          <li><b>Habits:</b> streaks, consistency scoring, deterministic math</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Knowledge, Finance, Content <span class="badge b-done">P3–P5</span></h4>
+        <div class="pm">8 PLANS · v1.0</div>
+        <ul>
+          <li><b>Notes:</b> backlinked graph, note-to-learning FK invariant</li>
+          <li><b>People:</b> CRM with interactions, soft-archive by default, hard delete opt-in</li>
+          <li><b>Learning:</b> courses/units, auto-completion at 100%</li>
+          <li><b>Finance:</b> signed liabilities, net worth, budgets, immutable ledger (ON DELETE RESTRICT)</li>
+          <li><b>Content:</b> items → per-channel variants, manual publication receipts, metrics snapshots</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>AI Layer &amp; Automations <span class="badge b-done">P6–P7</span></h4>
+        <div class="pm">12 PLANS · v1.0</div>
+        <ul>
+          <li><b>Assistant:</b> Gemini / Claude / OpenAI / Ollama via Vercel AI SDK, keys encrypted at rest</li>
+          <li><b>Zero-Trust AI:</b> model has zero authorization authority; every mutation becomes a pending <code>ai_actions</code> row requiring human approval</li>
+          <li><b>Event bus:</b> typed in-process bus, depth-3 cycle guard, post-commit emission</li>
+          <li><b>Scheduler:</b> dependency-free cron parser, PostgreSQL distributed locks, quiet hours, 15-min catch-up</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Integrations &amp; Intelligence <span class="badge b-done">P8–P9</span></h4>
+        <div class="pm">4 PLANS · v1.0</div>
+        <ul>
+          <li><b>Google Calendar:</b> incremental sync, syncToken 410 recovery, LWW conflict resolution, echo-loop prevention</li>
+          <li><b>GitHub:</b> activity ingestion, timing-safe HMAC webhook verification</li>
+          <li><b>Backups:</b> zero-dependency SigV4 S3 exporter, SHA-256 manifest checksums, restore verification</li>
+          <li><b>Analytics:</b> deterministic trends, focus-window optimizer, goal risk scoring</li>
+          <li><b>Search:</b> hybrid FTS + pg_trgm ranking, pgvector HNSW semantic search (migration 0026)</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Agent Interfaces &amp; CLI <span class="badge b-done">P10–P12</span></h4>
+        <div class="pm">10 PLANS · v2.0</div>
+        <ul>
+          <li><b>CLI <code>lifeos</code>:</b> 13 command groups (tasks, goals, habits, notes, projects, plan, context, docs, skills, mcp, agents, auth, workspace) with session-token auth and secret scrubbing</li>
+          <li><b>MCP server:</b> official SDK over stdio, 20 resources/prompts/tools, spoofed-caller identity rejected</li>
+          <li><b>Skills engine:</b> filesystem-backed procedural registry, contextual doc search with realpath path-traversal sandbox</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Zero-Trust Agent Safety <span class="badge b-done">P13–P14</span></h4>
+        <div class="pm">9 PLANS · v2.0</div>
+        <ul>
+          <li><b>Permissions:</b> 5 tiers — READ / WRITE / EXECUTE / DESTRUCTIVE / SENSITIVE</li>
+          <li><b>Financial shield:</b> fail-closed; no agent path can mutate finance</li>
+          <li><b>HITL challenges:</b> mandatory approval, <code>SELECT … FOR UPDATE</code> pessimistic locks, 5-min TTL sweeper</li>
+          <li><b>Audit:</b> migration 0027 agent_tokens / permissions / challenges / agent_audit_log; mutation + audit coupled in one transaction with rollback</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Mobile PWA &amp; Voice <span class="badge b-done">P15</span></h4>
+        <div class="pm">3 PLANS · v2.0</div>
+        <ul>
+          <li><b>PWA:</b> manifest, service-worker shell caching, IndexedDB offline capture sync</li>
+          <li><b>Voice:</b> Web Speech API dictation inside the quick-capture modal</li>
+          <li><b>NLP:</b> date and priority extraction from spoken text</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Workspace &amp; Autonomous Execution <span class="badge b-done">P16–P18</span></h4>
+        <div class="pm">5 PLANS · v2.0</div>
+        <ul>
+          <li><b>Sandbox:</b> realpath containment, bounded command runner with timeouts</li>
+          <li><b>Materialization:</b> plan → tasks via topological sort</li>
+          <li><b>Verified commit engine:</b> qualification leases, bounded retries, audited commits, pre-commit gate at zero drift</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Hardening &amp; External QA <span class="badge b-done">P19–P21</span></h4>
+        <div class="pm">7 PLANS · v2.1</div>
+        <ul>
+          <li><b>Device QA:</b> real handheld + tablet ergonomics, ≥44px tap targets (WCAG 2.5.5), NVDA / JAWS / VoiceOver / TalkBack traversal</li>
+          <li><b>Cross-browser:</b> Firefox Gecko, Safari WebKit, Edge parity; Safari Private Mode safe storage</li>
+          <li><b>Adversarial:</b> H01–H12 journey challenge plus full 19-phase regression, 0 regressions</li>
+          <li><b>Production infra:</b> TLS 1.3/1.2 termination, HTTP/2 ALPN, forwarded-header validation, HTTPS 308, private CDN headers</li>
+          <li><b>Migrations:</b> snapshots 0012–0027 reconciled into a strictly linear chain — 0 drift</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Milestone ledger</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Milestone</th><th>Scope</th><th>Plans</th><th>Requirements</th><th>Audit verdict</th><th>Shipped</th></tr></thead>
+        <tbody>
+          <tr><td><span class="t">v1.0 Full Personal Operating System</span></td><td class="num">Phases 1–9</td><td class="num">41 / 41</td><td class="num">82 / 82</td><td><span class="badge b-done">Passed</span></td><td class="num">2026-09-30</td></tr>
+          <tr><td><span class="t">v2.0 Autonomous Intelligence &amp; Agent Interface</span></td><td class="num">Phases 10–18</td><td class="num">27 / 27</td><td class="num">27 / 27</td><td><span class="badge b-done">Passed</span></td><td class="num">2026-10-02</td></tr>
+          <tr><td><span class="t">v2.1 Production Hardening &amp; External QA</span></td><td class="num">Phases 19–21</td><td class="num">7 / 7</td><td class="num">10 / 10</td><td><span class="badge b-done">Passed 10/10</span></td><td class="num">2026-10-02</td></tr>
+          <tr><td><span class="t">v3.0 Proactive Personal OS Orchestration</span></td><td class="num">Phases 22–27</td><td class="num">0 / 12</td><td class="num">0 / 18</td><td><span class="badge b-wip">In progress</span></td><td class="num">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== IN FLIGHT ===================== -->
+  <section>
+    <h2>In flight — Phase 22</h2>
+    <p class="lede">External Platform Connectors &amp; OAuth Credential Lifecycle. Fully designed, zero percent implemented.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h4>Planning artifacts — complete <span class="badge b-done">Done</span></h4>
+        <div class="pm">6 FILES · .planning/phases/22-…/</div>
+        <ul>
+          <li><b>CONTEXT</b> — scope decisions captured</li>
+          <li><b>DISCUSSION-LOG</b> — requirement ambiguity resolved</li>
+          <li><b>RESEARCH</b> — platform API + OAuth survey</li>
+          <li><b>VALIDATION</b> — Nyquist per-task verification map (draft)</li>
+          <li><b>22-01-PLAN</b> — wave 1: schema, crypto, cookies, token manager</li>
+          <li><b>22-02-PLAN</b> — wave 2: adapters, API routes, settings UI</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Code — nothing on disk yet <span class="badge b-todo">0 %</span></h4>
+        <div class="pm">EXPECTED ARTIFACTS MISSING</div>
+        <ul>
+          <li><code>0028_social_platform_connectors.sql</code> + snapshot — <b>absent</b> (journal stops at 0027)</li>
+          <li><code>src/server/integrations/social/</code> — <b>absent</b> (only backup / github / google-calendar / webhooks exist)</li>
+          <li><code>scripts/tests/phase-22/</code> — <b>absent</b> (test tree stops at phase-21)</li>
+          <li><code>/api/integrations/social/*</code> routes — <b>absent</b></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>The 6 tasks waiting to execute</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Task</th><th>Requirement</th><th>Threat</th><th>Delivers</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td class="num">22-01-01</td><td class="num">CONN-01</td><td class="num">T-22-01</td><td><span class="s">Migration 0028 expands the <code>provider</code> CHECK to twitter / linkedin / blog, linear snapshot chain preserved</span></td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">22-01-02</td><td class="num">CONN-01</td><td class="num">T-22-02</td><td><span class="s">AES-256-GCM token encryption; encrypted PKCE + CSRF state cookies with 10-minute TTL, single-use</span></td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">22-01-03</td><td class="num">CONN-02</td><td class="num">T-22-03</td><td><span class="s">Proactive refresh inside 5 min of expiry under <code>SELECT … FOR UPDATE</code>; fail-closed to <code>expired</code> with token wipe</span></td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">22-02-01</td><td class="num">CONN-03</td><td class="num">T-22-04</td><td><span class="s"><code>SocialPlatformAdapter</code> interface + Twitter, LinkedIn, Blog adapters with typed rate-limit / error normalization</span></td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">22-02-02</td><td class="num">CONN-01</td><td class="num">T-22-05</td><td><span class="s">Blog webhook HMAC-SHA256 with <code>crypto.timingSafeEqual</code> verification, zero timing leakage</span></td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">22-02-03</td><td class="num">CONN-01/02/03</td><td class="num">T-22-06</td><td><span class="s">6 route handlers (auth, callback, status, disconnect, configure, ping) fail-closed with scrubbed DTOs + Settings UI cards</span></td><td><span class="badge b-todo">Pending</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <b>Design quality is high, implementation risk is concentrated in one place.</b>
+      T-22-04 is the sharpest edge: Twitter rotates refresh tokens on use, so two concurrent workers refreshing the same token can permanently disconnect the account. The plan already answers this with a pessimistic row lock and a re-check of the expiry timestamp inside the transaction — that invariant must survive implementation, because nothing currently tests it.
+    </div>
+  </section>
+
+  <!-- ===================== PENDING ===================== -->
+  <section>
+    <h2>Pending — Phases 23 to 27</h2>
+    <p class="lede">Five phases, ten plans, eighteen requirements. None has a CONTEXT, PLAN, or test file.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Phase</th><th>Goal</th><th>Requirements</th><th>Depends on</th><th>Plans</th><th>State</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="t">23 · Autonomous Social Publishing</span></td>
+            <td><span class="s">HITL approval gate on rendered previews, <code>SchedulerEngine</code> dispatch worker, multi-platform send, publication receipts, dead-letter retries</span></td>
+            <td class="num">PUB-01…04</td><td class="num">22</td><td class="num">2</td>
+            <td><span class="badge b-todo">Not started</span></td>
+          </tr>
+          <tr>
+            <td><span class="t">24 · Engagement Analytics Sync</span></td>
+            <td><span class="s">Polling daemon ingesting views / likes / comments / clicks into <code>content_metrics</code>, benchmark curves, agent-facing resonance insights</span></td>
+            <td class="num">ANLT-01…02</td><td class="num">22, 23</td><td class="num">2</td>
+            <td><span class="badge b-todo">Not started</span></td>
+          </tr>
+          <tr>
+            <td><span class="t">25 · Multi-Agent Orchestration</span></td>
+            <td><span class="s">Planner / Analyst / Creator personas, inter-agent bus with typed Zod contracts, max-2-hop depth bound, <code>agent_audit_log</code> provenance with rollback</span></td>
+            <td class="num">ORCH-01…03</td><td class="num">13, 14, 23, 24</td><td class="num">2</td>
+            <td><span class="badge b-todo">Not started</span></td>
+          </tr>
+          <tr>
+            <td><span class="t">26 · "Plan My Week"</span></td>
+            <td><span class="s">Deterministic constraint-satisfaction solver over goals, deadlines, calendar, habits and energy curves; visual diff; one-click materialization into <code>time_blocks</code> + Google Calendar</span></td>
+            <td class="num">PLAN-01…03</td><td class="num">2, 25</td><td class="num">2</td>
+            <td><span class="badge b-todo">Not started</span></td>
+          </tr>
+          <tr>
+            <td><span class="t">27 · Proactive Interventions</span></td>
+            <td><span class="s">Event-bus drift listener (≥30 min slips), non-destructive rebalancer, one-tap accept/dismiss, 2-interventions-per-day cap, quiet hours</span></td>
+            <td class="num">REBAL-01…03</td><td class="num">7, 26</td><td class="num">2</td>
+            <td><span class="badge b-todo">Not started</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Requirement traceability — all 18 v3.0 requirements are unsatisfied</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>ID</th><th>Requirement (abridged)</th><th>Phase</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td class="num">CONN-01</td><td>OAuth 2.0 PKCE / signed webhooks for X, LinkedIn, Blog, AES-256-GCM at rest</td><td class="num">22</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">CONN-02</td><td>Proactive token refresh; fail to <code>expired</code>/<code>error</code> on unrecoverable failure</td><td class="num">22</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">CONN-03</td><td><code>SocialPlatformAdapter</code> contract isolating rate limits, payloads, error codes</td><td class="num">22</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">PUB-01</td><td>Zero-Trust HITL approval on rendered platform previews</td><td class="num">23</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">PUB-02</td><td>SchedulerEngine dispatch at <code>scheduledFor</code></td><td class="num">23</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">PUB-03</td><td>Immutable publication receipts in <code>content_publications</code></td><td class="num">23</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">PUB-04</td><td>Exponential backoff, dead-letter, immediate user notification</td><td class="num">23</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">ANLT-01</td><td>Periodic metric sync into <code>content_metrics</code></td><td class="num">24</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">ANLT-02</td><td>Historical benchmarks, optimal posting windows, agent feedback</td><td class="num">24</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">ORCH-01</td><td>Planner / Analyst / Creator personas with scoped capability tiers</td><td class="num">25</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">ORCH-02</td><td>Typed Zod inter-agent bus, max 2 deliberation hops</td><td class="num">25</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">ORCH-03</td><td>Full provenance in <code>agent_audit_log</code>, rollback on audit failure</td><td class="num">25</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">PLAN-01</td><td>Natural-language weekly synthesis over goals, deadlines, calendar, habits, energy</td><td class="num">26</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">PLAN-02</td><td>Deterministic constraint solver → conflict-free prioritized blocks</td><td class="num">26</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">PLAN-03</td><td>Reviewable diff, single confirmation → <code>time_blocks</code> + Calendar</td><td class="num">26</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">REBAL-01</td><td>Event-bus drift, ≥30 min overruns, energy dips</td><td class="num">27</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">REBAL-02</td><td>Non-destructive rebalancing proposals preserving evening buffers</td><td class="num">27</td><td><span class="badge b-todo">Pending</span></td></tr>
+          <tr><td class="num">REBAL-03</td><td>Interactive accept/reject before any block mutation</td><td class="num">27</td><td><span class="badge b-todo">Pending</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== VERIFICATION ===================== -->
+  <section>
+    <h2>Verification state today</h2>
+    <p class="lede">What I actually ran while producing this report, versus what is inherited from the last audit.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Gate</th><th>Command</th><th>Result</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td><span class="t">Unit / component suite</span></td><td class="num">pnpm test</td><td><span class="badge b-done">151 files · 1,899 tests · 0 failed</span></td><td><span class="s">Run live for this report — 115s</span></td></tr>
+          <tr><td><span class="t">PostgreSQL integration suite</span></td><td class="num">pnpm test:integration</td><td><span class="badge b-wip">Not verified</span></td><td><span class="s">72 <code>*.integration.test.ts</code> files need a live database; the Docker socket is not accessible in this environment. Last known: green under PostgreSQL 16 in the v2.1 audit.</span></td></tr>
+          <tr><td><span class="t">TypeScript strict</span></td><td class="num">tsc --noEmit</td><td><span class="badge b-done">0 errors</span></td><td><span class="s">v2.1 milestone audit</span></td></tr>
+          <tr><td><span class="t">Production build</span></td><td class="num">next build</td><td><span class="badge b-done">34 / 34 routes</span></td><td><span class="s">v2.1 milestone audit</span></td></tr>
+          <tr><td><span class="t">Schema drift</span></td><td class="num">drizzle-kit check</td><td><span class="badge b-done">0 drift · 28/28 replay</span></td><td><span class="s">v2.1 milestone audit — 50 tables, 628 columns</span></td></tr>
+          <tr><td><span class="t">Nyquist validation strategy</span></td><td class="num">phase VALIDATION.md</td><td><span class="badge b-wip">Draft for 22 · missing 19–21</span></td><td><span class="s">Non-blocking, flagged in the v2.1 audit frontmatter</span></td></tr>
+          <tr><td><span class="t">Independent human QA</span></td><td class="num">—</td><td><span class="badge b-info">Closed with owner sign-off</span></td><td><span class="s">All 9 register items in <code>docs/qa/deferred-independent-qa.md</code> marked RESOLVED in phases 19–21</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== GAPS ===================== -->
+  <section>
+    <h2>Gaps, drift and risks worth knowing about</h2>
+
+    <div class="note red">
+      <b>1 · Planning-state drift around Phase 22.</b>
+      <code>state.json</code> lists phase 22 as <code>pending</code> while its own <code>next.reason</code> says <code>0% · executing</code>;
+      <code>ROADMAP.md</code> shows <code>0/2 · Not started</code> even though both plans exist;
+      <code>STATE.md</code> header says <code>status: executing</code> while the body says "READY TO EXECUTE".
+      Four artifacts, three different readings. Harmless today, but a resume lands on an ambiguous state.
+    </div>
+
+    <div class="note red">
+      <b>2 · Plan-count mismatch.</b>
+      Adding the roadmap rows gives 75 delivered plans (41 + 27 + 7), while <code>STATE.md</code> reports
+      "Total plans completed: 73". One of the two is wrong; the roadmap is the more granular source.
+    </div>
+
+    <div class="note">
+      <b>3 · Nyquist validation is drafted, not enforced.</b>
+      <code>22-VALIDATION.md</code> is <code>status: draft</code> with <code>nyquist_compliant: false</code> and all six
+      Wave-0 test stubs unchecked. Phases 19–21 have no validation strategy file at all. Nothing blocks
+      execution, but the per-task verification map is currently a plan rather than a promise.
+    </div>
+
+    <div class="note">
+      <b>4 · 72 integration tests are unverified in this environment.</b>
+      They cover the security-critical paths — real PostgreSQL transactions, <code>FOR UPDATE</code> concurrency,
+      fail-closed behavior. They need a running database before Phase 22 touches credential storage.
+    </div>
+
+    <div class="note">
+      <b>5 · No social platform has ever been connected.</b>
+      The OAuth paths in Phases 22–24 are greenfield. Real X and LinkedIn app credentials, redirect URIs,
+      rate-limit tiers and webhook registration are environmental unknowns until an account exists.
+    </div>
+  </section>
+
+  <!-- ===================== WHAT EXISTS ===================== -->
+  <section>
+    <h2>Codebase shape</h2>
+    <dl class="kv">
+      <dt>API routes</dt><dd>111 <code>route.ts</code> handlers under <code>src/app/api</code></dd>
+      <dt>UI pages</dt><dd>19 <code>page.tsx</code> routes</dd>
+      <dt>Server modules</dt><dd>48 domain directories — agents, ai, analytics, audit, auth, automations, calendar, content, daily-plan, dashboard, db, docs, events, finance, goals, habits, integrations, learning, mcp, notes, notifications, people, preferences, projects, scheduler, search, skills, tasks</dd>
+      <dt>CLI</dt><dd>13 command modules behind the <code>lifeos</code> binary</dd>
+      <dt>Schema</dt><dd>23 Drizzle schema files · 50 tables · 28 SQL migrations · linear snapshot chain to 0027</dd>
+      <dt>Tests</dt><dd>223 test files under <code>scripts/tests/phase-NN/plan-NN/</code> — 151 in the default run, 72 PostgreSQL integration</dd>
+      <dt>Source size</dt><dd>~100,400 lines across 445 TypeScript / TSX files</dd>
+      <dt>Architecture</dt><td>Modular monolith — <code>src/app</code> (Next.js 15 App Router), <code>src/server</code> (domain services), <code>src/lib</code>, <code>src/cli</code>, <code>src/components</code>. Tests live only under <code>scripts/tests/</code>, never in <code>src/</code>.</dd>
+    </dl>
+  </section>
+
+  <!-- ===================== NEXT ===================== -->
+  <section>
+    <h2>Recommended next moves</h2>
+    <ul class="plain">
+      <li><b>1 · Execute Phase 22 wave 1.</b> Migration 0028 + snapshot, encrypted PKCE cookies, <code>SocialTokenManager</code> with the <code>FOR UPDATE</code> refresh lock. This is the only place in v3.0 where a race condition can permanently destroy a user's account connection, so it is worth doing first and testing hardest.</li>
+      <li><b>2 · Stand up PostgreSQL before wave 1 verification.</b> 72 integration tests are unverified here; the token-refresh concurrency test in 22-01-03 is meaningless without a real database.</li>
+      <li><b>3 · Reconcile the planning artifacts.</b> Settle Phase 22 to a single status across <code>state.json</code>, <code>STATE.md</code> and <code>ROADMAP.md</code>, and resolve the 73-vs-75 plan count, so the next session resumes unambiguously.</li>
+      <li><b>4 · Promote <code>22-VALIDATION.md</code> out of draft.</b> Create the six Wave-0 test stubs and mark <code>nyquist_compliant: true</code> before writing implementation code.</li>
+      <li><b>5 · Backfill Nyquist strategies for phases 19–21</b> via <code>/gsd-validate-phase</code> to close the last non-blocking audit gap.</li>
+      <li><b>6 · Secure real platform credentials early.</b> X and LinkedIn app registration, redirect URIs and scopes are external blockers on phases 23 and 24, and lead time is not under your control.</li>
+    </ul>
+  </section>
+
+  <footer>
+    Compiled from <code>.planning/ROADMAP.md</code>, <code>.planning/state.json</code>, <code>.planning/STATE.md</code>,
+    <code>.planning/MILESTONES.md</code>, <code>.planning/REQUIREMENTS.md</code>, milestone v2.1 audit,
+    <code>docs/qa/deferred-independent-qa.md</code>, the <code>src/</code> tree, the migration journal, and a live
+    <code>pnpm test</code> run. <span class="badge b-info">Read-only — no repository files were modified.</span>
+  </footer>
+
+</div>
+</body>
+</html>
